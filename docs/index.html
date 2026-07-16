@@ -950,6 +950,8 @@ map.on("load", () => {
   map.getCanvas().style.cursor = "";
   updateLegend();
   updateHeaderSub();
+  // If timeseries already loaded before map (race condition), apply colors now
+  if (timeseriesReady) applyYear();
 });
 
 // ── Timeseries — loaded in background; enable slider + colors when ready ──────
