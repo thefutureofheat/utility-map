@@ -828,7 +828,10 @@ map.on("click", "utilities-fill", (e) => {
 });
 
 map.on("click", (e) => {
-  if (pinnedFeat && !e.features?.length) {
+  if (!pinnedFeat) return;
+  // General click events don't carry features — query at the click point instead
+  const hits = map.queryRenderedFeatures(e.point, { layers: ["utilities-fill"] });
+  if (!hits.length) {
     setPinnedState(pinnedFeat, false);
     pinnedFeat = null;
     updateInfo(null, false);
