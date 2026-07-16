@@ -1,0 +1,158 @@
+{
+  "_comment": "Maps current EIA utility ID to predecessor IDs that covered the same territory in earlier years. The build script backfills missing years from predecessor data. Edit this file to add/remove mappings, then re-run build_eia_timeseries_json.py. Run generate_predecessor_candidates.py to find more candidates.",
+
+  "17671662TX": {
+    "note": "Atmos Energy Corp TX (2005+). Predecessor entities reported TX distribution before Atmos acquired TXU Gas Distribution in 2004.",
+    "predecessors": ["17604810TX", "17617436TX"]
+  },
+  "17671254VA": {
+    "note": "Washington Gas Light Company VA (2004+). Renamed from 'Washington Gas and Light Company' in 2004.",
+    "predecessors": ["17616173VA"]
+  },
+
+  "_section_exact_renames": "Same name, different EIA ID — simple registrations after reorganizations",
+
+  "17690211AL": {
+    "note": "Clarke Mobile Counties Gas District AL (2005+). Same name, new EIA ID after administrative change.",
+    "predecessors": ["17602511AL"]
+  },
+  "17672170AR": {
+    "note": "Ozark Gas Transmission LLC AR (2005+). Same name, new EIA ID.",
+    "predecessors": ["17681218AR"]
+  },
+  "17671810CA": {
+    "note": "Southwest Gas Corporation CA (2005+). Same name, new EIA ID.",
+    "predecessors": ["17616575CA"]
+  },
+  "17672060LA": {
+    "note": "Atmos Energy Corporation LA (2005+). Same name, new EIA ID.",
+    "predecessors": ["17602178LA"]
+  },
+  "17672931LA": {
+    "note": "Bridgeline Holdings LP LA (2007+). Same name, new EIA ID.",
+    "predecessors": ["17603740LA"]
+  },
+  "17678273LA": {
+    "note": "Kinetica Deepwater Express LLC LA (2016+). Same name, new EIA ID.",
+    "predecessors": ["17676011LA"]
+  },
+  "17650217MD": {
+    "note": "Chesapeake Utilities Corporation MD (2004+). Same name, new EIA ID.",
+    "predecessors": ["17619908MD"]
+  },
+  "17699051NC": {
+    "note": "Piedmont Natural Gas NC (2003+). Same name, new EIA ID.",
+    "predecessors": ["17616579NC"]
+  },
+  "17694621NM": {
+    "note": "Raptor Natural Pipeline LLC NM (2002+). Same name, new EIA ID.",
+    "predecessors": ["17603738NM"]
+  },
+  "17672171OK": {
+    "note": "Ozark Gas Transmission LLC OK (2005+). Same name, new EIA ID.",
+    "predecessors": ["17640311OK"]
+  },
+  "17617447TX": {
+    "note": "GPM Gas Corp TX (2000+). Same name, new EIA ID.",
+    "predecessors": ["17620350TX"]
+  },
+  "17694615WI": {
+    "note": "Wisconsin Pub Svc Corp WI (2002+). Same name, new EIA ID. Also picking up 'Wisconsin Public Service Corp' which is an alternate name form.",
+    "predecessors": ["17616599WI", "17615019WI"]
+  },
+  "17673240WV": {
+    "note": "Mountaineer Gas Co WV (2008+). Same name, new EIA ID after 2007.",
+    "predecessors": ["17672110WV"]
+  },
+
+  "_section_near_certain": "Very high name similarity or obvious LP/Inc/Corp suffix changes",
+
+  "17671151TX": {
+    "note": "Kinder Morgan Tejas Pipeline LLC TX (2004+). Renamed from LP to LLC in 2004.",
+    "predecessors": ["17604815TX"]
+  },
+  "17673180TX": {
+    "note": "West Texas Gas Inc TX (2004+). Shortened from 'West Texas Gas Incorporated'.",
+    "predecessors": ["17622900TX"]
+  },
+  "17676012MN": {
+    "note": "Minnesota Energy Resources Corp MN (2004+). Reorganized from 'Minnesota Energy Resources - NMU' division.",
+    "predecessors": ["17606411MN"]
+  },
+  "17672173NJ": {
+    "note": "Pivotal Util Holdings Inc DBA Elizabethtown NJ (2005+). Reorganized from Pivotal Utility DBA Elizabethtown; also chains from predecessor.",
+    "predecessors": ["17603892NJ"]
+  },
+  "17671010IN": {
+    "note": "Midwest Natural Gas IN (2004+). Dropped 'Corp' suffix from Midwest Natural Gas Corp.",
+    "predecessors": ["17609493IN"]
+  },
+  "17671250OK": {
+    "note": "ONEOK Field Services OK (2003+). Renamed from ONEOK Field Service Co.",
+    "predecessors": ["17603360OK"]
+  },
+  "17681346RI": {
+    "note": "The Narragansett EleCo DBA RIEnergy RI (2019+). Same utility rebranded as RIEnergy; predecessor is Narragansett Electric Co Gas Div.",
+    "predecessors": ["17698114RI"]
+  },
+  "17672110WV": {
+    "note": "Mountaineer Gas Co WV (2004-2007). Predecessor is Mountaineer Gas DBA Allegheny Power (Allegheny Power sold Mountaineer Gas to Equitable Resources ~2003).",
+    "predecessors": ["17616239WV"]
+  },
+  "17671911LA": {
+    "note": "Jefferson Island Storage & Hub LA (2005+). Same company, '&' vs 'AND' in name.",
+    "predecessors": ["17680617LA"]
+  },
+
+  "_section_ri_consolidation": "Rhode Island gas utilities consolidated under National Grid / Narragansett Electric around 2001-2002",
+
+  "17698114RI": {
+    "note": "Narragansett Electric Co Gas Div RI (2002+). National Grid consolidated Rhode Island gas distribution utilities in 2001-2002. New England Gas Co (then a Southern Union subsidiary), Valley Gas Co, and Bristol Warren Gas Co all ceased individual reporting in 2000-2001 when their service territories were absorbed into Narragansett Electric's gas division.",
+    "predecessors": ["17611447RI", "17614197RI", "17601534RI"]
+  },
+
+  "_section_pa_ugi_consolidation": "UGI acquired PPL Gas Utilities, which had merged North Penn Gas and Penn Fuel Gas",
+
+  "17671661PA": {
+    "note": "UGI Central Penn Gas Inc PA (2005-2017). North Penn Gas Co and Penn Fuel Gas Inc (PFG Gas Inc) merged into PPL Gas Utilities Corporation effective December 31, 2004; UGI then acquired PPL Gas Utilities in 2008 and reorganized the combined entity as UGI Central Penn Gas Inc. In January 2019 UGI merged Central Penn Gas and Penn Natural Gas into UGI Utilities (17614088PA); that entry fills 2018+ data for this territory.",
+    "predecessors": ["17610286PA", "17650212PA", "17614088PA"]
+  },
+
+  "_section_centerpoint_intrastate": "CenterPoint Energy Intrastate descended from PanEnergy via Duke Energy reorganization",
+
+  "17671025LA": {
+    "note": "CenterPoint Energy Intrastate PL LLC LA (2004+). PanEnergy Corp merged with Duke Energy in 1997, absorbing PanEnergy Louisiana Intrastate LLC. After CenterPoint Energy was spun off from Reliant Energy in 2002, the Louisiana intrastate pipeline assets came under CenterPoint Energy Intrastate Pipelines LLC.",
+    "predecessors": ["17620224LA"]
+  },
+
+  "_section_known_acquisitions": "Confirmed acquisitions where names differ — verified from company history",
+
+  "17670317OH": {
+    "note": "East Ohio Gas Comp Dominion East OH (2000+). Dominion Resources acquired East Ohio Gas Company around 2000 and renamed it.",
+    "predecessors": ["17603751OH"]
+  },
+  "17694131OH": {
+    "note": "Vectren Energy Delivery of Ohio (2002+). Same company as 'Vectren of Ohio', name extended after Vectren Corp reorganization.",
+    "predecessors": ["17603288OH"]
+  },
+  "17640418MO": {
+    "note": "Missouri Gas Energy MO (2004+). Southern Union Company operated Missouri distribution under the Missouri Gas Energy brand.",
+    "predecessors": ["17606730MO"]
+  },
+  "17696331IA": {
+    "note": "Interstate Power and Light Company IA (2000+). Same utility as 'Interstate Pwr Co', subsidiary of IES Industries / Alliant Energy.",
+    "predecessors": ["17606336IA"]
+  },
+  "17675803NH": {
+    "note": "Liberty Utilities DBA Energy North NH (2012+). Liberty Utilities acquired EnergyNorth Inc.'s NH gas distribution operations.",
+    "predecessors": ["17604829NH"]
+  },
+  "17692927MO": {
+    "note": "Atmos Energy Corporation MO (2004+). Atmos acquired United Cities Gas Company in 1997, which had MO operations.",
+    "predecessors": ["17604076MO"]
+  },
+  "17671155AR": {
+    "note": "Black Hills Energy AR (2016+). Black Hills Corp acquired Source Gas Holdings in 2016, which included Arkansas Western Gas operations. Two predecessor IDs for same territory.",
+    "predecessors": ["17600509AR", "17600512AR"]
+  }
+}
