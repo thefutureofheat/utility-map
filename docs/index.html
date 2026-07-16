@@ -674,38 +674,18 @@ const TILES_BASE = "https://pub-d2cb6d76c09646f9b239e9a1adde7ae1.r2.dev";
 
 const map = new maplibregl.Map({
   container: "map",
-  style: {
-    version: 8,
-    glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
-    sources: {
-      "carto-bg": {
-        type: "raster",
-        tiles: [
-          "https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-          "https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-          "https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        attribution: "© OpenStreetMap contributors © CARTO",
-      },
-      "carto-labels": {
-        type: "raster",
-        tiles: [
-          "https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png",
-          "https://b.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png",
-          "https://c.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-      },
-    },
-    layers: [
-      { id: "carto-bg-layer",     type: "raster", source: "carto-bg"     },
-      { id: "carto-labels-layer", type: "raster", source: "carto-labels" },
-    ],
-  },
+  style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
   center: [-96, 39],
   zoom: 3.5,
 });
+
+// Fallback: if map doesn't fire 'load' within 20 seconds, unblock the UI
+setTimeout(() => {
+  if (!mapLoaded) {
+    document.getElementById("loading").innerHTML =
+      "Map is taking longer than expected.<br><small>Try refreshing the page.</small>";
+  }
+}, 20000);
 
 map.addControl(new maplibregl.NavigationControl(), "top-right");
 
@@ -900,6 +880,9 @@ map.on("load", () => {
     promoteId: { utilities: "ID" },
   });
 
+  // Insert utility layers below the first label/symbol layer in the CARTO style
+  const firstSymbolId = map.getStyle().layers.find(l => l.type === "symbol")?.id;
+
   // Fill layer — choropleth color set by rebuildColorExpression()
   map.addLayer({
     id: "utilities-fill",
@@ -918,7 +901,7 @@ map.on("load", () => {
         0.72
       ],
     },
-  }, "carto-labels-layer");
+  }, firstSymbolId);
 
   // Stroke layer
   map.addLayer({
@@ -945,7 +928,7 @@ map.on("load", () => {
         1
       ],
     },
-  }, "carto-labels-layer");
+  }, firstSymbolId);
 
   map.getCanvas().style.cursor = "";
   updateLegend();
