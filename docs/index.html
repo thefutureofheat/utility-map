@@ -1729,12 +1729,8 @@ function renderTrends(feat) {
 
   document.getElementById("trends-body").innerHTML = `
     <div class="chart-block">
-      <div class="chart-title">Residential Price ($/Mcf)</div>
-      <div class="chart-wrap"><canvas id="tc-price"></canvas></div>
-    </div>
-    <div class="chart-block">
-      <div class="chart-title">Residential Consumption</div>
-      <div class="chart-wrap"><canvas id="tc-consump"></canvas></div>
+      <div class="chart-title">Residential Price &amp; Consumption</div>
+      <div class="chart-wrap"><canvas id="tc-price-consump"></canvas></div>
     </div>
     ${hasPriceBkdn ? `<div class="chart-block">
       <div class="chart-title">Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
@@ -1762,21 +1758,16 @@ function renderTrends(feat) {
   const BASE  = { fill: false, tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, spanGaps: true };
   const SBASE = { tension: 0.3, borderWidth: 1, pointRadius: 1, pointHoverRadius: 3, spanGaps: false };
 
-  trendCharts.price = makeLineChart("tc-price", d.years, [
-    { ...BASE, label: "Nominal",      data: d.nomPrice,  borderColor: "#e07020" },
-    { ...BASE, label: "Real (2024$)", data: d.realPrice, borderColor: "#1a3a5c", borderDash: [4, 3] },
-  ], v => v != null ? "$" + v.toFixed(2) : "");
-
   (function() {
-    const ctx = document.getElementById("tc-consump");
+    const ctx = document.getElementById("tc-price-consump");
     if (!ctx) return;
-    trendCharts.consump = new Chart(ctx, {
+    trendCharts.priceConsump = new Chart(ctx, {
       type: "line",
       data: {
         labels: d.years,
         datasets: [
-          { ...BASE, label: "Total (MMcf)",        data: d.totVol,  borderColor: "#2a78d6", yAxisID: "y"  },
-          { ...BASE, label: "Per customer (Mcf)",  data: d.perCust, borderColor: "#d4890a", yAxisID: "y2", borderDash: [4, 3] },
+          { ...BASE, label: "Real Price (2024 $/Mcf)", data: d.realPrice, borderColor: "#1a3a5c", yAxisID: "y"  },
+          { ...BASE, label: "Per Customer (Mcf)",       data: d.perCust,  borderColor: "#d4890a", yAxisID: "y2", borderDash: [4, 3] },
         ],
       },
       options: {
@@ -1792,7 +1783,7 @@ function renderTrends(feat) {
           },
           y: {
             position: "left",
-            ticks: { color: "#2a78d6", font: { size: 9 }, callback: milesTickFmt },
+            ticks: { color: "#1a3a5c", font: { size: 9 }, callback: v => v != null ? "$" + v.toFixed(2) : "" },
             grid: { color: "#f5f5f5" },
             beginAtZero: true,
           },
@@ -1808,12 +1799,14 @@ function renderTrends(feat) {
   })();
 
   if (hasPriceBkdn) {
-    // supplyPr = citygate (bottom band); nomPrice = total residential (supply+delivery cumulative top)
-    // null-safe: only plot years where both supply and total price exist
-    const safeTotal = d.nomPrice.map((v, i) => (v != null && d.supplyPr[i] != null) ? v : null);
-    trendCharts.pricebkdn = makeStackedAreaChart("tc-pricebkdn", d.years, [
-      { ...SBASE, fill: "origin", label: "Supply (citygate)", data: d.supplyPr, borderColor: "#5b4fcd", backgroundColor: "rgba(91,79,205,0.55)" },
-      { ...SBASE, fill: "-1",     label: "Delivery",          data: safeTotal,  borderColor: "#e07020", backgroundColor: "rgba(224,112,32,0.50)" },
+    const delivery = d.nomPrice.map((v, i) => {
+      if (v == null || d.supplyPr[i] == null) return null;
+      const del = v - d.supplyPr[i];
+      return del >= 0 ? del : null;
+    });
+    trendCharts.pricebkdn = makeLineChart("tc-pricebkdn", d.years, [
+      { ...BASE, label: "Supply (citygate)", data: d.supplyPr, borderColor: "#5b4fcd" },
+      { ...BASE, label: "Delivery",          data: delivery,   borderColor: "#e07020", borderDash: [4, 3] },
     ], priceTickFmt);
   }
 
