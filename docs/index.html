@@ -1840,20 +1840,21 @@ function renderTrends(feat) {
     ], tickFmt);
   }
 
-  const MAT_LABELS = ["Plastic", "Steel (protected)", "Steel (unprotected)", "Cast Iron", "Ductile Iron", "Copper", "Other"];
+  // Bottom = oldest/most phased-out; top = modern/growing; Other always on top
+  const MAT_LABELS = ["Cast Iron", "Steel (unprotected)", "Ductile Iron", "Copper", "Steel (protected)", "Plastic", "Other"];
   const MAT_COLORS = [
-    ["#27ae60", "rgba(39,174,96,0.60)"],
-    ["#2471a3", "rgba(36,113,163,0.58)"],
-    ["#e67e22", "rgba(230,126,34,0.58)"],
-    ["#8b2500", "rgba(139,37,0,0.65)"],
-    ["#c0392b", "rgba(192,57,43,0.55)"],
-    ["#d4ac0d", "rgba(212,172,13,0.55)"],
-    ["#aaa",    "rgba(170,170,170,0.45)"],
+    ["#8b2500", "rgba(139,37,0,0.65)"],   // Cast Iron
+    ["#e67e22", "rgba(230,126,34,0.58)"], // Steel (unprotected)
+    ["#c0392b", "rgba(192,57,43,0.55)"],  // Ductile Iron
+    ["#d4ac0d", "rgba(212,172,13,0.55)"], // Copper
+    ["#2471a3", "rgba(36,113,163,0.58)"], // Steel (protected)
+    ["#27ae60", "rgba(39,174,96,0.60)"],  // Plastic
+    ["#aaa",    "rgba(170,170,170,0.45)"],// Other
   ];
 
   if (hasMatMiles) {
     trendCharts.mat = makeMaterialChart("tc-mat",
-      [d.matPlastic, d.matStCp, d.matStUnp, d.matCI, d.matDI, d.matCu, d.matOther],
+      [d.matCI, d.matStUnp, d.matDI, d.matCu, d.matStCp, d.matPlastic, d.matOther],
       MAT_LABELS, MAT_COLORS, milesTickFmt);
   }
 
@@ -1875,7 +1876,7 @@ function renderTrends(feat) {
 
   if (hasSrvMat) {
     trendCharts.srvmat = makeMaterialChart("tc-srvmat",
-      [d.srvPlastic, d.srvStCp, d.srvStUnp, d.srvCI, d.srvDI, d.srvCu, d.srvOther],
+      [d.srvCI, d.srvStUnp, d.srvDI, d.srvCu, d.srvStCp, d.srvPlastic, d.srvOther],
       MAT_LABELS, MAT_COLORS, srvTickFmt);
   }
 }
