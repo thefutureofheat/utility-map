@@ -180,6 +180,8 @@
     .col-fatal    { width: 52px; text-align: center; }
     .col-injure   { width: 52px; text-align: center; }
     .col-cause    { width: 130px; }
+    .col-prtlk    { width: 110px; }
+    .col-cost     { width: 88px; text-align: right; font-variant-numeric: tabular-nums; }
     .col-narrative { }
     .incidents-table td.col-fatal,
     .incidents-table td.col-injure { text-align: center; }
@@ -1435,11 +1437,13 @@ function renderIncidentsTable(rows) {
   });
 
   const cols = [
-    { key: "inc_year",       label: "Year",      cls: "col-year"  },
-    { key: "fatal",          label: "Fatalities",cls: "col-fatal"  },
-    { key: "injure",         label: "Injuries",  cls: "col-injure" },
-    { key: "map_seven_cause",label: "Cause",     cls: "col-cause"  },
-    { key: "NARRATIVE",      label: "Narrative", cls: "col-narrative" },
+    { key: "inc_year",          label: "Year",        cls: "col-year"      },
+    { key: "fatal",             label: "Fatalities",  cls: "col-fatal"     },
+    { key: "injure",            label: "Injuries",    cls: "col-injure"    },
+    { key: "map_seven_cause",   label: "Cause",       cls: "col-cause"     },
+    { key: "PRTLK",             label: "System Part", cls: "col-prtlk"     },
+    { key: "total_cost_current",label: "Total Cost",  cls: "col-cost"      },
+    { key: "NARRATIVE",         label: "Narrative",   cls: "col-narrative" },
   ];
 
   const thHtml = cols.map(c => {
@@ -1448,11 +1452,19 @@ function renderIncidentsTable(rows) {
     return `<th class="${cls}" onclick="incidentsSortBy('${c.key}')">${c.label}</th>`;
   }).join("");
 
+  const fmtCost = v => {
+    if (v == null || v === 0) return "—";
+    if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+    if (v >= 1e3) return "$" + Math.round(v / 1e3) + "K";
+    return "$" + Math.round(v);
+  };
   const rowsHtml = sorted.map(r => {
     const yr     = r.inc_year  ?? "—";
     const fatal  = r.fatal  != null ? r.fatal  : "—";
     const injure = r.injure != null ? r.injure : "—";
     const cause  = escHtml(r.map_seven_cause || "—");
+    const prtlk  = escHtml(r.PRTLK || "—");
+    const cost   = fmtCost(r.total_cost_current);
     const narr   = escHtml(r.NARRATIVE || "");
     const fatalCls  = (r.fatal  > 0) ? " fatal-nonzero"  : "";
     const injureCls = (r.injure > 0) ? " injure-nonzero" : "";
@@ -1461,6 +1473,8 @@ function renderIncidentsTable(rows) {
       <td class="col-fatal${fatalCls}">${fatal}</td>
       <td class="col-injure${injureCls}">${injure}</td>
       <td class="col-cause">${cause}</td>
+      <td class="col-prtlk">${prtlk}</td>
+      <td class="col-cost">${cost}</td>
       <td class="col-narrative">${narr}</td>
     </tr>`;
   }).join("");
@@ -1686,7 +1700,11 @@ function renderTrends(feat) {
   destroyTrendCharts();
 
   const state   = stop || p.EIA_state || null;
+  const opKey   = opId != null ? String(opId).replace(/\.0$/, "") : null;
   const d = assembleTrendsData(eiaId, phmsaKey, state);
+
+  const hasIncidents = opKey != null && incidentsData != null
+                    && Array.isArray(incidentsData[opKey]) && incidentsData[opKey].length > 0;
 
   const hasDcd      = d.dcdPre70.some(v => v != null && v > 0) || d.dcd7090.some(v => v != null && v > 0)
                    || d.dcd0010.some(v => v != null && v > 0)  || d.dcd20s.some(v => v != null && v > 0);
@@ -1735,6 +1753,10 @@ function renderTrends(feat) {
     ${hasPriceBkdn ? `<div class="chart-block">
       <div class="chart-title">Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
+    </div>` : ""}
+    ${hasIncidents ? `<div class="chart-block">
+      <div class="chart-title">Incidents by Year and Cause</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
     </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
       <div class="chart-title">Pipeline Miles by Installation Era</div>
@@ -1808,6 +1830,64 @@ function renderTrends(feat) {
       { ...BASE, label: "Supply (citygate)", data: d.supplyPr, borderColor: "#5b4fcd" },
       { ...BASE, label: "Delivery",          data: delivery,   borderColor: "#e07020", borderDash: [4, 3] },
     ], priceTickFmt);
+  }
+
+  if (hasIncidents) {
+    const CAUSES = [
+      "EXCAVATION DAMAGE",
+      "OTHER OUTSIDE FORCE DAMAGE",
+      "ALL OTHER CAUSES",
+      "NATURAL FORCE DAMAGE",
+      "MATERIAL/WELD/EQUIP FAILURE",
+      "INCORRECT OPERATION",
+      "CORROSION",
+    ];
+    const CAUSE_COLORS = ["#8B4513","#8e44ad","#95a5a6","#27ae60","#2471a3","#d4ac0d","#e67e22"];
+    const incRows = incidentsData[opKey];
+    const yearSet = new Set(incRows.map(r => String(r.inc_year)));
+    const incYears = [...yearSet].sort();
+    const counts = {};
+    for (const cause of CAUSES) counts[cause] = {};
+    for (const r of incRows) {
+      const yr = String(r.inc_year);
+      const cause = CAUSES.includes(r.map_seven_cause) ? r.map_seven_cause : "ALL OTHER CAUSES";
+      counts[cause][yr] = (counts[cause][yr] || 0) + 1;
+    }
+    const ctx = document.getElementById("tc-incidents");
+    if (ctx) {
+      trendCharts.incidents = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: incYears,
+          datasets: CAUSES.map((cause, i) => ({
+            label: cause,
+            data: incYears.map(yr => counts[cause][yr] || 0),
+            backgroundColor: CAUSE_COLORS[i],
+            borderWidth: 0,
+          })),
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, labels: { boxWidth: 10, font: { size: 9 }, padding: 4 } },
+            tooltip: { mode: "index", intersect: false },
+          },
+          scales: {
+            x: {
+              stacked: true,
+              ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
+              grid: { color: "#f5f5f5" },
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { color: "#555", font: { size: 9 }, precision: 0 },
+              grid: { color: "#f5f5f5" },
+            },
+          },
+        },
+      });
+    }
   }
 
   if (hasDcd) {
