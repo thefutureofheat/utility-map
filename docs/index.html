@@ -1496,6 +1496,13 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   const years = [], nomPrice = [], realPrice = [], totVol = [], perCust = [], ciMiles = [];
   const supplyPr = [];
   const dcdPre70 = [], dcd7090 = [], dcd0010 = [], dcd20s = [], dcdUnknown = [];
+  // Material breakdown — mains miles
+  const matPlastic = [], matStCp = [], matStUnp = [], matCI = [], matDI = [], matCu = [], matOther = [];
+  // Services by installation era
+  const srvDcdPre70 = [], srvDcd7090 = [], srvDcd0010 = [], srvDcd20s = [], srvDcdUnk = [];
+  // Services by material
+  const srvPlastic = [], srvStCp = [], srvStUnp = [], srvCI = [], srvDI = [], srvCu = [], srvOther = [];
+
   for (let yr = 1997; yr <= 2025; yr++) {
     const yrStr = String(yr);
     const ed = eiaId    ? eiaTimeseries?.[eiaId]?.data?.[yrStr]      : null;
@@ -1529,13 +1536,69 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
         dcdPre70.push(null); dcd7090.push(null); dcd0010.push(null);
         dcd20s.push(null); dcdUnknown.push(null);
       }
+      // Miles by material
+      const mTotal = pd.MMILES_TOTAL || 0;
+      if (mTotal > 0) {
+        matPlastic.push(pd.MMILES_PLASTIC || 0);
+        matStCp.push((pd.MMILES_STEEL_CP_BARE || 0) + (pd.MMILES_STEEL_CP_COATED || 0));
+        matStUnp.push((pd.MMILES_STEEL_UNP_BARE || 0) + (pd.MMILES_STEEL_UNP_COATED || 0));
+        matCI.push(pd.MMILES_CI || 0);
+        matDI.push(pd.MMILES_DI || 0);
+        matCu.push(pd.MMILES_CU || 0);
+        matOther.push(pd.MMILES_OTHER || 0);
+      } else {
+        matPlastic.push(null); matStCp.push(null); matStUnp.push(null);
+        matCI.push(null); matDI.push(null); matCu.push(null); matOther.push(null);
+      }
+      // Services by installation era
+      const sTotal = pd.NUM_SRVS_BY_DCD_TOTAL || 0;
+      if (sTotal > 0) {
+        const sp70  = (pd.NUM_SRVS_BY_DCD_PRE1940      || 0) + (pd.NUM_SRVS_BY_DCD_1940_TO_1949 || 0)
+                    + (pd.NUM_SRVS_BY_DCD_1950_TO_1959  || 0) + (pd.NUM_SRVS_BY_DCD_1960_TO_1969 || 0);
+        const s7090 = (pd.NUM_SRVS_BY_DCD_1970_TO_1979  || 0) + (pd.NUM_SRVS_BY_DCD_1980_TO_1989 || 0)
+                    + (pd.NUM_SRVS_BY_DCD_1990_TO_1999   || 0);
+        const s0010 = (pd.NUM_SRVS_BY_DCD_2000_TO_2009   || 0) + (pd.NUM_SRVS_BY_DCD_2010_TO_2019 || 0);
+        const s20   =  pd.NUM_SRVS_BY_DCD_2020_TO_2029   || 0;
+        const sUnk  = Math.max(0, sTotal - (sp70 + s7090 + s0010 + s20));
+        srvDcdPre70.push(sp70); srvDcd7090.push(s7090); srvDcd0010.push(s0010);
+        srvDcd20s.push(s20); srvDcdUnk.push(sUnk);
+      } else {
+        srvDcdPre70.push(null); srvDcd7090.push(null); srvDcd0010.push(null);
+        srvDcd20s.push(null); srvDcdUnk.push(null);
+      }
+      // Services by material
+      const smTotal = pd.NUM_SRVCS_TOTAL || 0;
+      if (smTotal > 0) {
+        srvPlastic.push(pd.NUM_SRVS_PLASTIC || 0);
+        srvStCp.push((pd.NUM_SRVS_STEEL_CP_BARE || 0) + (pd.NUM_SRVS_STEEL_CP_COATED || 0));
+        srvStUnp.push((pd.NUM_SRVS_STEEL_UNP_BARE || 0) + (pd.NUM_SRVS_STEEL_UNP_COATED || 0));
+        srvCI.push(pd.NUM_SRVS_CI || 0);
+        srvDI.push(pd.NUM_SRVS_DI || 0);
+        srvCu.push(pd.NUM_SRVS_CU || 0);
+        srvOther.push(pd.NUM_SRVS_OTHER || 0);
+      } else {
+        srvPlastic.push(null); srvStCp.push(null); srvStUnp.push(null);
+        srvCI.push(null); srvDI.push(null); srvCu.push(null); srvOther.push(null);
+      }
     } else {
       ciMiles.push(null);
       dcdPre70.push(null); dcd7090.push(null); dcd0010.push(null);
       dcd20s.push(null); dcdUnknown.push(null);
+      matPlastic.push(null); matStCp.push(null); matStUnp.push(null);
+      matCI.push(null); matDI.push(null); matCu.push(null); matOther.push(null);
+      srvDcdPre70.push(null); srvDcd7090.push(null); srvDcd0010.push(null);
+      srvDcd20s.push(null); srvDcdUnk.push(null);
+      srvPlastic.push(null); srvStCp.push(null); srvStUnp.push(null);
+      srvCI.push(null); srvDI.push(null); srvCu.push(null); srvOther.push(null);
     }
   }
-  return { years, nomPrice, realPrice, totVol, perCust, ciMiles, dcdPre70, dcd7090, dcd0010, dcd20s, dcdUnknown, supplyPr };
+  return {
+    years, nomPrice, realPrice, totVol, perCust, ciMiles, supplyPr,
+    dcdPre70, dcd7090, dcd0010, dcd20s, dcdUnknown,
+    matPlastic, matStCp, matStUnp, matCI, matDI, matCu, matOther,
+    srvDcdPre70, srvDcd7090, srvDcd0010, srvDcd20s, srvDcdUnk,
+    srvPlastic, srvStCp, srvStUnp, srvCI, srvDI, srvCu, srvOther,
+  };
 }
 
 function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
@@ -1629,6 +1692,10 @@ function renderTrends(feat) {
   const hasDcd      = d.dcdPre70.some(v => v != null && v > 0) || d.dcd7090.some(v => v != null && v > 0)
                    || d.dcd0010.some(v => v != null && v > 0)  || d.dcd20s.some(v => v != null && v > 0);
   const hasPriceBkdn = d.supplyPr.some(v => v != null) && d.nomPrice.some(v => v != null);
+  const hasMatMiles  = d.matPlastic.some(v => v != null);
+  const hasSrvDcd    = d.srvDcdPre70.some(v => v != null && v > 0) || d.srvDcd7090.some(v => v != null && v > 0)
+                    || d.srvDcd0010.some(v => v != null && v > 0)  || d.srvDcd20s.some(v => v != null && v > 0);
+  const hasSrvMat    = d.srvPlastic.some(v => v != null);
 
   const milesTickFmt = v => v != null ? (v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)) : "";
   const priceTickFmt = v => v != null ? "$" + v.toFixed(2) : "";
@@ -1653,6 +1720,18 @@ function renderTrends(feat) {
     ${hasDcd ? `<div class="chart-block">
       <div class="chart-title">Pipeline Miles by Installation Era</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
+    </div>` : ""}
+    ${hasMatMiles ? `<div class="chart-block">
+      <div class="chart-title">Pipeline Miles by Material</div>
+      <div class="chart-wrap" style="height:290px"><canvas id="tc-mat"></canvas></div>
+    </div>` : ""}
+    ${hasSrvDcd ? `<div class="chart-block">
+      <div class="chart-title">Number of Services by Installation Era</div>
+      <div class="chart-wrap" style="height:290px"><canvas id="tc-srvdcd"></canvas></div>
+    </div>` : ""}
+    ${hasSrvMat ? `<div class="chart-block">
+      <div class="chart-title">Number of Services by Material</div>
+      <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
   `;
 
@@ -1735,6 +1814,69 @@ function renderTrends(feat) {
       { ...SBASE, fill: "-1",     label: "2020s+",      data: cum4, borderColor: "#2a78d6", backgroundColor: "rgba(42,120,214,0.50)" },
       { ...SBASE, fill: "-1",     label: "Unknown era", data: cum5, borderColor: "#aaa",    backgroundColor: "rgba(170,170,170,0.45)" },
     ], milesTickFmt);
+  }
+
+  const srvTickFmt = v => v != null ? (v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)) : "";
+
+  // Shared stacked-area helper for material charts (7 bands, same stack pattern)
+  function makeMaterialChart(canvasId, data7, labels7, colors7, tickFmt) {
+    const add = (a, b) => a.map((v, i) => v != null && b[i] != null ? v + b[i] : null);
+    const [plastic, stCp, stUnp, ci, di, cu, other] = data7;
+    const c1 = plastic;
+    const c2 = add(c1, stCp);
+    const c3 = add(c2, stUnp);
+    const c4 = add(c3, ci);
+    const c5 = add(c4, di);
+    const c6 = add(c5, cu);
+    const c7 = add(c6, other);
+    return makeStackedAreaChart(canvasId, d.years, [
+      { ...SBASE, fill: "origin", label: labels7[0], data: c1, borderColor: colors7[0][0], backgroundColor: colors7[0][1] },
+      { ...SBASE, fill: "-1",     label: labels7[1], data: c2, borderColor: colors7[1][0], backgroundColor: colors7[1][1] },
+      { ...SBASE, fill: "-1",     label: labels7[2], data: c3, borderColor: colors7[2][0], backgroundColor: colors7[2][1] },
+      { ...SBASE, fill: "-1",     label: labels7[3], data: c4, borderColor: colors7[3][0], backgroundColor: colors7[3][1] },
+      { ...SBASE, fill: "-1",     label: labels7[4], data: c5, borderColor: colors7[4][0], backgroundColor: colors7[4][1] },
+      { ...SBASE, fill: "-1",     label: labels7[5], data: c6, borderColor: colors7[5][0], backgroundColor: colors7[5][1] },
+      { ...SBASE, fill: "-1",     label: labels7[6], data: c7, borderColor: colors7[6][0], backgroundColor: colors7[6][1] },
+    ], tickFmt);
+  }
+
+  const MAT_LABELS = ["Plastic", "Steel (protected)", "Steel (unprotected)", "Cast Iron", "Ductile Iron", "Copper", "Other"];
+  const MAT_COLORS = [
+    ["#27ae60", "rgba(39,174,96,0.60)"],
+    ["#2471a3", "rgba(36,113,163,0.58)"],
+    ["#e67e22", "rgba(230,126,34,0.58)"],
+    ["#8b2500", "rgba(139,37,0,0.65)"],
+    ["#c0392b", "rgba(192,57,43,0.55)"],
+    ["#d4ac0d", "rgba(212,172,13,0.55)"],
+    ["#aaa",    "rgba(170,170,170,0.45)"],
+  ];
+
+  if (hasMatMiles) {
+    trendCharts.mat = makeMaterialChart("tc-mat",
+      [d.matPlastic, d.matStCp, d.matStUnp, d.matCI, d.matDI, d.matCu, d.matOther],
+      MAT_LABELS, MAT_COLORS, milesTickFmt);
+  }
+
+  if (hasSrvDcd) {
+    const add = (a, b) => a.map((v, i) => v != null && b[i] != null ? v + b[i] : null);
+    const sc1 = d.srvDcdPre70;
+    const sc2 = add(sc1, d.srvDcd7090);
+    const sc3 = add(sc2, d.srvDcd0010);
+    const sc4 = add(sc3, d.srvDcd20s);
+    const sc5 = add(sc4, d.srvDcdUnk);
+    trendCharts.srvdcd = makeStackedAreaChart("tc-srvdcd", d.years, [
+      { ...SBASE, fill: "origin", label: "Pre-1970",    data: sc1, borderColor: "#8b2500", backgroundColor: "rgba(139,37,0,0.65)"   },
+      { ...SBASE, fill: "-1",     label: "1970s–1990s", data: sc2, borderColor: "#b87a00", backgroundColor: "rgba(184,122,0,0.60)"  },
+      { ...SBASE, fill: "-1",     label: "2000s–2010s", data: sc3, borderColor: "#1b8872", backgroundColor: "rgba(27,136,114,0.55)" },
+      { ...SBASE, fill: "-1",     label: "2020s+",      data: sc4, borderColor: "#2a78d6", backgroundColor: "rgba(42,120,214,0.50)" },
+      { ...SBASE, fill: "-1",     label: "Unknown era", data: sc5, borderColor: "#aaa",    backgroundColor: "rgba(170,170,170,0.45)" },
+    ], srvTickFmt);
+  }
+
+  if (hasSrvMat) {
+    trendCharts.srvmat = makeMaterialChart("tc-srvmat",
+      [d.srvPlastic, d.srvStCp, d.srvStUnp, d.srvCI, d.srvDI, d.srvCu, d.srvOther],
+      MAT_LABELS, MAT_COLORS, srvTickFmt);
   }
 }
 
