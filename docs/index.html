@@ -1418,7 +1418,7 @@ function openIncidentsPanel(feat) {
   document.getElementById("incidents-panel").classList.add("open");
 
   incidentsSortCol = "inc_year";
-  incidentsSortAsc = true;
+  incidentsSortAsc = false;
   renderIncidentsTable(rows);
 }
 
@@ -1437,13 +1437,13 @@ function renderIncidentsTable(rows) {
   });
 
   const cols = [
-    { key: "inc_year",          label: "Year",        cls: "col-year"      },
-    { key: "fatal",             label: "Fatalities",  cls: "col-fatal"     },
-    { key: "injure",            label: "Injuries",    cls: "col-injure"    },
-    { key: "map_seven_cause",   label: "Cause",       cls: "col-cause"     },
-    { key: "PRTLK",             label: "System Part", cls: "col-prtlk"     },
-    { key: "total_cost_current",label: "Total Cost",  cls: "col-cost"      },
-    { key: "NARRATIVE",         label: "Narrative",   cls: "col-narrative" },
+    { key: "inc_year",          label: "Year",             cls: "col-year"      },
+    { key: "fatal",             label: "Fatalities",       cls: "col-fatal"     },
+    { key: "injure",            label: "Injuries",         cls: "col-injure"    },
+    { key: "total_cost_current",label: "Total Cost (2024 $)", cls: "col-cost"   },
+    { key: "map_seven_cause",   label: "Cause",            cls: "col-cause"     },
+    { key: "PRTLK",             label: "System Part",      cls: "col-prtlk"     },
+    { key: "NARRATIVE",         label: "Narrative",        cls: "col-narrative" },
   ];
 
   const thHtml = cols.map(c => {
@@ -1472,9 +1472,9 @@ function renderIncidentsTable(rows) {
       <td class="col-year">${yr}</td>
       <td class="col-fatal${fatalCls}">${fatal}</td>
       <td class="col-injure${injureCls}">${injure}</td>
+      <td class="col-cost">${cost}</td>
       <td class="col-cause">${cause}</td>
       <td class="col-prtlk">${prtlk}</td>
-      <td class="col-cost">${cost}</td>
       <td class="col-narrative">${narr}</td>
     </tr>`;
   }).join("");
@@ -1491,7 +1491,7 @@ function incidentsSortBy(col) {
     incidentsSortAsc = !incidentsSortAsc;
   } else {
     incidentsSortCol = col;
-    incidentsSortAsc = col === "inc_year";
+    incidentsSortAsc = col !== "inc_year";
   }
   const p = getEffectiveProps(currentInfoFeat);
   const opKey = String(p.phmsa_OPERATOR_ID).replace(/\.0$/, "");
@@ -1704,7 +1704,7 @@ function renderTrends(feat) {
   const d = assembleTrendsData(eiaId, phmsaKey, state);
 
   const hasIncidents = opKey != null && incidentsData != null
-                    && Array.isArray(incidentsData[opKey]) && incidentsData[opKey].length > 0;
+                    && Array.isArray(incidentsData[opKey]) && incidentsData[opKey].length >= 20;
 
   const hasDcd      = d.dcdPre70.some(v => v != null && v > 0) || d.dcd7090.some(v => v != null && v > 0)
                    || d.dcd0010.some(v => v != null && v > 0)  || d.dcd20s.some(v => v != null && v > 0);
@@ -1754,10 +1754,6 @@ function renderTrends(feat) {
       <div class="chart-title">Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
-    ${hasIncidents ? `<div class="chart-block">
-      <div class="chart-title">Incidents by Year and Cause</div>
-      <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
-    </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
       <div class="chart-title">Pipeline Miles by Installation Era</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
@@ -1775,6 +1771,10 @@ function renderTrends(feat) {
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
     ${multistateNoteHtml}
+    ${hasIncidents ? `<div class="chart-block">
+      <div class="chart-title">Incidents by Year and Cause</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
+    </div>` : ""}
   `;
 
   const BASE  = { fill: false, tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, spanGaps: true };
@@ -1833,19 +1833,25 @@ function renderTrends(feat) {
   }
 
   if (hasIncidents) {
+    // Bottom → top stack order; user-visible labels abbreviated where long
     const CAUSES = [
+      "CORROSION",
+      "NATURAL FORCE DAMAGE",
       "EXCAVATION DAMAGE",
       "OTHER OUTSIDE FORCE DAMAGE",
-      "ALL OTHER CAUSES",
-      "NATURAL FORCE DAMAGE",
       "MATERIAL/WELD/EQUIP FAILURE",
       "INCORRECT OPERATION",
-      "CORROSION",
+      "ALL OTHER CAUSES",
     ];
-    const CAUSE_COLORS = ["#8B4513","#8e44ad","#95a5a6","#27ae60","#2471a3","#d4ac0d","#e67e22"];
+    const CAUSE_COLORS = ["#e67e22","#27ae60","#8B4513","#8e44ad","#2471a3","#d4ac0d","#95a5a6"];
     const incRows = incidentsData[opKey];
-    const yearSet = new Set(incRows.map(r => String(r.inc_year)));
-    const incYears = [...yearSet].sort();
+
+    // Build evenly-spaced year axis from min to max year in data
+    const minYr = Math.min(...incRows.map(r => r.inc_year));
+    const maxYr = Math.max(...incRows.map(r => r.inc_year));
+    const incYears = [];
+    for (let y = minYr; y <= maxYr; y++) incYears.push(String(y));
+
     const counts = {};
     for (const cause of CAUSES) counts[cause] = {};
     for (const r of incRows) {
@@ -1869,8 +1875,15 @@ function renderTrends(feat) {
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, labels: { boxWidth: 10, font: { size: 9 }, padding: 4 } },
-            tooltip: { mode: "index", intersect: false },
+            legend: { display: true, position: "bottom", labels: { boxWidth: 10, font: { size: 9 }, padding: 4 } },
+            tooltip: {
+              mode: "index",
+              intersect: false,
+              itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
+              callbacks: {
+                label: ctx => ctx.raw > 0 ? `${ctx.dataset.label}: ${ctx.raw}` : null,
+              },
+            },
           },
           scales: {
             x: {
