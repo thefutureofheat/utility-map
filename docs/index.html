@@ -1688,7 +1688,6 @@ function renderTrends(feat) {
   const state   = stop || p.EIA_state || null;
   const d = assembleTrendsData(eiaId, phmsaKey, state);
 
-  const hasCI       = d.ciMiles.some(v => v != null && v > 0);
   const hasDcd      = d.dcdPre70.some(v => v != null && v > 0) || d.dcd7090.some(v => v != null && v > 0)
                    || d.dcd0010.some(v => v != null && v > 0)  || d.dcd20s.some(v => v != null && v > 0);
   const hasPriceBkdn = d.supplyPr.some(v => v != null) && d.nomPrice.some(v => v != null);
@@ -1696,6 +1695,34 @@ function renderTrends(feat) {
   const hasSrvDcd    = d.srvDcdPre70.some(v => v != null && v > 0) || d.srvDcd7090.some(v => v != null && v > 0)
                     || d.srvDcd0010.some(v => v != null && v > 0)  || d.srvDcd20s.some(v => v != null && v > 0);
   const hasSrvMat    = d.srvPlastic.some(v => v != null);
+
+  // Determine which PHMSA years were multistate combined filings
+  const multistateEntries = [];
+  if (opId != null && stop) {
+    for (const yr of d.years) {
+      const group = getMultiStateGroup(opId, stop, yr);
+      if (group) multistateEntries.push({ yr, states: group.join(", ") });
+    }
+  }
+  // Collapse consecutive years with the same states into ranges for display
+  const multistateRanges = [];
+  for (const e of multistateEntries) {
+    const last = multistateRanges[multistateRanges.length - 1];
+    if (last && last.states === e.states && String(Number(last.endYr) + 1) === String(e.yr)) {
+      last.endYr = e.yr;
+    } else {
+      multistateRanges.push({ startYr: e.yr, endYr: e.yr, states: e.states });
+    }
+  }
+  const multistateNoteHtml = multistateRanges.length
+    ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
+        <strong>Multistate filing years (PHMSA data):</strong>
+        ${multistateRanges.map(r =>
+          `${r.startYr === r.endYr ? r.startYr : r.startYr + "–" + r.endYr} <span style="color:#888">(${r.states})</span>`
+        ).join(", ")}
+        — data for these years may reflect combined operations across states.
+      </div>`
+    : "";
 
   const milesTickFmt = v => v != null ? (v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)) : "";
   const priceTickFmt = v => v != null ? "$" + v.toFixed(2) : "";
@@ -1713,10 +1740,6 @@ function renderTrends(feat) {
       <div class="chart-title">Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
-    ${hasCI ? `<div class="chart-block">
-      <div class="chart-title">Cast Iron Mileage (miles)</div>
-      <div class="chart-wrap"><canvas id="tc-ci"></canvas></div>
-    </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
       <div class="chart-title">Pipeline Miles by Installation Era</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
@@ -1733,6 +1756,7 @@ function renderTrends(feat) {
       <div class="chart-title">Number of Services by Material</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
+    ${multistateNoteHtml}
   `;
 
   const BASE  = { fill: false, tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, spanGaps: true };
@@ -1791,12 +1815,6 @@ function renderTrends(feat) {
       { ...SBASE, fill: "origin", label: "Supply (citygate)", data: d.supplyPr, borderColor: "#5b4fcd", backgroundColor: "rgba(91,79,205,0.55)" },
       { ...SBASE, fill: "-1",     label: "Delivery",          data: safeTotal,  borderColor: "#e07020", backgroundColor: "rgba(224,112,32,0.50)" },
     ], priceTickFmt);
-  }
-
-  if (hasCI) {
-    trendCharts.ci = makeLineChart("tc-ci", d.years, [
-      { ...BASE, data: d.ciMiles, borderColor: "#c0392b" },
-    ], milesTickFmt);
   }
 
   if (hasDcd) {
