@@ -1142,40 +1142,15 @@ function updateInfo(feat, pinned) {
         <td>${avgP != null ? "$" + avgP.toFixed(2) : "—"}</td>
       </tr>`;
       html += `</tbody></table>`;
-      // Consumption per customer
-      const resVl = p["Residential Sales [VL]"], resCt = p["Residential Sales [CT]"];
-      if (resVl && resCt && resCt > 0) {
-        html += statRow("Res. consumption/customer", (resVl / resCt).toFixed(1) + " Mcf");
-      }
-      // 10-year real price change
-      const yrN = +yr;
-      const yr10 = yrN - 10;
-      if (yrN >= 2007 && eiaTimeseries && p.ID) {
-        const entry10 = eiaTimeseries[p.ID];
-        const d10 = entry10?.data?.[String(yr10)];
-        const cs10 = d10?.["Residential Sales [CS]"], vl10 = d10?.["Residential Sales [VL]"];
-        const cs1 = p["Residential Sales [CS]"], vl1 = p["Residential Sales [VL]"];
-        const cpi10 = CPI_U[yr10], cpiN = CPI_U[yrN], cpi24 = CPI_U[2024];
-        if (cs10 && vl10 && vl10 > 0 && cs1 && vl1 && vl1 > 0 && cpi10 && cpiN) {
-          const p10r = (cs10 / vl10) * (cpi24 / cpi10);
-          const p1r  = (cs1  / vl1)  * (cpi24 / cpiN);
-          const chg  = p1r - p10r;
-          const sign = chg >= 0 ? "+" : "";
-          html += statRow(
-            `Real price chg (${yr10}–${yrN}, 2024$)`,
-            `${sign}$${chg.toFixed(2)}/Mcf`
-          );
-        }
-      }
-      // Supply / delivery price breakdown
+      // Residential delivery box
       const infoState = p.phmsa_STOP || p.EIA_state;
+      const resVl = p["Residential Sales [VL]"], resCt = p["Residential Sales [CT]"];
       const resCs2 = p["Residential Sales [CS]"], resVl2 = p["Residential Sales [VL]"];
       const resPr2  = resCs2 && resVl2 && resVl2 > 0 ? resCs2 / resVl2 : null;
       const cgPrice = infoState ? (CITYGATE_PRICE[infoState]?.[String(yr)] ?? null) : null;
-      if (resPr2 != null && cgPrice != null) {
-        html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`);
-        html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`);
-      }
+      const hasConsump = resVl && resCt && resCt > 0;
+      const hasDelivery = resPr2 != null && cgPrice != null;
+      let delivCagrHtml = "";
       if (infoState && eiaEntry && eiaEntry.data) {
         const delivPts = [];
         for (const [yrStr, yd] of Object.entries(eiaEntry.data)) {
@@ -1198,22 +1173,31 @@ function updateInfo(feat, pinned) {
             const n = end.yr - best.yr;
             const cagr = Math.pow(end.v / best.v, 1 / n) - 1;
             const sign = cagr >= 0 ? "+" : "";
-            html += statRow(
+            delivCagrHtml = statRow(
               `Delivery price CAGR (${best.yr}–${end.yr})`,
               `${sign}${(cagr * 100).toFixed(1)}%/yr`
             );
           }
         }
       }
+      if (hasConsump || hasDelivery || delivCagrHtml) {
+        html += `<div style="margin-top:7px;padding:7px 9px;background:#f0f4fa;border-left:3px solid #1a3a5c;border-radius:3px">`;
+        if (hasConsump)
+          html += statRow("Res. consumption/customer", (resVl / resCt).toFixed(1) + " Mcf");
+        if (hasDelivery) {
+          html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`);
+          html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`);
+        }
+        html += delivCagrHtml;
+        html += `</div>`;
+      }
     } else {
       html += `<div style="color:#999;font-size:11px;padding:3px 0 5px">No retail sales data reported</div>`;
     }
     const supply = p["Total Supply [VL]"], disp = p["Total Disposition [VL]"];
-    const heat   = p["Heat Content of Delivered Gas (BTU/cf) [VL]"];
     const losses = p["Losses from Leaks [VL]"];
     if (supply) html += `<div style="margin-top:6px">` + statRow("Total Supply",      fmtNum(supply) + " MMcf") + `</div>`;
     if (disp)   html += statRow("Total Disposition", fmtNum(disp) + " MMcf");
-    if (heat)   html += statRow("Heat Content",      fmtNum(heat) + " BTU/cf");
     if (losses) html += statRow("Losses (Leaks)",    fmtNum(losses) + " MMcf");
     html += `</div>`;
   }
