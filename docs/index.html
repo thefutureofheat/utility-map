@@ -1220,47 +1220,6 @@ function updateInfo(feat, pinned) {
     if (p.phmsa_KNOWN_LEAKS != null) html += statRow("Known Leaks", fmtNum(p.phmsa_KNOWN_LEAKS));
     if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("Unaccounted-for Gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`);
 
-    const dcdVals    = DECADES.map(d => p[d.key] || 0);
-    const dcdSumKnown = dcdVals.reduce((a, b) => a + b, 0);
-    const dcdUnknown = Math.max(0, dcdTot - dcdSumKnown);
-    const dcdMax     = Math.max(...dcdVals, dcdUnknown);
-    if (dcdMax > 0) {
-      html += `<div style="margin-top:7px;margin-bottom:3px;font-size:9px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px">Miles by Decade Installed</div>`;
-      DECADES.forEach((d, i) => {
-        if (dcdVals[i] === 0) return;
-        const barW = (dcdVals[i] / dcdMax * 100).toFixed(0);
-        html += `<div class="decade-row">
-          <span class="decade-lbl">${d.label}</span>
-          <div class="bar-wrap"><div class="bar-inner" style="width:${barW}%;background:#5c85b4"></div></div>
-          <span class="bar-val">${fmtNum(dcdVals[i])}</span>
-        </div>`;
-      });
-      if (dcdUnknown > 0.05) {
-        const barW = (dcdUnknown / dcdMax * 100).toFixed(0);
-        html += `<div class="decade-row">
-          <span class="decade-lbl" style="color:#aaa;font-style:italic">Unknown</span>
-          <div class="bar-wrap"><div class="bar-inner" style="width:${barW}%;background:#bbb"></div></div>
-          <span class="bar-val" style="color:#aaa">${fmtNum(dcdUnknown)}</span>
-        </div>`;
-      }
-    }
-
-    const matVals = MATERIALS.map(m => p[m.key] || 0);
-    const matMax  = Math.max(...matVals);
-    if (matMax > 0) {
-      html += `<div style="margin-top:7px;margin-bottom:3px;font-size:9px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px">Miles by Material</div>`;
-      MATERIALS.forEach((m, i) => {
-        if (matVals[i] === 0) return;
-        const barW = (matVals[i] / matMax * 100).toFixed(0);
-        html += `<div class="mat-row">
-          <div class="mat-swatch" style="background:${m.color}"></div>
-          <span class="mat-lbl">${m.label}</span>
-          <div class="mat-bar-wrap"><div class="mat-bar-inner" style="width:${barW}%;background:${m.color}"></div></div>
-          <span class="mat-val">${fmtNum(matVals[i])}</span>
-        </div>`;
-      });
-    }
-
     // ── Services subsection
     const svcTotal = p.phmsa_NUM_SRVCS_TOTAL;
     if (svcTotal != null && svcTotal > 0) {
@@ -1269,46 +1228,6 @@ function updateInfo(feat, pinned) {
       html += `<div class="subsec-hdr">Services</div>`;
       html += statRow("Total Services", fmtNum(svcTotal));
       if (pctSvcCi != null) html += statRow("% Cast Iron", `${pctSvcCi.toFixed(1)}%`);
-
-      const svcMatVals = SVC_MATERIALS.map(m => p[m.key] || 0);
-      const svcMatMax  = Math.max(...svcMatVals);
-      if (svcMatMax > 0) {
-        html += `<div style="margin-top:7px;margin-bottom:3px;font-size:9px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px">Services by Material</div>`;
-        SVC_MATERIALS.forEach((m, i) => {
-          if (svcMatVals[i] === 0) return;
-          const barW = (svcMatVals[i] / svcMatMax * 100).toFixed(0);
-          html += `<div class="mat-row">
-            <div class="mat-swatch" style="background:${m.color}"></div>
-            <span class="mat-lbl">${m.label}</span>
-            <div class="mat-bar-wrap"><div class="mat-bar-inner" style="width:${barW}%;background:${m.color}"></div></div>
-            <span class="mat-val">${fmtNum(svcMatVals[i])}</span>
-          </div>`;
-        });
-      }
-
-      const svcDcdVals = SVC_DECADES.map(d => p[d.key] || 0);
-      const svcDcdUnk  = p.phmsa_NUM_SRVS_BY_DCD_UNK || 0;
-      const svcDcdMax  = Math.max(...svcDcdVals, svcDcdUnk);
-      if (svcDcdMax > 0) {
-        html += `<div style="margin-top:7px;margin-bottom:3px;font-size:9px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px">Services by Decade Installed</div>`;
-        SVC_DECADES.forEach((d, i) => {
-          if (svcDcdVals[i] === 0) return;
-          const barW = (svcDcdVals[i] / svcDcdMax * 100).toFixed(0);
-          html += `<div class="decade-row">
-            <span class="decade-lbl">${d.label}</span>
-            <div class="bar-wrap"><div class="bar-inner" style="width:${barW}%;background:#5c85b4"></div></div>
-            <span class="bar-val">${fmtNum(svcDcdVals[i])}</span>
-          </div>`;
-        });
-        if (svcDcdUnk > 0) {
-          const barW = (svcDcdUnk / svcDcdMax * 100).toFixed(0);
-          html += `<div class="decade-row">
-            <span class="decade-lbl" style="color:#aaa;font-style:italic">Unknown</span>
-            <div class="bar-wrap"><div class="bar-inner" style="width:${barW}%;background:#bbb"></div></div>
-            <span class="bar-val" style="color:#aaa">${fmtNum(svcDcdUnk)}</span>
-          </div>`;
-        }
-      }
     }
 
     html += `</div>`;
