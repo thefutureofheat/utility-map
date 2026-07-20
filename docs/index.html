@@ -1196,6 +1196,35 @@ function updateInfo(feat, pinned) {
         html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`);
         html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`);
       }
+      if (infoState && eiaEntry && eiaEntry.data) {
+        const delivPts = [];
+        for (const [yrStr, yd] of Object.entries(eiaEntry.data)) {
+          const cs = yd["Residential Sales [CS]"], vl = yd["Residential Sales [VL]"];
+          const rp = cs && vl && vl > 0 ? cs / vl : null;
+          const cg = CITYGATE_PRICE[infoState]?.[yrStr] ?? null;
+          if (rp != null && cg != null && rp > cg) delivPts.push({ yr: +yrStr, v: rp - cg });
+        }
+        delivPts.sort((a, b) => a.yr - b.yr);
+        if (delivPts.length >= 2) {
+          const end = delivPts[delivPts.length - 1];
+          const targetYr = end.yr - 10;
+          let best = null, bestDist = Infinity;
+          for (const pt of delivPts) {
+            if (pt.yr >= end.yr) continue;
+            const dist = Math.abs(pt.yr - targetYr);
+            if (dist < bestDist) { bestDist = dist; best = pt; }
+          }
+          if (best) {
+            const n = end.yr - best.yr;
+            const cagr = Math.pow(end.v / best.v, 1 / n) - 1;
+            const sign = cagr >= 0 ? "+" : "";
+            html += statRow(
+              `Delivery price CAGR (${best.yr}–${end.yr})`,
+              `${sign}${(cagr * 100).toFixed(1)}%/yr`
+            );
+          }
+        }
+      }
     } else {
       html += `<div style="color:#999;font-size:11px;padding:3px 0 5px">No retail sales data reported</div>`;
     }
