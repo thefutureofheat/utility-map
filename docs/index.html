@@ -249,7 +249,8 @@
         <option value="res_vol" selected>Residential Sales Volume (MMcf)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
-        <option value="losses_eia">Losses from Leaks (MMcf)</option>
+        <option value="losses_eia">% Lost from Leaks (EIA)</option>
+        <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
       </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
         <option value="miles">Total Pipeline Miles</option>
@@ -449,7 +450,8 @@ const MODES = {
   total_sales_vol:{ label: "Total Sales Volume",           unit: "MMcf",   scale: "teal",     fixed: null       },
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
-  losses_eia:       { label: "Losses from Leaks",                unit: "MMcf",      scale: "red",      fixed: null       },
+  losses_eia:       { label: "% Lost from Leaks",                 unit: "%",         scale: "red",      fixed: null       },
+  delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
 };
 
@@ -563,7 +565,36 @@ function getValue(p, mode) {
       return dcdTotal > 0 ? pre / dcdTotal * 100 : null;
     }
     case "leaks":    return p.phmsa_KNOWN_LEAKS != null ? p.phmsa_KNOWN_LEAKS : null;
-    case "losses_eia": return p["Losses from Leaks [VL]"] || null;
+    case "losses_eia": {
+      const loss = p["Losses from Leaks [VL]"], supply = p["Total Supply [VL]"];
+      return loss != null && supply > 0 ? loss / supply * 100 : null;
+    }
+    case "delivery_cagr": {
+      if (!eiaTimeseries || !p.ID) return null;
+      const entry = eiaTimeseries[p.ID];
+      if (!entry?.data) return null;
+      const state = p.phmsa_STOP || p.EIA_state;
+      if (!state) return null;
+      const delivPts = [];
+      for (const [yrStr, yd] of Object.entries(entry.data)) {
+        const cs = yd["Residential Sales [CS]"], vl = yd["Residential Sales [VL]"];
+        const rp = cs && vl && vl > 0 ? cs / vl : null;
+        const cg = CITYGATE_PRICE[state]?.[yrStr] ?? null;
+        if (rp != null && cg != null && rp > cg) delivPts.push({ yr: +yrStr, v: rp - cg });
+      }
+      delivPts.sort((a, b) => a.yr - b.yr);
+      if (delivPts.length < 2) return null;
+      const end = delivPts[delivPts.length - 1];
+      const targetYr = end.yr - 10;
+      let best = null, bestDist = Infinity;
+      for (const pt of delivPts) {
+        if (pt.yr >= end.yr) continue;
+        const dist = Math.abs(pt.yr - targetYr);
+        if (dist < bestDist) { bestDist = dist; best = pt; }
+      }
+      if (!best) return null;
+      return (Math.pow(end.v / best.v, 1 / (end.yr - best.yr)) - 1) * 100;
+    }
     case "unacc":    return p.phmsa_PERCENT_UNACC_GAS != null ? p.phmsa_PERCENT_UNACC_GAS : null;
     case "res_vol":  return p["Residential Sales [VL]"] || null;
     case "res_price": {
