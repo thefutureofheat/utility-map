@@ -1724,8 +1724,7 @@ function renderTrends(feat) {
   const hasSrvMat    = d.srvPlastic.some(v => v != null);
   const hasSupplyDisp = d.totSupply.some(v => v != null) || d.totDisp.some(v => v != null);
   const hasLossEIA    = d.lossEIA.some(v => v != null && v > 0);
-  const hasKnownLeaks = d.knownLeaks.some(v => v != null);
-  const hasUnaccPct   = d.unaccPct.some(v => v != null);
+  const hasPriceConsump = d.realPrice.some(v => v != null) || d.perCust.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
   const multistateEntries = [];
@@ -1759,12 +1758,12 @@ function renderTrends(feat) {
   const priceTickFmt = v => v != null ? "$" + v.toFixed(2) : "";
 
   document.getElementById("trends-body").innerHTML = `
-    <div class="chart-block">
+    ${hasPriceConsump ? `<div class="chart-block">
       <div class="chart-title">Residential Price &amp; Consumption</div>
       <div class="chart-wrap"><canvas id="tc-price-consump"></canvas></div>
-    </div>
+    </div>` : ""}
     ${hasPriceBkdn ? `<div class="chart-block">
-      <div class="chart-title">Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
+      <div class="chart-title">Residential Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
     ${hasSupplyDisp ? `<div class="chart-block">
@@ -1790,14 +1789,6 @@ function renderTrends(feat) {
     ${hasSrvMat ? `<div class="chart-block">
       <div class="chart-title">Number of Services by Material</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
-    </div>` : ""}
-    ${hasKnownLeaks ? `<div class="chart-block">
-      <div class="chart-title">Known Leaks</div>
-      <div class="chart-wrap"><canvas id="tc-knownleaks"></canvas></div>
-    </div>` : ""}
-    ${hasUnaccPct ? `<div class="chart-block">
-      <div class="chart-title">Unaccounted-for Gas (%)</div>
-      <div class="chart-wrap"><canvas id="tc-unacc"></canvas></div>
     </div>` : ""}
     ${multistateNoteHtml}
     ${hasIncidents ? `<div class="chart-block">
@@ -2026,17 +2017,6 @@ function renderTrends(feat) {
       MAT_LABELS, MAT_COLORS, srvTickFmt);
   }
 
-  if (hasKnownLeaks) {
-    trendCharts.knownLeaks = makeLineChart("tc-knownleaks", d.years, [
-      { ...BASE, label: "Known Leaks", data: d.knownLeaks, borderColor: "#c0392b" },
-    ], v => v != null ? Math.round(v).toString() : "");
-  }
-
-  if (hasUnaccPct) {
-    trendCharts.unaccPct = makeLineChart("tc-unacc", d.years, [
-      { ...BASE, label: "Unaccounted-for Gas", data: d.unaccPct, borderColor: "#8e44ad" },
-    ], v => v != null ? v.toFixed(1) + "%" : "");
-  }
 }
 
 function escHtml(s) {
