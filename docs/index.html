@@ -10,15 +10,15 @@
     html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 13px; color: #222; }
 
     #sidebar {
-      position: absolute; top: 0; left: 0; width: 300px; height: 100%;
+      position: absolute; top: 0; left: 0; width: 520px; height: 100%;
       background: #fff; overflow-y: auto; z-index: 1000;
       box-shadow: 2px 0 8px rgba(0,0,0,0.18);
       display: flex; flex-direction: column;
     }
-    #map { position: absolute; top: 0; left: 300px; right: 0; bottom: 0; }
+    #map { position: absolute; top: 0; left: 520px; right: 0; bottom: 0; }
 
     #loading {
-      position: absolute; top: 50%; left: calc(150px + 50%);
+      position: absolute; top: 50%; left: calc(260px + 50%);
       transform: translate(-50%, -50%);
       background: rgba(255,255,255,0.96); padding: 22px 32px;
       border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.22);
@@ -137,7 +137,7 @@
 
     /* ── Incidents panel ─────────────────────────────────── */
     #incidents-panel {
-      position: absolute; top: 0; left: 300px; right: 0; bottom: 0;
+      position: absolute; top: 0; left: 520px; right: 0; bottom: 0;
       background: #fff; z-index: 1100;
       display: none; flex-direction: column;
       box-shadow: 2px 0 12px rgba(0,0,0,0.22);
@@ -195,48 +195,14 @@
     .incidents-btn:hover { background: #3e1010; }
     .incidents-empty { color: #aaa; font-size: 12px; font-style: italic; padding: 12px 0; }
 
-    /* ── Trends panel ──────────────────────────────────── */
-    #trends-panel {
-      position: absolute; top: 0; right: -570px; width: 570px; height: 100%;
-      background: #fff; z-index: 999;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.18);
-      display: flex; flex-direction: column;
-      transition: right 0.22s ease;
-    }
-    #trends-panel.open { right: 0; }
-    #map { transition: right 0.22s ease; }
-
-    .trends-header {
-      padding: 12px 14px 10px;
-      background: #1a3a5c; color: white;
-      display: flex; justify-content: space-between; align-items: flex-start;
-      flex-shrink: 0;
-    }
-    .trends-header-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
-    .trends-header-sub { font-size: 10px; opacity: 0.75; margin-top: 2px; max-width: 290px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .trends-close {
-      background: none; border: none; color: rgba(255,255,255,0.7);
-      font-size: 18px; cursor: pointer; padding: 0 2px; line-height: 1;
-      flex-shrink: 0; margin-left: 8px;
-    }
-    .trends-close:hover { color: white; }
-
-    #trends-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
-
+    /* ── Chart styles (inline in sidebar) ──────────────────── */
     .chart-block { margin-bottom: 20px; }
     .chart-title {
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.6px; color: #1a3a5c;
       border-bottom: 2px solid #1a3a5c; padding-bottom: 3px; margin-bottom: 8px;
     }
-    .chart-wrap { position: relative; width: 100%; height: 240px; }
-
-    .trends-btn {
-      display: block; width: 100%; margin-top: 10px; padding: 7px 12px;
-      background: #1a3a5c; color: white; border: none; border-radius: 5px;
-      font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
-    }
-    .trends-btn:hover { background: #0f2540; }
+    .chart-wrap { position: relative; width: 100%; height: 220px; }
 
     /* ── Data availability chips ──────────────────────────────── */
     .data-avail-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
@@ -323,16 +289,6 @@
 </div>
 
 <div id="map"></div>
-<div id="trends-panel">
-  <div class="trends-header">
-    <div>
-      <div class="trends-header-title">Utility Trends</div>
-      <div class="trends-header-sub" id="trends-title-name"></div>
-    </div>
-    <button class="trends-close" onclick="closeTrendsPanel()" title="Close trends panel">&#10005;</button>
-  </div>
-  <div id="trends-body"></div>
-</div>
 <div id="incidents-panel">
   <div class="incidents-header">
     <div>
@@ -707,7 +663,6 @@ map.addControl(new maplibregl.NavigationControl(), "top-right");
 let hoveredId        = null;
 let pinnedFeat       = null;
 let currentInfoFeat  = null;
-let trendsOpenFeat   = null;
 let trendCharts      = {};
 let currentMode      = "res_vol";
 let operatorStateMap = {};
@@ -824,7 +779,6 @@ map.on("click", "utilities-fill", (e) => {
     pinnedFeat = feat;
     setPinnedState(feat, true);
     updateInfo(feat, true);
-    if (trendsOpenFeat) openTrendsPanel(feat);
   }
   e.originalEvent.stopPropagation();
 });
@@ -1093,6 +1047,7 @@ function updateInfo(feat, pinned) {
   currentInfoFeat = feat;
   const panel = document.getElementById("info-panel");
   if (!feat) {
+    destroyTrendCharts();
     panel.innerHTML = `<p class="info-hint">Hover over a utility territory to see details.<br>Click to pin the panel.</p>`;
     return;
   }
@@ -1388,9 +1343,10 @@ function updateInfo(feat, pinned) {
 
   html += `</div>`;
 
+  const hasTrends = !!(eiaId || phmsaKey);
   if (pinned) {
-    if (eiaId || phmsaKey) {
-      html += `<button class="trends-btn" onclick="openTrendsPanel(currentInfoFeat)">View Trends &#8594;</button>`;
+    if (hasTrends) {
+      html += `<div id="trends-body" style="margin-top:4px"></div>`;
     }
     if (opId != null && incidentsData) {
       const opKey = String(opId).replace(/\.0$/, "");
@@ -1403,6 +1359,7 @@ function updateInfo(feat, pinned) {
   }
 
   panel.innerHTML = html;
+  if (pinned && hasTrends) renderTrends(feat);
 }
 
 function statRow(label, val) {
@@ -1411,22 +1368,6 @@ function statRow(label, val) {
 
 // ── Trends panel ──────────────────────────────────────────────────────────────
 
-function openTrendsPanel(feat) {
-  if (!feat) return;
-  trendsOpenFeat = feat;
-  document.getElementById("trends-panel").classList.add("open");
-  document.getElementById("map").style.right = "570px";
-  setTimeout(() => map.invalidateSize(), 240);
-  renderTrends(feat);
-}
-
-function closeTrendsPanel() {
-  trendsOpenFeat = null;
-  document.getElementById("trends-panel").classList.remove("open");
-  document.getElementById("map").style.right = "0";
-  setTimeout(() => map.invalidateSize(), 240);
-  destroyTrendCharts();
-}
 
 // ── Incidents panel ────────────────────────────────────────────────────────────
 
