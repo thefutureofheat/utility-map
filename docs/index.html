@@ -431,6 +431,16 @@ const SCALES = {
     { at: 0.5,  rgb: [240, 240, 240] },
     { at: 1,    rgb: [160,   0,   0] },
   ], t),
+  // Distinct gray for 0% CI; power curve so even 1–2% CI reads as clearly colored
+  ci_red: t => {
+    if (t <= 0) return 'rgb(210,210,210)';
+    const s = Math.pow(t, 0.38);
+    return multiStop([
+      { at: 0,   rgb: [255, 195, 178] },
+      { at: 0.5, rgb: [210,  50,  30] },
+      { at: 1,   rgb: [140,   0,   0] },
+    ], s);
+  },
 };
 
 // ── Color modes ────────────────────────────────────────────────────────────────
@@ -439,7 +449,7 @@ const MODES = {
   age:            { label: "Avg. Pipe Age",                 unit: "yrs",    scale: "age",      fixed: [0,  80]  },
   miles:          { label: "Total Pipeline Miles",          unit: "mi",     scale: "blue",     fixed: null       },
   pct_plastic:    { label: "% Plastic Pipe",               unit: "%",      scale: "green",    fixed: [0, 100]   },
-  pct_ci:         { label: "% Cast Iron Pipe",             unit: "%",      scale: "red",      fixed: [0,  50]   },
+  pct_ci:         { label: "% Cast Iron Pipe",             unit: "%",      scale: "ci_red",   fixed: [0,  50]   },
   pct_pre1970:    { label: "% Pre-1970 Pipe",              unit: "%",      scale: "orange",   fixed: [0, 100]   },
   leaks:          { label: "Known Leaks",                  unit: "",       scale: "red",      fixed: null       },
   unacc:          { label: "Unaccounted-for Gas",          unit: "%",      scale: "red",      fixed: null       },
