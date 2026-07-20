@@ -1675,7 +1675,6 @@ function renderTrends(feat) {
   const phmsaKey = (opId != null && stop) ? `${opId}_${stop}` : null;
   const name    = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
 
-  document.getElementById("trends-title-name").textContent = name;
   destroyTrendCharts();
 
   const state   = stop || p.EIA_state || null;
