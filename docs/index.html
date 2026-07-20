@@ -249,9 +249,9 @@
         <option value="res_vol" selected>Residential Sales Volume (MMcf)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
+        <option value="losses_eia">Losses from Leaks (MMcf)</option>
       </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
-        <option value="leaks">Losses from Leaks (Known Leaks)</option>
         <option value="miles">Total Pipeline Miles</option>
         <option value="pct_ci">% Cast Iron Pipe</option>
         <option value="pct_pre1970">% Pre-1970 Pipe</option>
@@ -449,6 +449,7 @@ const MODES = {
   total_sales_vol:{ label: "Total Sales Volume",           unit: "MMcf",   scale: "teal",     fixed: null       },
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
+  losses_eia:       { label: "Losses from Leaks",                unit: "MMcf",      scale: "red",      fixed: null       },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
 };
 
@@ -562,6 +563,7 @@ function getValue(p, mode) {
       return dcdTotal > 0 ? pre / dcdTotal * 100 : null;
     }
     case "leaks":    return p.phmsa_KNOWN_LEAKS != null ? p.phmsa_KNOWN_LEAKS : null;
+    case "losses_eia": return p["Losses from Leaks [VL]"] || null;
     case "unacc":    return p.phmsa_PERCENT_UNACC_GAS != null ? p.phmsa_PERCENT_UNACC_GAS : null;
     case "res_vol":  return p["Residential Sales [VL]"] || null;
     case "res_price": {
