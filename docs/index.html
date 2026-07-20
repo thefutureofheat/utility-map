@@ -249,7 +249,6 @@
         <option value="res_vol" selected>Residential Sales Volume (MMcf)</option>
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
-        <option value="delivery_price">Residential Delivery Price ($/Mcf)</option>
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
         <option value="losses_eia">% Lost from Leaks (EIA)</option>
       </optgroup>
@@ -452,7 +451,6 @@ const MODES = {
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
   losses_eia:       { label: "% Lost from Leaks",                 unit: "%",         scale: "red",      fixed: null       },
-  delivery_price:   { label: "Residential Delivery Price",        unit: "$/Mcf",     scale: "pricemap", fixed: null       },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
 };
@@ -570,13 +568,6 @@ function getValue(p, mode) {
     case "losses_eia": {
       const loss = p["Losses from Leaks [VL]"], supply = p["Total Supply [VL]"];
       return loss != null && supply > 0 ? loss / supply * 100 : null;
-    }
-    case "delivery_price": {
-      const cs = p["Residential Sales [CS]"], vl = p["Residential Sales [VL]"];
-      const rp = cs && vl && vl > 0 ? cs / vl : null;
-      const state = p.phmsa_STOP || p.EIA_state;
-      const cg = state ? (CITYGATE_PRICE[state]?.[String(selectedYear)] ?? null) : null;
-      return rp != null && cg != null && rp > cg ? rp - cg : null;
     }
     case "delivery_cagr": {
       if (!eiaTimeseries || !p.ID) return null;
@@ -1631,7 +1622,7 @@ function renderTrends(feat) {
   const d = assembleTrendsData(eiaId, phmsaKey, state);
 
   const hasIncidents = opKey != null && incidentsData != null
-                    && Array.isArray(incidentsData[opKey]) && incidentsData[opKey].length >= 20;
+                    && Array.isArray(incidentsData[opKey]) && incidentsData[opKey].length >= 5;
 
   const hasDcd      = d.dcdPre70.some(v => v != null && v > 0) || d.dcd7090.some(v => v != null && v > 0)
                    || d.dcd0010.some(v => v != null && v > 0)  || d.dcd20s.some(v => v != null && v > 0);
