@@ -1509,6 +1509,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   const cpi24 = CPI_U[2024];
   const years = [], nomPrice = [], realPrice = [], totVol = [], perCust = [], ciMiles = [];
   const supplyPr = [];
+  const totSupply = [], totDisp = [], lossEIA = [];
+  const knownLeaks = [], unaccPct = [];
   const dcdPre70 = [], dcd7090 = [], dcd0010 = [], dcd20s = [], dcdUnknown = [];
   // Material breakdown — mains miles
   const matPlastic = [], matStCp = [], matStUnp = [], matCI = [], matDI = [], matCu = [], matOther = [];
@@ -1533,6 +1535,9 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
     totVol.push(vl ?? null);
     perCust.push(vl && ct && ct > 0 ? vl / ct : null);
     supplyPr.push(cg);
+    totSupply.push((ed?.["Total Supply [VL]"] ?? 0) > 0 ? ed["Total Supply [VL]"] : null);
+    totDisp.push((ed?.["Total Disposition [VL]"] ?? 0) > 0 ? ed["Total Disposition [VL]"] : null);
+    lossEIA.push(ed != null ? (ed["Losses from Leaks [VL]"] ?? null) : null);
     if (pd) {
       const ci = (pd.MMILES_CI || 0) + (pd.MMILES_CI_WR_TOTAL || 0);
       ciMiles.push(ci > 0 ? ci : null);
@@ -1594,6 +1599,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
         srvPlastic.push(null); srvStCp.push(null); srvStUnp.push(null);
         srvCI.push(null); srvDI.push(null); srvCu.push(null); srvOther.push(null);
       }
+      knownLeaks.push(pd.KNOWN_LEAKS != null ? pd.KNOWN_LEAKS : null);
+      unaccPct.push(pd.PERCENT_UNACC_GAS != null ? Number(pd.PERCENT_UNACC_GAS) : null);
     } else {
       ciMiles.push(null);
       dcdPre70.push(null); dcd7090.push(null); dcd0010.push(null);
@@ -1604,10 +1611,12 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
       srvDcd20s.push(null); srvDcdUnk.push(null);
       srvPlastic.push(null); srvStCp.push(null); srvStUnp.push(null);
       srvCI.push(null); srvDI.push(null); srvCu.push(null); srvOther.push(null);
+      knownLeaks.push(null); unaccPct.push(null);
     }
   }
   return {
     years, nomPrice, realPrice, totVol, perCust, ciMiles, supplyPr,
+    totSupply, totDisp, lossEIA, knownLeaks, unaccPct,
     dcdPre70, dcd7090, dcd0010, dcd20s, dcdUnknown,
     matPlastic, matStCp, matStUnp, matCI, matDI, matCu, matOther,
     srvDcdPre70, srvDcd7090, srvDcd0010, srvDcd20s, srvDcdUnk,
@@ -1713,6 +1722,10 @@ function renderTrends(feat) {
   const hasSrvDcd    = d.srvDcdPre70.some(v => v != null && v > 0) || d.srvDcd7090.some(v => v != null && v > 0)
                     || d.srvDcd0010.some(v => v != null && v > 0)  || d.srvDcd20s.some(v => v != null && v > 0);
   const hasSrvMat    = d.srvPlastic.some(v => v != null);
+  const hasSupplyDisp = d.totSupply.some(v => v != null) || d.totDisp.some(v => v != null);
+  const hasLossEIA    = d.lossEIA.some(v => v != null && v > 0);
+  const hasKnownLeaks = d.knownLeaks.some(v => v != null);
+  const hasUnaccPct   = d.unaccPct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
   const multistateEntries = [];
@@ -1754,6 +1767,14 @@ function renderTrends(feat) {
       <div class="chart-title">Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
+    ${hasSupplyDisp ? `<div class="chart-block">
+      <div class="chart-title">Total Supply &amp; Total Disposition (MMcf)</div>
+      <div class="chart-wrap"><canvas id="tc-supplydisp"></canvas></div>
+    </div>` : ""}
+    ${hasLossEIA ? `<div class="chart-block">
+      <div class="chart-title">Losses from Leaks (MMcf)</div>
+      <div class="chart-wrap"><canvas id="tc-loss"></canvas></div>
+    </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
       <div class="chart-title">Pipeline Miles by Installation Era</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
@@ -1769,6 +1790,14 @@ function renderTrends(feat) {
     ${hasSrvMat ? `<div class="chart-block">
       <div class="chart-title">Number of Services by Material</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
+    </div>` : ""}
+    ${hasKnownLeaks ? `<div class="chart-block">
+      <div class="chart-title">Known Leaks</div>
+      <div class="chart-wrap"><canvas id="tc-knownleaks"></canvas></div>
+    </div>` : ""}
+    ${hasUnaccPct ? `<div class="chart-block">
+      <div class="chart-title">Unaccounted-for Gas (%)</div>
+      <div class="chart-wrap"><canvas id="tc-unacc"></canvas></div>
     </div>` : ""}
     ${multistateNoteHtml}
     ${hasIncidents ? `<div class="chart-block">
@@ -1903,6 +1932,19 @@ function renderTrends(feat) {
     }
   }
 
+  if (hasSupplyDisp) {
+    trendCharts.supplyDisp = makeLineChart("tc-supplydisp", d.years, [
+      { ...BASE, label: "Total Supply",      data: d.totSupply, borderColor: "#2a78d6" },
+      { ...BASE, label: "Total Disposition", data: d.totDisp,   borderColor: "#e07020", borderDash: [4, 3] },
+    ], milesTickFmt);
+  }
+
+  if (hasLossEIA) {
+    trendCharts.lossEIA = makeLineChart("tc-loss", d.years, [
+      { ...BASE, label: "Losses from Leaks", data: d.lossEIA, borderColor: "#c0392b" },
+    ], milesTickFmt);
+  }
+
   if (hasDcd) {
     // Pre-compute cumulative sums so fill:'-1' fills between consecutive lines (not back to 0)
     const add = (a, b) => a.map((v, i) => v != null && b[i] != null ? v + b[i] : null);
@@ -1982,6 +2024,18 @@ function renderTrends(feat) {
     trendCharts.srvmat = makeMaterialChart("tc-srvmat",
       [d.srvCI, d.srvStUnp, d.srvDI, d.srvCu, d.srvStCp, d.srvPlastic, d.srvOther],
       MAT_LABELS, MAT_COLORS, srvTickFmt);
+  }
+
+  if (hasKnownLeaks) {
+    trendCharts.knownLeaks = makeLineChart("tc-knownleaks", d.years, [
+      { ...BASE, label: "Known Leaks", data: d.knownLeaks, borderColor: "#c0392b" },
+    ], v => v != null ? Math.round(v).toString() : "");
+  }
+
+  if (hasUnaccPct) {
+    trendCharts.unaccPct = makeLineChart("tc-unacc", d.years, [
+      { ...BASE, label: "Unaccounted-for Gas", data: d.unaccPct, borderColor: "#8e44ad" },
+    ], v => v != null ? v.toFixed(1) + "%" : "");
   }
 }
 
