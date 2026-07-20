@@ -1219,25 +1219,37 @@ function updateInfo(feat, pinned) {
       : "";
     html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${yr})${multiStateHtml}</div>`;
 
-    // ── Mains subsection
-    html += `<div class="subsec-hdr">Mains</div>`;
-    if (age  != null)  html += statRow("Avg. Pipe Age",    `${age.toFixed(0)} yrs`);
+    // ── Mains
     html += statRow("Total Miles", fmtNum(total));
-    if (pctPl != null) html += statRow("% Plastic",         `${pctPl.toFixed(1)}%`);
-    if (pctCi != null && pctCi > 0) html += statRow("% Cast Iron", `${pctCi.toFixed(1)}%`);
-    if (dcdTot > 0)    html += statRow("% Pre-1970",        `${(pre70/dcdTot*100).toFixed(1)}%`);
-    if (p.phmsa_KNOWN_LEAKS != null) html += statRow("Known Leaks", fmtNum(p.phmsa_KNOWN_LEAKS));
-    if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("Unaccounted-for Gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`);
+    const indentStyle = `style="padding-left:14px"`;
+    if (pctCi != null && pctCi > 0)
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Cast Iron</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
+    if (dcdTot > 0)
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970</span><span class="stat-val">${(pre70/dcdTot*100).toFixed(1)}%</span></div>`;
 
-    // ── Services subsection
+    // ── Services
     const svcTotal = p.phmsa_NUM_SRVCS_TOTAL;
     if (svcTotal != null && svcTotal > 0) {
-      const svcCi    = p.phmsa_NUM_SRVS_CI || 0;
+      const svcCi   = p.phmsa_NUM_SRVS_CI || 0;
       const pctSvcCi = svcCi > 0 ? svcCi / svcTotal * 100 : null;
-      html += `<div class="subsec-hdr">Services</div>`;
-      html += statRow("Total Services", fmtNum(svcTotal));
-      if (pctSvcCi != null) html += statRow("% Cast Iron", `${pctSvcCi.toFixed(1)}%`);
+      const svcDcdTot = (p.phmsa_NUM_SRVS_BY_DCD_PRE1940 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1940_TO_1949 || 0)
+                      + (p.phmsa_NUM_SRVS_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1960_TO_1969 || 0)
+                      + (p.phmsa_NUM_SRVS_BY_DCD_1970_TO_1979 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1980_TO_1989 || 0)
+                      + (p.phmsa_NUM_SRVS_BY_DCD_1990_TO_1999 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_2000_TO_2009 || 0)
+                      + (p.phmsa_NUM_SRVS_BY_DCD_2010_TO_2019 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_2020_TO_2029 || 0);
+      const svcPre70 = (p.phmsa_NUM_SRVS_BY_DCD_PRE1940 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1940_TO_1949 || 0)
+                     + (p.phmsa_NUM_SRVS_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1960_TO_1969 || 0);
+      const pctSvcPre70 = svcDcdTot > 0 ? svcPre70 / svcDcdTot * 100 : null;
+      html += `<div style="margin-top:5px">` + statRow("Total Services", fmtNum(svcTotal)) + `</div>`;
+      if (pctSvcCi != null)
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Cast Iron</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
+      if (pctSvcPre70 != null && pctSvcPre70 > 0)
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970</span><span class="stat-val">${pctSvcPre70.toFixed(1)}%</span></div>`;
     }
+
+    // ── Leak / unaccounted-for gas
+    if (p.phmsa_KNOWN_LEAKS != null) html += statRow("Known Leaks", fmtNum(p.phmsa_KNOWN_LEAKS));
+    if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("Unaccounted-for Gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`);
 
     html += `</div>`;
   }
