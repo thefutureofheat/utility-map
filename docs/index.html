@@ -254,9 +254,9 @@
       </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
         <option value="miles">Total Main Miles</option>
-        <option value="pct_ci">% Iron Pipe Mileage (Cast &amp; Ductile)</option>
-        <option value="pct_unp_steel">% Unprotected Steel Mileage</option>
-        <option value="pct_pre1970">% Pre-1970 Pipe Mileage</option>
+        <option value="pct_ci">% Iron Main Mileage (Cast &amp; Ductile)</option>
+        <option value="pct_unp_steel">% Unprotected Steel Main Mileage</option>
+        <option value="pct_pre1970">% Pre-1970 Main Mileage</option>
       </optgroup>
     </select>
   </div>
@@ -458,10 +458,10 @@ const SCALES = {
 const MODES = {
   age:            { label: "Avg. Pipe Age",                 unit: "yrs",    scale: "age",      fixed: [0,  80]  },
   miles:          { label: "Total Main Miles",                    unit: "mi",     scale: "blue",     fixed: null       },
-  pct_plastic:    { label: "% Plastic Pipe Mileage",             unit: "%",      scale: "green",    fixed: [0, 100]   },
-  pct_ci:         { label: "% Iron Pipe Mileage (Cast & Ductile)", unit: "%",    scale: "ci_red",   fixed: [0,  50]   },
-  pct_unp_steel:  { label: "% Unprotected Steel Mileage",        unit: "%",      scale: "unp_steel", fixed: null       },
-  pct_pre1970:    { label: "% Pre-1970 Pipe Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
+  pct_plastic:    { label: "% Plastic Main Mileage",             unit: "%",      scale: "green",    fixed: [0, 100]   },
+  pct_ci:         { label: "% Iron Main Mileage (Cast & Ductile)", unit: "%",    scale: "ci_red",   fixed: [0,  50]   },
+  pct_unp_steel:  { label: "% Unprotected Steel Main Mileage",   unit: "%",      scale: "unp_steel", fixed: null       },
+  pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
   leaks:          { label: "Known Leaks",                  unit: "",       scale: "red",      fixed: null       },
   unacc:          { label: "Unaccounted-for Gas",          unit: "%",      scale: "red",      fixed: null       },
   res_vol:        { label: "Residential Sales Volume",     unit: "MMcf",   scale: "blue",     fixed: null       },
