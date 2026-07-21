@@ -1694,11 +1694,11 @@ function renderTrends(feat) {
       <div class="chart-wrap"><canvas id="tc-loss"></canvas></div>
     </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
-      <div class="chart-title">Pipeline Miles by Installation Era</div>
+      <div class="chart-title">Main Miles by Installation Era</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
     </div>` : ""}
     ${hasMatMiles ? `<div class="chart-block">
-      <div class="chart-title">Pipeline Miles by Material</div>
+      <div class="chart-title">Main Miles by Material</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-mat"></canvas></div>
     </div>` : ""}
     ${hasSrvDcd ? `<div class="chart-block">
@@ -1875,43 +1875,44 @@ function renderTrends(feat) {
   const srvTickFmt = v => v != null ? (v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)) : "";
 
   // Shared stacked-area helper for material charts (7 bands, same stack pattern)
-  function makeMaterialChart(canvasId, data7, labels7, colors7, tickFmt) {
+  // Combine two nullable arrays, treating null as 0 unless both are null
+  const mergeNullable = (a, b) => a.map((v, i) => {
+    if (v == null && b[i] == null) return null;
+    return (v ?? 0) + (b[i] ?? 0);
+  });
+
+  // Generic stacked-area material chart: layers = [{label, data, border, bg}, ...]
+  function makeMaterialChart(canvasId, layers, tickFmt) {
     const add = (a, b) => a.map((v, i) => v != null && b[i] != null ? v + b[i] : null);
-    const [plastic, stCp, stUnp, ci, di, cu, other] = data7;
-    const c1 = plastic;
-    const c2 = add(c1, stCp);
-    const c3 = add(c2, stUnp);
-    const c4 = add(c3, ci);
-    const c5 = add(c4, di);
-    const c6 = add(c5, cu);
-    const c7 = add(c6, other);
-    return makeStackedAreaChart(canvasId, d.years, [
-      { ...SBASE, fill: "origin", label: labels7[0], data: c1, borderColor: colors7[0][0], backgroundColor: colors7[0][1] },
-      { ...SBASE, fill: "-1",     label: labels7[1], data: c2, borderColor: colors7[1][0], backgroundColor: colors7[1][1] },
-      { ...SBASE, fill: "-1",     label: labels7[2], data: c3, borderColor: colors7[2][0], backgroundColor: colors7[2][1] },
-      { ...SBASE, fill: "-1",     label: labels7[3], data: c4, borderColor: colors7[3][0], backgroundColor: colors7[3][1] },
-      { ...SBASE, fill: "-1",     label: labels7[4], data: c5, borderColor: colors7[4][0], backgroundColor: colors7[4][1] },
-      { ...SBASE, fill: "-1",     label: labels7[5], data: c6, borderColor: colors7[5][0], backgroundColor: colors7[5][1] },
-      { ...SBASE, fill: "-1",     label: labels7[6], data: c7, borderColor: colors7[6][0], backgroundColor: colors7[6][1] },
-    ], tickFmt);
+    let acc = null;
+    const cumulative = layers.map(layer => {
+      acc = acc === null ? [...layer.data] : add(acc, layer.data);
+      return acc;
+    });
+    return makeStackedAreaChart(canvasId, d.years, layers.map((layer, i) => ({
+      ...SBASE,
+      fill: i === 0 ? "origin" : "-1",
+      label: layer.label,
+      data: cumulative[i],
+      borderColor: layer.border,
+      backgroundColor: layer.bg,
+    })), tickFmt);
   }
 
   // Bottom = oldest/most phased-out; top = modern/growing; Other always on top
-  const MAT_LABELS = ["Cast Iron", "Steel (unprotected)", "Ductile Iron", "Copper", "Steel (protected)", "Plastic", "Other"];
-  const MAT_COLORS = [
-    ["#8b2500", "rgba(139,37,0,0.65)"],   // Cast Iron
-    ["#e67e22", "rgba(230,126,34,0.58)"], // Steel (unprotected)
-    ["#c0392b", "rgba(192,57,43,0.55)"],  // Ductile Iron
-    ["#d4ac0d", "rgba(212,172,13,0.55)"], // Copper
-    ["#2471a3", "rgba(36,113,163,0.58)"], // Steel (protected)
-    ["#27ae60", "rgba(39,174,96,0.60)"],  // Plastic
-    ["#aaa",    "rgba(170,170,170,0.45)"],// Other
+  // CI + DI merged into Iron; Cu merged into Other
+  const matLayers = (ci, stUnp, di, cu, stCp, plastic, other) => [
+    { label: "Iron (Cast & Ductile)", data: mergeNullable(ci, di), border: "#8b2500", bg: "rgba(139,37,0,0.65)"   },
+    { label: "Steel (unprotected)",   data: stUnp,                  border: "#e67e22", bg: "rgba(230,126,34,0.58)" },
+    { label: "Steel (protected)",     data: stCp,                   border: "#2471a3", bg: "rgba(36,113,163,0.58)" },
+    { label: "Plastic",               data: plastic,                 border: "#27ae60", bg: "rgba(39,174,96,0.60)"  },
+    { label: "Other",                 data: mergeNullable(cu, other),border: "#aaa",    bg: "rgba(170,170,170,0.45)"},
   ];
 
   if (hasMatMiles) {
     trendCharts.mat = makeMaterialChart("tc-mat",
-      [d.matCI, d.matStUnp, d.matDI, d.matCu, d.matStCp, d.matPlastic, d.matOther],
-      MAT_LABELS, MAT_COLORS, milesTickFmt);
+      matLayers(d.matCI, d.matStUnp, d.matDI, d.matCu, d.matStCp, d.matPlastic, d.matOther),
+      milesTickFmt);
   }
 
   if (hasSrvDcd) {
@@ -1932,8 +1933,8 @@ function renderTrends(feat) {
 
   if (hasSrvMat) {
     trendCharts.srvmat = makeMaterialChart("tc-srvmat",
-      [d.srvCI, d.srvStUnp, d.srvDI, d.srvCu, d.srvStCp, d.srvPlastic, d.srvOther],
-      MAT_LABELS, MAT_COLORS, srvTickFmt);
+      matLayers(d.srvCI, d.srvStUnp, d.srvDI, d.srvCu, d.srvStCp, d.srvPlastic, d.srvOther),
+      srvTickFmt);
   }
 
 }
