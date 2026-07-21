@@ -286,7 +286,7 @@
 <div id="incidents-panel">
   <div class="incidents-header">
     <div>
-      <div class="incidents-header-title">Incidents</div>
+      <div class="incidents-header-title">Significant Incidents Since 2010</div>
       <div class="incidents-header-sub" id="incidents-title-name"></div>
     </div>
     <button class="incidents-close" onclick="closeIncidentsPanel()" title="Close incidents panel">&#10005;</button>
@@ -1325,7 +1325,7 @@ function updateInfo(feat, pinned) {
       const opKey = String(opId).replace(/\.0$/, "");
       const incRows = incidentsData[opKey];
       if (incRows && incRows.length > 0) {
-        html += `<button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Incidents (${incRows.length}) &#9888;</button>`;
+        html += `<button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Significant Incidents Since 2010 (${incRows.length}) &#9888;</button>`;
       }
     }
     html += `<p class="pinned-note">Pinned — click territory again or click map to unpin</p>`;
@@ -1383,9 +1383,9 @@ function renderIncidentsTable(rows) {
     { key: "inc_year",          label: "Year",             cls: "col-year"      },
     { key: "fatal",             label: "Fatalities",       cls: "col-fatal"     },
     { key: "injure",            label: "Injuries",         cls: "col-injure"    },
-    { key: "total_cost_current",label: "Cost (2024 $)",       cls: "col-cost"   },
-    { key: "map_seven_cause",   label: "Cause",            cls: "col-cause"     },
-    { key: "PRTLK",             label: "System Part",      cls: "col-prtlk"     },
+    { key: "total_cost_current",label: "Cost (2025 $)",    cls: "col-cost"      },
+    { key: "MAP_EIGHT_CAUSE",   label: "Cause",            cls: "col-cause"     },
+    { key: "system_part",       label: "System Part",      cls: "col-prtlk"     },
     { key: "NARRATIVE",         label: "Narrative",        cls: "col-narrative" },
   ];
 
@@ -1405,8 +1405,8 @@ function renderIncidentsTable(rows) {
     const yr     = r.inc_year  ?? "—";
     const fatal  = r.fatal  != null ? r.fatal  : "—";
     const injure = r.injure != null ? r.injure : "—";
-    const cause  = escHtml(r.map_seven_cause || "—");
-    const prtlk  = escHtml((r.inc_year > 2004 ? r.system_part : r.PRTLK) || "—");
+    const cause  = escHtml(r.MAP_EIGHT_CAUSE || "—");
+    const prtlk  = escHtml(r.system_part || "—");
     const cost   = fmtCost(r.total_cost_current);
     const narr   = escHtml(r.NARRATIVE || "");
     const fatalCls  = (r.fatal  > 0) ? " fatal-nonzero"  : "";
@@ -1734,7 +1734,7 @@ function renderTrends(feat) {
     </div>` : ""}
     ${multistateNoteHtml}
     ${hasIncidents ? `<div class="chart-block">
-      <div class="chart-title">Incidents by Year and Cause</div>
+      <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
       <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
     </div>` : ""}
   `;
@@ -1797,15 +1797,16 @@ function renderTrends(feat) {
   if (hasIncidents) {
     // Bottom → top stack order; user-visible labels abbreviated where long
     const CAUSES = [
-      "CORROSION",
-      "NATURAL FORCE DAMAGE",
       "EXCAVATION DAMAGE",
       "OTHER OUTSIDE FORCE DAMAGE",
-      "MATERIAL/WELD/EQUIP FAILURE",
+      "MATERIAL FAILURE OF PIPE OR WELD",
+      "EQUIPMENT FAILURE",
+      "NATURAL FORCE DAMAGE",
       "INCORRECT OPERATION",
+      "CORROSION",
       "ALL OTHER CAUSES",
     ];
-    const CAUSE_COLORS = ["#e67e22","#27ae60","#8B4513","#8e44ad","#2471a3","#d4ac0d","#95a5a6"];
+    const CAUSE_COLORS = ["#8B4513","#8e44ad","#2471a3","#e67e22","#27ae60","#d4ac0d","#c0392b","#95a5a6"];
     const incRows = incidentsData[opKey];
 
     // Build evenly-spaced year axis from min to max year in data
@@ -1818,7 +1819,7 @@ function renderTrends(feat) {
     for (const cause of CAUSES) counts[cause] = {};
     for (const r of incRows) {
       const yr = String(r.inc_year);
-      const cause = CAUSES.includes(r.map_seven_cause) ? r.map_seven_cause : "ALL OTHER CAUSES";
+      const cause = CAUSES.includes(r.MAP_EIGHT_CAUSE) ? r.MAP_EIGHT_CAUSE : "ALL OTHER CAUSES";
       counts[cause][yr] = (counts[cause][yr] || 0) + 1;
     }
     const ctx = document.getElementById("tc-incidents");
