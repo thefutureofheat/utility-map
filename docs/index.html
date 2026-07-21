@@ -253,10 +253,10 @@
         <option value="losses_eia">% Lost from Leaks (EIA)</option>
       </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
-        <option value="miles">Total Pipeline Miles</option>
-        <option value="pct_ci">% Iron Pipe (Cast &amp; Ductile)</option>
-        <option value="pct_unp_steel">% Unprotected Steel</option>
-        <option value="pct_pre1970">% Pre-1970 Pipe</option>
+        <option value="miles">Total Main Miles</option>
+        <option value="pct_ci">% Iron Pipe Mileage (Cast &amp; Ductile)</option>
+        <option value="pct_unp_steel">% Unprotected Steel Mileage</option>
+        <option value="pct_pre1970">% Pre-1970 Pipe Mileage</option>
       </optgroup>
     </select>
   </div>
@@ -432,7 +432,7 @@ const SCALES = {
     { at: 0.5,  rgb: [240, 240, 240] },
     { at: 1,    rgb: [160,   0,   0] },
   ], t),
-  // Distinct gray for 0% CI; power curve so even 1–2% CI reads as clearly colored
+  // Distinct gray for 0%; power curve so even small values read as clearly colored
   ci_red: t => {
     if (t <= 0) return 'rgb(210,210,210)';
     const s = Math.pow(t, 0.38);
@@ -442,17 +442,26 @@ const SCALES = {
       { at: 1,   rgb: [140,   0,   0] },
     ], s);
   },
+  unp_steel: t => {
+    if (t <= 0) return 'rgb(210,210,210)';
+    const s = Math.pow(t, 0.38);
+    return multiStop([
+      { at: 0,   rgb: [255, 220, 160] },
+      { at: 0.5, rgb: [210,  90,  10] },
+      { at: 1,   rgb: [150,  40,   0] },
+    ], s);
+  },
 };
 
 // ── Color modes ────────────────────────────────────────────────────────────────
 
 const MODES = {
   age:            { label: "Avg. Pipe Age",                 unit: "yrs",    scale: "age",      fixed: [0,  80]  },
-  miles:          { label: "Total Pipeline Miles",          unit: "mi",     scale: "blue",     fixed: null       },
-  pct_plastic:    { label: "% Plastic Pipe",               unit: "%",      scale: "green",    fixed: [0, 100]   },
-  pct_ci:         { label: "% Iron Pipe (Cast & Ductile)",  unit: "%",      scale: "ci_red",   fixed: [0,  50]   },
-  pct_unp_steel:  { label: "% Unprotected Steel",          unit: "%",      scale: "orange",   fixed: null        },
-  pct_pre1970:    { label: "% Pre-1970 Pipe",              unit: "%",      scale: "orange",   fixed: [0, 100]   },
+  miles:          { label: "Total Main Miles",                    unit: "mi",     scale: "blue",     fixed: null       },
+  pct_plastic:    { label: "% Plastic Pipe Mileage",             unit: "%",      scale: "green",    fixed: [0, 100]   },
+  pct_ci:         { label: "% Iron Pipe Mileage (Cast & Ductile)", unit: "%",    scale: "ci_red",   fixed: [0,  50]   },
+  pct_unp_steel:  { label: "% Unprotected Steel Mileage",        unit: "%",      scale: "unp_steel", fixed: null       },
+  pct_pre1970:    { label: "% Pre-1970 Pipe Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
   leaks:          { label: "Known Leaks",                  unit: "",       scale: "red",      fixed: null       },
   unacc:          { label: "Unaccounted-for Gas",          unit: "%",      scale: "red",      fixed: null       },
   res_vol:        { label: "Residential Sales Volume",     unit: "MMcf",   scale: "blue",     fixed: null       },
@@ -1238,7 +1247,7 @@ function updateInfo(feat, pinned) {
     html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${yr})${multiStateHtml}</div>`;
 
     // ── Mains
-    html += statRow("Total Miles", fmtNum(total));
+    html += statRow("Total Main Miles", fmtNum(total));
     const indentStyle = `style="padding-left:14px"`;
     if (pctCi != null && pctCi > 0)
       html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
