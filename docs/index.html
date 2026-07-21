@@ -254,7 +254,8 @@
       </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
         <option value="miles">Total Pipeline Miles</option>
-        <option value="pct_ci">% Cast Iron Pipe</option>
+        <option value="pct_ci">% Iron Pipe (Cast &amp; Ductile)</option>
+        <option value="pct_unp_steel">% Unprotected Steel</option>
         <option value="pct_pre1970">% Pre-1970 Pipe</option>
       </optgroup>
     </select>
@@ -449,7 +450,8 @@ const MODES = {
   age:            { label: "Avg. Pipe Age",                 unit: "yrs",    scale: "age",      fixed: [0,  80]  },
   miles:          { label: "Total Pipeline Miles",          unit: "mi",     scale: "blue",     fixed: null       },
   pct_plastic:    { label: "% Plastic Pipe",               unit: "%",      scale: "green",    fixed: [0, 100]   },
-  pct_ci:         { label: "% Cast Iron Pipe",             unit: "%",      scale: "ci_red",   fixed: [0,  50]   },
+  pct_ci:         { label: "% Iron Pipe (Cast & Ductile)",  unit: "%",      scale: "ci_red",   fixed: [0,  50]   },
+  pct_unp_steel:  { label: "% Unprotected Steel",          unit: "%",      scale: "orange",   fixed: null        },
   pct_pre1970:    { label: "% Pre-1970 Pipe",              unit: "%",      scale: "orange",   fixed: [0, 100]   },
   leaks:          { label: "Known Leaks",                  unit: "",       scale: "red",      fixed: null       },
   unacc:          { label: "Unaccounted-for Gas",          unit: "%",      scale: "red",      fixed: null       },
@@ -566,8 +568,12 @@ function getValue(p, mode) {
     case "pct_plastic":
       return total > 0 && p.phmsa_MMILES_PLASTIC != null ? p.phmsa_MMILES_PLASTIC / total * 100 : null;
     case "pct_ci": {
-      const ci = (p.phmsa_MMILES_CI || 0) + (p.phmsa_MMILES_CI_WR_TOTAL || 0);
+      const ci = (p.phmsa_MMILES_CI || 0) + (p.phmsa_MMILES_CI_WR_TOTAL || 0) + (p.phmsa_MMILES_DI || 0);
       return total > 0 ? ci / total * 100 : null;
+    }
+    case "pct_unp_steel": {
+      const unp = (p.phmsa_MMILES_STEEL_CP_BARE || 0) + (p.phmsa_MMILES_STEEL_UNP_COATED || 0) + (p.phmsa_MMILES_STEEL_UNP_BARE || 0);
+      return total > 0 ? unp / total * 100 : null;
     }
     case "pct_pre1970": {
       const pre = (p.phmsa_MMILES_BY_DCD_PRE1940 || 0) + (p.phmsa_MMILES_BY_DCD_1940_TO_1949 || 0)
@@ -1217,8 +1223,10 @@ function updateInfo(feat, pinned) {
     const age    = avgAge(p);
     const total  = p.phmsa_MMILES_TOTAL;
     const pctPl  = total > 0 && p.phmsa_MMILES_PLASTIC != null ? p.phmsa_MMILES_PLASTIC / total * 100 : null;
-    const ciMi   = (p.phmsa_MMILES_CI || 0) + (p.phmsa_MMILES_CI_WR_TOTAL || 0);
+    const ciMi   = (p.phmsa_MMILES_CI || 0) + (p.phmsa_MMILES_CI_WR_TOTAL || 0) + (p.phmsa_MMILES_DI || 0);
     const pctCi  = total > 0 ? ciMi / total * 100 : null;
+    const unpSt  = (p.phmsa_MMILES_STEEL_CP_BARE || 0) + (p.phmsa_MMILES_STEEL_UNP_COATED || 0) + (p.phmsa_MMILES_STEEL_UNP_BARE || 0);
+    const pctUnpSt = total > 0 && unpSt > 0 ? unpSt / total * 100 : null;
     const pre70  = (p.phmsa_MMILES_BY_DCD_PRE1940 || 0) + (p.phmsa_MMILES_BY_DCD_1940_TO_1949 || 0)
                  + (p.phmsa_MMILES_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_MMILES_BY_DCD_1960_TO_1969 || 0);
     const dcdTot = p.phmsa_MMILES_BY_DCD_TOTAL || 0;
@@ -1233,15 +1241,19 @@ function updateInfo(feat, pinned) {
     html += statRow("Total Miles", fmtNum(total));
     const indentStyle = `style="padding-left:14px"`;
     if (pctCi != null && pctCi > 0)
-      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Cast Iron</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
+    if (pctUnpSt != null)
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel</span><span class="stat-val">${pctUnpSt.toFixed(1)}%</span></div>`;
     if (dcdTot > 0)
       html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970</span><span class="stat-val">${(pre70/dcdTot*100).toFixed(1)}%</span></div>`;
 
     // ── Services
     const svcTotal = p.phmsa_NUM_SRVCS_TOTAL;
     if (svcTotal != null && svcTotal > 0) {
-      const svcCi   = p.phmsa_NUM_SRVS_CI || 0;
+      const svcCi   = (p.phmsa_NUM_SRVS_CI || 0) + (p.phmsa_NUM_SRVS_DI || 0);
       const pctSvcCi = svcCi > 0 ? svcCi / svcTotal * 100 : null;
+      const svcUnpSt = (p.phmsa_NUM_SRVS_STEEL_CP_BARE || 0) + (p.phmsa_NUM_SRVS_STEEL_UNP_COATED || 0) + (p.phmsa_NUM_SRVS_STEEL_UNP_BARE || 0);
+      const pctSvcUnpSt = svcUnpSt > 0 ? svcUnpSt / svcTotal * 100 : null;
       const svcDcdTot = (p.phmsa_NUM_SRVS_BY_DCD_PRE1940 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1940_TO_1949 || 0)
                       + (p.phmsa_NUM_SRVS_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1960_TO_1969 || 0)
                       + (p.phmsa_NUM_SRVS_BY_DCD_1970_TO_1979 || 0) + (p.phmsa_NUM_SRVS_BY_DCD_1980_TO_1989 || 0)
@@ -1252,7 +1264,9 @@ function updateInfo(feat, pinned) {
       const pctSvcPre70 = svcDcdTot > 0 ? svcPre70 / svcDcdTot * 100 : null;
       html += `<div style="margin-top:5px">` + statRow("Total Services", fmtNum(svcTotal)) + `</div>`;
       if (pctSvcCi != null)
-        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Cast Iron</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
+      if (pctSvcUnpSt != null)
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel</span><span class="stat-val">${pctSvcUnpSt.toFixed(1)}%</span></div>`;
       if (pctSvcPre70 != null && pctSvcPre70 > 0)
         html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970</span><span class="stat-val">${pctSvcPre70.toFixed(1)}%</span></div>`;
     }
@@ -1479,8 +1493,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
       const mTotal = pd.MMILES_TOTAL || 0;
       if (mTotal > 0) {
         matPlastic.push(pd.MMILES_PLASTIC || 0);
-        matStCp.push((pd.MMILES_STEEL_CP_BARE || 0) + (pd.MMILES_STEEL_CP_COATED || 0));
-        matStUnp.push((pd.MMILES_STEEL_UNP_BARE || 0) + (pd.MMILES_STEEL_UNP_COATED || 0));
+        matStCp.push(pd.MMILES_STEEL_CP_COATED || 0);
+        matStUnp.push((pd.MMILES_STEEL_CP_BARE || 0) + (pd.MMILES_STEEL_UNP_COATED || 0) + (pd.MMILES_STEEL_UNP_BARE || 0));
         matCI.push(pd.MMILES_CI || 0);
         matDI.push(pd.MMILES_DI || 0);
         matCu.push(pd.MMILES_CU || 0);
@@ -1509,8 +1523,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
       const smTotal = pd.NUM_SRVCS_TOTAL || 0;
       if (smTotal > 0) {
         srvPlastic.push(pd.NUM_SRVS_PLASTIC || 0);
-        srvStCp.push((pd.NUM_SRVS_STEEL_CP_BARE || 0) + (pd.NUM_SRVS_STEEL_CP_COATED || 0));
-        srvStUnp.push((pd.NUM_SRVS_STEEL_UNP_BARE || 0) + (pd.NUM_SRVS_STEEL_UNP_COATED || 0));
+        srvStCp.push(pd.NUM_SRVS_STEEL_CP_COATED || 0);
+        srvStUnp.push((pd.NUM_SRVS_STEEL_CP_BARE || 0) + (pd.NUM_SRVS_STEEL_UNP_COATED || 0) + (pd.NUM_SRVS_STEEL_UNP_BARE || 0));
         srvCI.push(pd.NUM_SRVS_CI || 0);
         srvDI.push(pd.NUM_SRVS_DI || 0);
         srvCu.push(pd.NUM_SRVS_CU || 0);
