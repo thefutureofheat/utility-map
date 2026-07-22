@@ -478,8 +478,8 @@ const MODES = {
   losses_eia:       { label: "% Lost from Leaks",                 unit: "%",         scale: "red",      fixed: null       },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
-  afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "purple",   fixed: null },
-  afford_pct:       { label: "Gas Bill as % of Per Capita Income", unit: "%income", scale: "teal",     fixed: null },
+  afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
+  afford_pct:       { label: "Gas Bill as % of Per Capita Income", unit: "%income", scale: "pricemap", fixed: null },
 };
 
 const DOMAINS = {};
@@ -1758,7 +1758,7 @@ function renderTrends(feat) {
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
     ${hasAffordability ? `<div class="chart-block">
-      <div class="chart-title">Gas Bill Affordability (Nominal)</div>
+      <div class="chart-title">Gas Bill Affordability</div>
       <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
     </div>` : ""}
     ${hasSupplyDisp ? `<div class="chart-block">
