@@ -1485,7 +1485,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
     realPrice.push(resPr && cpi ? resPr * (cpi24 / cpi) : null);
     totVol.push(vl ?? null);
     perCust.push(vl && ct && ct > 0 ? vl / ct : null);
-    const annualBill = cs != null && ct != null && ct > 0 ? cs * 1000 / ct : null;
+    const annualBill = cs != null && ct != null && ct > 0 ? cs / ct : null;
     const aff = state ? affordabilityData?.[state]?.[yrStr] : null;
     const mw  = aff ? aff[0] : null;
     const ip  = aff ? aff[1] : null;
