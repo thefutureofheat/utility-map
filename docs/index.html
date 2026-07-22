@@ -72,11 +72,15 @@
     .legend-na-swatch { width: 12px; height: 12px; border-radius: 2px; background: #e0e0e0; border: 1px solid #bbb; flex-shrink: 0; }
 
     /* ── Info panel ───────────────────────────────────────── */
-    #info-panel { flex: 1; padding: 12px 16px; overflow-y: auto; min-height: 0; }
-    .info-hint { color: #aaa; font-size: 11px; font-style: italic; margin: 0; line-height: 1.5; }
+    #info-panel { flex: 1; padding: 0 16px; overflow-y: auto; min-height: 0; }
+    .info-hint { color: #aaa; font-size: 11px; font-style: italic; margin: 0; line-height: 1.5; padding-top: 12px; }
 
+    .info-sticky-header {
+      position: sticky; top: 0; background: white; z-index: 10;
+      padding: 10px 0 7px; border-bottom: 1px solid #eee; margin-bottom: 9px;
+    }
     .info-name { font-size: 13px; font-weight: 700; margin: 0 0 3px; line-height: 1.3; }
-    .info-sub  { font-size: 11px; color: #666; margin: 0 0 7px; }
+    .info-sub  { font-size: 11px; color: #666; margin: 0; }
     .info-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 9px; }
     .badge {
       font-size: 9px; padding: 2px 6px; border-radius: 9px;
@@ -1157,10 +1161,12 @@ function updateInfo(feat, pinned) {
   const eiaYears   = eiaEntry   ? dataYearRange(eiaEntry.data)   : null;
   const phmsaYears = phmsaEntry ? dataYearRange(phmsaEntry.data) : null;
 
-  // ── Header
+  // ── Header (sticky)
   let html = `
-    <div class="info-name">${escHtml(name)}</div>
-    <div class="info-sub">${escHtml(subParts.join(" • "))}</div>
+    <div class="info-sticky-header">
+      <div class="info-name">${escHtml(name)}</div>
+      <div class="info-sub">${escHtml(subParts.join(" • "))}</div>
+    </div>
   `;
 
   // ── Data availability chips
@@ -1726,7 +1732,7 @@ function renderTrends(feat) {
   const hasSrvMat    = d.srvPlastic.some(v => v != null);
   const hasSupplyDisp = d.totSupply.some(v => v != null) || d.totDisp.some(v => v != null);
   const hasLossEIA    = d.lossEIA.some(v => v != null && v > 0);
-  const hasPriceConsump   = d.realPrice.some(v => v != null) || d.perCust.some(v => v != null);
+  const hasPriceConsump   = d.nomPrice.some(v => v != null) || d.perCust.some(v => v != null);
   const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
@@ -1815,7 +1821,7 @@ function renderTrends(feat) {
       data: {
         labels: d.years,
         datasets: [
-          { ...BASE, label: "Real Price (2024 $/Mcf)", data: d.realPrice, borderColor: "#1a3a5c", yAxisID: "y"  },
+          { ...BASE, label: "Nominal Price ($/Mcf)", data: d.nomPrice, borderColor: "#1a3a5c", yAxisID: "y"  },
           { ...BASE, label: "Per Customer (Mcf)",       data: d.perCust,  borderColor: "#d4890a", yAxisID: "y2", borderDash: [4, 3] },
         ],
       },
