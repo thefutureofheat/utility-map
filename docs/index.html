@@ -1166,16 +1166,12 @@ function updateInfo(feat, pinned) {
     <div class="info-sticky-header">
       <div class="info-name">${escHtml(name)}</div>
       <div class="info-sub">${escHtml(subParts.join(" • "))}</div>
+      <div class="data-avail-row" style="margin-top:6px;margin-bottom:0">
+        ${eiaYears   ? `<span class="src-chip src-eia">EIA  ${eiaYears}</span>`   : ""}
+        ${phmsaYears ? `<span class="src-chip src-phmsa">PHMSA  ${phmsaYears}</span>` : ""}
+      </div>
     </div>
   `;
-
-  // ── Data availability chips
-  if (eiaYears || phmsaYears) {
-    html += `<div class="data-avail-row">`;
-    if (eiaYears)   html += `<span class="src-chip src-eia">EIA  ${eiaYears}</span>`;
-    if (phmsaYears) html += `<span class="src-chip src-phmsa">PHMSA  ${phmsaYears}</span>`;
-    html += `</div>`;
-  }
 
   // ── EIA Sales section
   const hasAnySales = SALES_SECTORS.some(s => p[s.vl] != null || p[s.cs] != null);
@@ -1821,8 +1817,8 @@ function renderTrends(feat) {
       data: {
         labels: d.years,
         datasets: [
-          { ...BASE, label: "Nominal Price ($/Mcf)", data: d.nomPrice, borderColor: "#1a3a5c", yAxisID: "y"  },
-          { ...BASE, label: "Per Customer (Mcf)",       data: d.perCust,  borderColor: "#d4890a", yAxisID: "y2", borderDash: [4, 3] },
+          { ...BASE, label: "Price ($/Mcf)", data: d.nomPrice, borderColor: "#1a3a5c", yAxisID: "y"  },
+          { ...BASE, label: "Per customer consumption (Mcf)", data: d.perCust, borderColor: "#d4890a", yAxisID: "y2", borderDash: [4, 3] },
         ],
       },
       options: {
