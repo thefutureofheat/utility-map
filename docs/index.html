@@ -252,6 +252,10 @@
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
         <option value="losses_eia">% Lost from Leaks (EIA)</option>
       </optgroup>
+      <optgroup label="Affordability (EIA + State Data)">
+        <option value="afford_hours">Hours at Min. Wage for Gas Bill</option>
+        <option value="afford_pct">Gas Bill as % of Per Capita Income</option>
+      </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
         <option value="miles">Total Main Miles</option>
         <option value="pct_ci">% Iron Main Mileage (Cast &amp; Ductile)</option>
@@ -474,6 +478,8 @@ const MODES = {
   losses_eia:       { label: "% Lost from Leaks",                 unit: "%",         scale: "red",      fixed: null       },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
+  afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "purple",   fixed: null },
+  afford_pct:       { label: "Gas Bill as % of Per Capita Income", unit: "%income", scale: "teal",     fixed: null },
 };
 
 const DOMAINS = {};
@@ -489,6 +495,8 @@ function fmtVal(v, modeKey) {
   if (unit === "MMcf")     return `${n} MMcf`;
   if (unit === "mi")       return `${n} mi`;
   if (unit === "Mcf/cust") return `${v.toFixed(1)} Mcf/cust`;
+  if (unit === "hrs/yr")   return `${v.toFixed(1)} hrs/yr`;
+  if (unit === "%income")  return `${v.toFixed(2)}%`;
   return n;
 }
 
@@ -660,6 +668,17 @@ function getValue(p, mode) {
       const price0_real = (cs0 / vl0) * (cpi2024 / cpi0);
       const price1_real = (cs1 / vl1) * (cpi2024 / cpi1);
       return price1_real - price0_real;
+    }
+    case "afford_hours":
+    case "afford_pct": {
+      const cs = p["Residential Sales [CS]"], ct = p["Residential Sales [CT]"];
+      if (!cs || !ct || ct <= 0) return null;
+      const bill = cs / ct;
+      const state = p.phmsa_STOP || p.EIA_state;
+      const aff = state ? affordabilityData?.[state]?.[selectedYear] : null;
+      if (!aff) return null;
+      if (mode === "afford_hours") return aff[0] > 0 ? bill / aff[0] : null;
+      return aff[1] > 0 ? bill / aff[1] * 100 : null;
     }
   }
   return null;
@@ -1738,6 +1757,10 @@ function renderTrends(feat) {
       <div class="chart-title">Residential Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
+    ${hasAffordability ? `<div class="chart-block">
+      <div class="chart-title">Gas Bill Affordability (Nominal)</div>
+      <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
+    </div>` : ""}
     ${hasSupplyDisp ? `<div class="chart-block">
       <div class="chart-title">Total Supply &amp; Total Disposition (MMcf)</div>
       <div class="chart-wrap"><canvas id="tc-supplydisp"></canvas></div>
@@ -1766,10 +1789,6 @@ function renderTrends(feat) {
     ${hasIncidents ? `<div class="chart-block">
       <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
       <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
-    </div>` : ""}
-    ${hasAffordability ? `<div class="chart-block">
-      <div class="chart-title">Gas Bill Affordability (Nominal)</div>
-      <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
     </div>` : ""}
   `;
 
