@@ -1223,6 +1223,20 @@ function updateInfo(feat, pinned) {
         html += delivCagrHtml;
         html += `</div>`;
       }
+      // Affordability box
+      const annualBill = resCs2 && resCt && resCt > 0 ? resCs2 / resCt : null;
+      const affEntry   = infoState ? affordabilityData?.[infoState]?.[String(yr)] : null;
+      const minWage    = affEntry ? affEntry[0] : null;
+      const incomePC   = affEntry ? affEntry[1] : null;
+      const hoursAtMW  = annualBill != null && minWage  != null && minWage  > 0 ? annualBill / minWage  : null;
+      const incomeSh   = annualBill != null && incomePC != null && incomePC > 0 ? annualBill / incomePC * 100 : null;
+      if (annualBill != null || hoursAtMW != null || incomeSh != null) {
+        html += `<div style="margin-top:6px;padding:7px 9px;background:#f5f2fb;border-left:3px solid #6a3a8c;border-radius:3px">`;
+        if (annualBill != null) html += statRow("Avg. annual gas cost/customer", `$${annualBill.toFixed(0)}`);
+        if (hoursAtMW  != null) html += statRow("Hours at state min. wage to pay", `${hoursAtMW.toFixed(1)} hrs/yr`);
+        if (incomeSh   != null) html += statRow("Gas cost as % of per capita income", `${incomeSh.toFixed(2)}%`);
+        html += `</div>`;
+      }
     } else {
       html += `<div style="color:#999;font-size:11px;padding:3px 0 5px">No retail sales data reported</div>`;
     }
