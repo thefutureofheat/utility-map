@@ -717,6 +717,7 @@ let trendCharts      = {};
 let currentMode      = "res_vol";
 let operatorStateMap = {};
 let incidentsData    = null;
+let affordabilityData = null;
 let idMap            = {};   // EIA ID → PHMSA key (e.g. "17600184OK" → "32647_OK")
 let mapLoaded        = false;
 
@@ -869,6 +870,12 @@ function updateHeaderSub() {
 function updateYearAvail() {}
 
 // ── Data load ─────────────────────────────────────────────────────────────────
+
+// Fetch affordability lookup (state × year min wage + income per capita)
+fetch("affordability.json")
+  .then(r => r.json())
+  .then(d => { affordabilityData = d; })
+  .catch(() => {});
 
 // Fetch incidents.json early — small file, needed for click panel
 fetch("incidents.json")
@@ -1452,6 +1459,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   const cpi24 = CPI_U[2024];
   const years = [], nomPrice = [], realPrice = [], totVol = [], perCust = [], ciMiles = [];
   const supplyPr = [];
+  const hoursMinWage = [], incomeSharePct = [];
   const totSupply = [], totDisp = [], lossEIA = [];
   const knownLeaks = [], unaccPct = [];
   const dcdPre70 = [], dcd7090 = [], dcd0010 = [], dcd20s = [], dcdUnknown = [];
@@ -1477,6 +1485,12 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
     realPrice.push(resPr && cpi ? resPr * (cpi24 / cpi) : null);
     totVol.push(vl ?? null);
     perCust.push(vl && ct && ct > 0 ? vl / ct : null);
+    const annualBill = cs != null && ct != null && ct > 0 ? cs * 1000 / ct : null;
+    const aff = state ? affordabilityData?.[state]?.[yrStr] : null;
+    const mw  = aff ? aff[0] : null;
+    const ip  = aff ? aff[1] : null;
+    hoursMinWage.push(annualBill != null && mw != null && mw > 0 ? annualBill / mw : null);
+    incomeSharePct.push(annualBill != null && ip != null && ip > 0 ? annualBill / ip * 100 : null);
     supplyPr.push(cg);
     totSupply.push((ed?.["Total Supply [VL]"] ?? 0) > 0 ? ed["Total Supply [VL]"] : null);
     totDisp.push((ed?.["Total Disposition [VL]"] ?? 0) > 0 ? ed["Total Disposition [VL]"] : null);
@@ -1559,6 +1573,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   }
   return {
     years, nomPrice, realPrice, totVol, perCust, ciMiles, supplyPr,
+    hoursMinWage, incomeSharePct,
     totSupply, totDisp, lossEIA, knownLeaks, unaccPct,
     dcdPre70, dcd7090, dcd0010, dcd20s, dcdUnknown,
     matPlastic, matStCp, matStUnp, matCI, matDI, matCu, matOther,
@@ -1666,7 +1681,8 @@ function renderTrends(feat) {
   const hasSrvMat    = d.srvPlastic.some(v => v != null);
   const hasSupplyDisp = d.totSupply.some(v => v != null) || d.totDisp.some(v => v != null);
   const hasLossEIA    = d.lossEIA.some(v => v != null && v > 0);
-  const hasPriceConsump = d.realPrice.some(v => v != null) || d.perCust.some(v => v != null);
+  const hasPriceConsump   = d.realPrice.some(v => v != null) || d.perCust.some(v => v != null);
+  const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
   const multistateEntries = [];
@@ -1736,6 +1752,10 @@ function renderTrends(feat) {
     ${hasIncidents ? `<div class="chart-block">
       <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
       <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
+    </div>` : ""}
+    ${hasAffordability ? `<div class="chart-block">
+      <div class="chart-title">Gas Bill Affordability (Nominal)</div>
+      <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
     </div>` : ""}
   `;
 
@@ -1959,6 +1979,59 @@ function renderTrends(feat) {
     trendCharts.srvmat = makeMaterialChart("tc-srvmat",
       matLayers(d.srvCI, d.srvStUnp, d.srvDI, d.srvCu, d.srvStCp, d.srvPlastic, d.srvOther),
       srvTickFmt);
+  }
+
+  if (hasAffordability) {
+    const ctx = document.getElementById("tc-afford");
+    if (ctx) {
+      trendCharts.afford = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: d.years,
+          datasets: [
+            { ...BASE, label: "Hours at min. wage", data: d.hoursMinWage,   borderColor: "#1a3a5c", yAxisID: "y"  },
+            { ...BASE, label: "% of per capita income", data: d.incomeSharePct, borderColor: "#b03a00", yAxisID: "y2", borderDash: [4, 3] },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, labels: { boxWidth: 10, font: { size: 10 }, padding: 6 } },
+            tooltip: {
+              mode: "index", intersect: false,
+              callbacks: {
+                label: ctx => {
+                  if (ctx.raw == null) return null;
+                  return ctx.datasetIndex === 0
+                    ? `Hours at min. wage: ${ctx.raw.toFixed(1)}`
+                    : `% of per capita income: ${ctx.raw.toFixed(1)}%`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+              grid: { color: "#f5f5f5" },
+            },
+            y: {
+              position: "left",
+              beginAtZero: true,
+              ticks: { color: "#1a3a5c", font: { size: 9 }, callback: v => v != null ? v.toFixed(0) + " hrs" : "" },
+              grid: { color: "#f5f5f5" },
+              title: { display: true, text: "Hours/yr", color: "#1a3a5c", font: { size: 9 } },
+            },
+            y2: {
+              position: "right",
+              beginAtZero: true,
+              ticks: { color: "#b03a00", font: { size: 9 }, callback: v => v != null ? v.toFixed(1) + "%" : "" },
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: "% income", color: "#b03a00", font: { size: 9 } },
+            },
+          },
+        },
+      });
+    }
   }
 
 }
