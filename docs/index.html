@@ -763,6 +763,7 @@ let operatorStateMap = {};
 let incidentsData    = null;
 let affordabilityData = null;
 let idMap            = {};   // EIA ID → PHMSA key (e.g. "17600184OK" → "32647_OK")
+let phmsaToEia       = {};   // reverse: PHMSA key → EIA ID (for polygons with no ID property)
 let mapLoaded        = false;
 
 // ── Choropleth color expression ───────────────────────────────────────────────
@@ -954,7 +955,10 @@ fetch("incidents.json")
 // Fetch id_map.json — maps EIA ID → PHMSA key for choropleth join
 fetch("id_map.json")
   .then(r => r.json())
-  .then(d => { idMap = d; })
+  .then(d => {
+    idMap = d;
+    phmsaToEia = Object.fromEntries(Object.entries(d).map(([eia, phmsa]) => [phmsa, eia]));
+  })
   .catch(() => {});
 
 const phmsaPromise = fetch("phmsa_timeseries.json")
@@ -1189,10 +1193,10 @@ function updateInfo(feat, pinned) {
   const subParts = [stateLbl, typeLbl].filter(Boolean);
 
   // Timeseries entry references
-  const eiaId    = p.ID;
   const opId     = p.phmsa_OPERATOR_ID;
   const stop     = p.phmsa_STOP;
   const phmsaKey = (opId != null && stop) ? `${opId}_${stop}` : null;
+  const eiaId    = p.ID || (phmsaKey && phmsaToEia[phmsaKey]) || null;
   const eiaEntry   = eiaId    && eiaTimeseries   ? eiaTimeseries[eiaId]     : null;
   const phmsaEntry = phmsaKey && phmsaTimeseries  ? phmsaTimeseries[phmsaKey] : null;
 
@@ -1481,7 +1485,6 @@ function statRow(label, val, tip) {
 }());
 
 // ── Trends panel ──────────────────────────────────────────────────────────────
-
 
 // ── Incidents panel ────────────────────────────────────────────────────────────
 
@@ -1791,10 +1794,10 @@ function makeLineChart(canvasId, labels, datasets, yTickFmt) {
 
 function renderTrends(feat) {
   const p       = getEffectiveProps(feat);
-  const eiaId   = p.ID || null;
   const opId    = p.phmsa_OPERATOR_ID;
   const stop    = p.phmsa_STOP;
   const phmsaKey = (opId != null && stop) ? `${opId}_${stop}` : null;
+  const eiaId   = p.ID || (phmsaKey && phmsaToEia[phmsaKey]) || null;
   const name    = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
 
   destroyTrendCharts();
@@ -1949,7 +1952,6 @@ function renderTrends(feat) {
   }
 
   if (hasIncidents) {
-    // Bottom → top stack order; user-visible labels abbreviated where long
     const CAUSES = [
       "EXCAVATION DAMAGE",
       "OTHER OUTSIDE FORCE DAMAGE",
@@ -1963,7 +1965,6 @@ function renderTrends(feat) {
     const CAUSE_COLORS = ["#8B4513","#8e44ad","#2471a3","#e67e22","#27ae60","#d4ac0d","#c0392b","#95a5a6"];
     const incRows = incidentsData[opKey];
 
-    // Build evenly-spaced year axis from min to max year in data
     const minYr = Math.min(...incRows.map(r => r.inc_year));
     const maxYr = Math.max(...incRows.map(r => r.inc_year));
     const incYears = [];
@@ -2050,9 +2051,9 @@ function renderTrends(feat) {
     ], milesTickFmt);
   }
 
-  const srvTickFmt = v => v != null ? (v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)) : "";
+  const srvTickFmt = v => v != null ? (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1e3 ? (v/1e3).toFixed(0)+"K" : v.toFixed(0)) : "";
 
-  // Shared stacked-area helper for material charts (7 bands, same stack pattern)
+  // Bottom = oldest/most phased-out; top = modern/growing; Other always on top
   // Combine two nullable arrays, treating null as 0 unless both are null
   const mergeNullable = (a, b) => a.map((v, i) => {
     if (v == null && b[i] == null) return null;
