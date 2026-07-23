@@ -102,6 +102,24 @@
     .stat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
     .stat-label { color: #666; font-size: 11px; flex: 1; }
     .stat-val   { font-weight: 600; font-size: 11px; text-align: right; }
+    .stat-tip {
+      position: relative; display: inline-block;
+      color: #aaa; font-size: 10px; margin-left: 3px;
+      cursor: help; vertical-align: middle; line-height: 1;
+    }
+    .stat-tip-box {
+      display: none; position: absolute;
+      bottom: calc(100% + 5px); right: -4px;
+      width: 210px; padding: 6px 8px;
+      background: #333; color: #fff;
+      font-size: 10.5px; font-weight: 400; line-height: 1.45;
+      border-radius: 4px; white-space: normal;
+      z-index: 200; pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+    .stat-tip:hover .stat-tip-box { display: block; }
+    /* table-header variant */
+    th .stat-tip-box { right: auto; left: -4px; }
 
     /* ── Decade histogram ─────────────────────────────────── */
     .decade-row { display: flex; align-items: center; margin-bottom: 3px; gap: 4px; }
@@ -1203,7 +1221,8 @@ function updateInfo(feat, pinned) {
     html += `<div class="info-section"><div class="info-section-title">Sales (EIA Form 176, ${yr})</div>`;
     if (hasAnySales) {
       html += `<table class="sales-table"><thead><tr>
-        <th>Sector</th><th>Vol (MMcf)</th><th>Customers</th><th>$/Mcf</th>
+        <th>Sector</th><th>Vol (MMcf)</th><th>Customers</th>
+        <th>$/Mcf${tipIcon("Derived: revenue ÷ volume sold (EIA Form 176 CS ÷ VL fields)")}</th>
       </tr></thead><tbody>`;
       let tvl = 0, tcs = 0, tct = 0;
       for (const s of SALES_SECTORS) {
@@ -1259,7 +1278,8 @@ function updateInfo(feat, pinned) {
             const sign = cagr >= 0 ? "+" : "";
             delivCagrHtml = statRow(
               `Delivery price CAGR (${best.yr}–${end.yr})`,
-              `${sign}${(cagr * 100).toFixed(1)}%/yr`
+              `${sign}${(cagr * 100).toFixed(1)}%/yr`,
+              `Compound annual growth rate of the delivery price (residential price − citygate) over the shown period. Formula: (end ÷ start)^(1/n) − 1`
             );
           }
         }
@@ -1267,10 +1287,13 @@ function updateInfo(feat, pinned) {
       if (hasConsump || hasDelivery || delivCagrHtml) {
         html += `<div style="margin-top:7px;padding:7px 9px;background:#f0f4fa;border-left:3px solid #1a3a5c;border-radius:3px">`;
         if (hasConsump)
-          html += statRow("Res. consumption/customer", (resVl / resCt).toFixed(1) + " Mcf");
+          html += statRow("Res. consumption/customer", (resVl / resCt).toFixed(1) + " Mcf",
+            "Derived: residential volume ÷ residential customers (EIA Form 176 VL ÷ CT)");
         if (hasDelivery) {
-          html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`);
-          html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`);
+          html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`,
+            "State-level monthly citygate price from EIA's natural gas price series (not utility-specific). Source: EIA eia.gov/dnav/ng");
+          html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`,
+            "Derived: residential average price − state citygate price. Approximates the utility's distribution margin.");
         }
         html += delivCagrHtml;
         html += `</div>`;
@@ -1284,9 +1307,12 @@ function updateInfo(feat, pinned) {
       const incomeSh   = annualBill != null && incomePC != null && incomePC > 0 ? annualBill / incomePC * 100 : null;
       if (annualBill != null || hoursAtMW != null || incomeSh != null) {
         html += `<div style="margin-top:6px;padding:7px 9px;background:#f5f2fb;border-left:3px solid #6a3a8c;border-radius:3px">`;
-        if (annualBill != null) html += statRow("Avg. annual gas cost/customer", `$${annualBill.toFixed(0)}`);
-        if (hoursAtMW  != null) html += statRow("Hours at state min. wage to pay", `${hoursAtMW.toFixed(1)} hrs/yr`);
-        if (incomeSh   != null) html += statRow("Gas cost as % of per capita income", `${incomeSh.toFixed(2)}%`);
+        if (annualBill != null) html += statRow("Avg. annual gas cost/customer", `$${annualBill.toFixed(0)}`,
+          "Derived: total residential revenue ÷ number of residential customers (EIA Form 176 CS ÷ CT)");
+        if (hoursAtMW  != null) html += statRow("Hours at state min. wage to pay", `${hoursAtMW.toFixed(1)} hrs/yr`,
+          "Derived: annual gas cost ÷ state hourly minimum wage. Min. wage source: FRED (Federal Reserve Bank of St. Louis)");
+        if (incomeSh   != null) html += statRow("Gas cost as % of per capita income", `${incomeSh.toFixed(2)}%`,
+          "Derived: (annual gas cost ÷ per capita income) × 100. Per capita income source: BEA (Bureau of Economic Analysis)");
         html += `</div>`;
       }
     } else {
@@ -1413,8 +1439,12 @@ function updateInfo(feat, pinned) {
   if (pinned && hasTrends) renderTrends(feat);
 }
 
-function statRow(label, val) {
-  return `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-val">${val}</span></div>`;
+function tipIcon(text) {
+  return `<span class="stat-tip">ⓘ<span class="stat-tip-box">${escHtml(text)}</span></span>`;
+}
+function statRow(label, val, tip) {
+  const icon = tip ? tipIcon(tip) : "";
+  return `<div class="stat-row"><span class="stat-label">${label}${icon}</span><span class="stat-val">${val}</span></div>`;
 }
 
 // ── Trends panel ──────────────────────────────────────────────────────────────
