@@ -786,8 +786,21 @@ function rebuildColorExpression() {
     const col = modeColor(val, currentMode);
     if (col) pairs.push(eiaId, col);
   }
+  // Polygons whose ID property is null but are linked via phmsaToEia (e.g. Hawaii Gas):
+  // match using the PHMSA-derived key "<OPERATOR_ID>_<STOP>" as a fallback.
+  for (const [phmsaKey, eiaId] of Object.entries(phmsaToEia)) {
+    const p   = buildPropsForId(eiaId);
+    const val = getValue(p, currentMode);
+    const col = modeColor(val, currentMode);
+    if (col) pairs.push(phmsaKey, col);
+  }
+  // Match on ID when set; fall back to "<OPERATOR_ID>_<STOP>" for null-ID polygons.
+  const matchKey = ["coalesce",
+    ["get", "ID"],
+    ["concat", ["to-string", ["get", "phmsa_OPERATOR_ID"]], "_", ["get", "phmsa_STOP"]]
+  ];
   const expr = pairs.length
-    ? ["match", ["get", "ID"], ...pairs, "#e0e0e0"]
+    ? ["match", matchKey, ...pairs, "#e0e0e0"]
     : "#e0e0e0";
   map.setPaintProperty("utilities-fill", "fill-color", expr);
   updateLegend();
