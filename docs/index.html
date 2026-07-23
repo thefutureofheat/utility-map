@@ -1345,11 +1345,11 @@ function updateInfo(feat, pinned) {
     html += statRow("Total Main Miles", fmtNum(total));
     const indentStyle = `style="padding-left:14px"`;
     if (pctCi != null && pctCi > 0)
-      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast iron + ductile iron main miles) ÷ total main miles. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
     if (pctUnpSt != null)
-      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel</span><span class="stat-val">${pctUnpSt.toFixed(1)}%</span></div>`;
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: unprotected steel main miles ÷ total main miles. Includes bare and unprotected-coated steel lacking cathodic protection.")}</span><span class="stat-val">${pctUnpSt.toFixed(1)}%</span></div>`;
     if (dcdTot > 0)
-      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970</span><span class="stat-val">${(pre70/dcdTot*100).toFixed(1)}%</span></div>`;
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970${tipIcon("Derived: main miles installed before 1970 ÷ total miles with a known decade of construction.")}</span><span class="stat-val">${(pre70/dcdTot*100).toFixed(1)}%</span></div>`;
 
     // ── Services
     const svcTotal = p.phmsa_NUM_SRVCS_TOTAL;
@@ -1368,11 +1368,11 @@ function updateInfo(feat, pinned) {
       const pctSvcPre70 = svcDcdTot > 0 ? svcPre70 / svcDcdTot * 100 : null;
       html += `<div style="margin-top:5px">` + statRow("Total Services", fmtNum(svcTotal)) + `</div>`;
       if (pctSvcCi != null)
-        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast iron + ductile iron service lines) ÷ total service lines. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
       if (pctSvcUnpSt != null)
-        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel</span><span class="stat-val">${pctSvcUnpSt.toFixed(1)}%</span></div>`;
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: unprotected steel service lines ÷ total service lines. Includes bare and unprotected-coated steel lacking cathodic protection.")}</span><span class="stat-val">${pctSvcUnpSt.toFixed(1)}%</span></div>`;
       if (pctSvcPre70 != null && pctSvcPre70 > 0)
-        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970</span><span class="stat-val">${pctSvcPre70.toFixed(1)}%</span></div>`;
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970${tipIcon("Derived: service lines installed before 1970 ÷ total service lines with a known decade of construction.")}</span><span class="stat-val">${pctSvcPre70.toFixed(1)}%</span></div>`;
     }
 
     // ── Leak / unaccounted-for gas
