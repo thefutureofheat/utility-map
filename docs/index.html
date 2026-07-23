@@ -816,7 +816,7 @@ function computeDomains() {
 function setPinnedState(feat, pinned) {
   if (!feat) return;
   map.setFeatureState(
-    { source: "utilities", sourceLayer: "utilities", id: feat.properties.ID },
+    { source: "utilities", sourceLayer: "utilities", id: feat.id },
     { pinned }
   );
 }
@@ -868,10 +868,16 @@ function pickSmallest(features) {
   }, null)?.f ?? features[0];
 }
 
+// Flag so the general click handler doesn't fight the layer-specific one.
+// Both fire for every click on the fill layer; without this, queryRenderedFeatures
+// can return empty at tile boundaries and immediately unpin what was just pinned.
+let utilityJustClicked = false;
+
 map.on("click", "utilities-fill", (e) => {
   if (!e.features.length) return;
+  utilityJustClicked = true;
   const feat = pickSmallest(e.features);
-  if (pinnedFeat && pinnedFeat.properties.ID === feat.properties.ID) {
+  if (pinnedFeat && pinnedFeat.id === feat.id) {
     setPinnedState(pinnedFeat, false);
     pinnedFeat = null;
     updateInfo(null, false);
@@ -881,18 +887,15 @@ map.on("click", "utilities-fill", (e) => {
     setPinnedState(feat, true);
     updateInfo(feat, true);
   }
-  e.originalEvent.stopPropagation();
 });
 
+// Deselect when clicking empty map space (not on a utility polygon).
 map.on("click", (e) => {
+  if (utilityJustClicked) { utilityJustClicked = false; return; }
   if (!pinnedFeat) return;
-  // General click events don't carry features — query at the click point instead
-  const hits = map.queryRenderedFeatures(e.point, { layers: ["utilities-fill"] });
-  if (!hits.length) {
-    setPinnedState(pinnedFeat, false);
-    pinnedFeat = null;
-    updateInfo(null, false);
-  }
+  setPinnedState(pinnedFeat, false);
+  pinnedFeat = null;
+  updateInfo(null, false);
 });
 
 // ── Apply year ────────────────────────────────────────────────────────────────
