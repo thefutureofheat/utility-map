@@ -103,23 +103,19 @@
     .stat-label { color: #666; font-size: 11px; flex: 1; }
     .stat-val   { font-weight: 600; font-size: 11px; text-align: right; }
     .stat-tip {
-      position: relative; display: inline-block;
+      display: inline-block;
       color: #aaa; font-size: 10px; margin-left: 3px;
       cursor: help; vertical-align: middle; line-height: 1;
     }
     .stat-tip-box {
-      display: none; position: absolute;
-      bottom: calc(100% + 5px); right: -4px;
+      display: none; position: fixed;
       width: 210px; padding: 6px 8px;
       background: #333; color: #fff;
       font-size: 10.5px; font-weight: 400; line-height: 1.45;
       border-radius: 4px; white-space: normal;
-      z-index: 200; pointer-events: none;
+      z-index: 9999; pointer-events: none;
       box-shadow: 0 2px 6px rgba(0,0,0,.35);
     }
-    .stat-tip:hover .stat-tip-box { display: block; }
-    /* table-header variant */
-    th .stat-tip-box { right: auto; left: -4px; }
 
     /* ── Decade histogram ─────────────────────────────────── */
     .decade-row { display: flex; align-items: center; margin-bottom: 3px; gap: 4px; }
@@ -1446,6 +1442,42 @@ function statRow(label, val, tip) {
   const icon = tip ? tipIcon(tip) : "";
   return `<div class="stat-row"><span class="stat-label">${label}${icon}</span><span class="stat-val">${val}</span></div>`;
 }
+
+// ── Stat-tip tooltip positioning (fixed, clamped inside #info-panel) ─────────
+(function () {
+  const panel = document.getElementById('info-panel');
+  const GAP = 5, BOX_W = 210;
+
+  panel.addEventListener('mouseover', e => {
+    const tip = e.target.closest && e.target.closest('.stat-tip');
+    if (!tip) return;
+    const box = tip.querySelector('.stat-tip-box');
+    if (!box) return;
+
+    const tr = tip.getBoundingClientRect();
+    const pr = panel.getBoundingClientRect();
+
+    // Horizontal: right-align to icon, clamped inside panel
+    const left = Math.max(pr.left + GAP, Math.min(tr.right - BOX_W, pr.right - BOX_W - GAP));
+
+    // Show first so offsetHeight is real, then pick above vs below
+    box.style.left = left + 'px';
+    box.style.top  = '-9999px';
+    box.style.display = 'block';
+    const bh = box.offsetHeight;
+    const top = (tr.top - bh - GAP >= pr.top)
+      ? tr.top - bh - GAP   // above the icon
+      : tr.bottom + GAP;    // below (fallback)
+    box.style.top = top + 'px';
+  });
+
+  panel.addEventListener('mouseout', e => {
+    const tip = e.target.closest && e.target.closest('.stat-tip');
+    if (!tip || tip.contains(e.relatedTarget)) return;
+    const box = tip.querySelector('.stat-tip-box');
+    if (box) box.style.display = '';
+  });
+}());
 
 // ── Trends panel ──────────────────────────────────────────────────────────────
 
