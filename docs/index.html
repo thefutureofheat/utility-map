@@ -1347,7 +1347,7 @@ function updateInfo(feat, pinned) {
     if (pctCi != null && pctCi > 0)
       html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast iron + ductile iron main miles) ÷ total main miles. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
     if (pctUnpSt != null)
-      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: unprotected steel main miles ÷ total main miles. Includes bare and unprotected-coated steel lacking cathodic protection.")}</span><span class="stat-val">${pctUnpSt.toFixed(1)}%</span></div>`;
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: steel main miles lacking full protection (both coating and cathodic protection) ÷ total main miles. Includes cathodically-protected bare pipe, unprotected coated pipe, and unprotected bare pipe.")}</span><span class="stat-val">${pctUnpSt.toFixed(1)}%</span></div>`;
     if (dcdTot > 0)
       html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970${tipIcon("Derived: main miles installed before 1970 ÷ total miles with a known decade of construction.")}</span><span class="stat-val">${(pre70/dcdTot*100).toFixed(1)}%</span></div>`;
 
@@ -1370,7 +1370,7 @@ function updateInfo(feat, pinned) {
       if (pctSvcCi != null)
         html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast iron + ductile iron service lines) ÷ total service lines. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
       if (pctSvcUnpSt != null)
-        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: unprotected steel service lines ÷ total service lines. Includes bare and unprotected-coated steel lacking cathodic protection.")}</span><span class="stat-val">${pctSvcUnpSt.toFixed(1)}%</span></div>`;
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: steel service lines lacking full protection (both coating and cathodic protection) ÷ total service lines. Includes cathodically-protected bare pipe, unprotected coated pipe, and unprotected bare pipe.")}</span><span class="stat-val">${pctSvcUnpSt.toFixed(1)}%</span></div>`;
       if (pctSvcPre70 != null && pctSvcPre70 > 0)
         html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970${tipIcon("Derived: service lines installed before 1970 ÷ total service lines with a known decade of construction.")}</span><span class="stat-val">${pctSvcPre70.toFixed(1)}%</span></div>`;
     }
