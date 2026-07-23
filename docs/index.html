@@ -848,9 +848,29 @@ map.on("mouseleave", "utilities-fill", () => {
   updateInfo(null, false);
 });
 
+// Pick the feature with the smallest bounding-box area so small utilities
+// aren't hidden behind large overlapping service territories.
+function pickSmallest(features) {
+  return features.reduce((best, f) => {
+    const b = f.geometry.bbox ?? (() => {
+      // compute bbox from all coordinates in the geometry
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      const walk = coords => {
+        if (typeof coords[0] === "number") { minX = Math.min(minX,coords[0]); maxX = Math.max(maxX,coords[0]); minY = Math.min(minY,coords[1]); maxY = Math.max(maxY,coords[1]); }
+        else coords.forEach(walk);
+      };
+      walk(f.geometry.coordinates);
+      return [minX, minY, maxX, maxY];
+    })();
+    const area = (b[2]-b[0]) * (b[3]-b[1]);
+    if (!best) return { f, area };
+    return area < best.area ? { f, area } : best;
+  }, null)?.f ?? features[0];
+}
+
 map.on("click", "utilities-fill", (e) => {
   if (!e.features.length) return;
-  const feat = e.features[0];
+  const feat = pickSmallest(e.features);
   if (pinnedFeat && pinnedFeat.properties.ID === feat.properties.ID) {
     setPinnedState(pinnedFeat, false);
     pinnedFeat = null;
