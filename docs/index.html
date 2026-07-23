@@ -554,9 +554,8 @@ function getEffectiveProps(feat) {
   const p     = feat.properties;
   const opId  = p.phmsa_OPERATOR_ID;
   const stop  = p.phmsa_STOP;
-  const eiaId = p.ID;
-
   const phmsaKey  = (opId != null && stop) ? `${opId}_${stop}` : null;
+  const eiaId = p.ID || (phmsaKey && phmsaToEia[phmsaKey]) || null;
   const phmsaData = phmsaKey && phmsaTimeseries
     ? (phmsaTimeseries[phmsaKey]?.data?.[selectedYear] ?? null) : null;
   const eiaEntry = eiaId && eiaTimeseries ? (eiaTimeseries[eiaId] ?? null) : null;
