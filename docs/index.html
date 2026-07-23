@@ -1383,7 +1383,7 @@ function updateInfo(feat, pinned) {
     const excavTix = p.phmsa_PARTDTOTTICKETS, excavDmg = p.phmsa_PARTDTOTDAMAGES;
     if (excavTix != null && excavTix > 0)
       html += statRow("Damages per 1K excavation tickets", `${(1000 * (excavDmg || 0) / excavTix).toFixed(2)}`,
-        "Derived: (total dig-in damages ÷ total excavation tickets) × 1,000. Source: PHMSA Annual Report Part D (fields PARTDTOTDAMAGES and PARTDTOTTICKETS). Only available from 2024.");
+        "Derived: (total dig-in damages ÷ total excavation tickets) × 1,000. Only available from 2024.");
 
     html += `</div>`;
   }
