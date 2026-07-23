@@ -815,10 +815,11 @@ function computeDomains() {
 
 function setPinnedState(feat, pinned) {
   if (!feat) return;
-  map.setFeatureState(
-    { source: "utilities", sourceLayer: "utilities", id: feat.id },
-    { pinned }
-  );
+  const ref = { source: "utilities", sourceLayer: "utilities", id: feat.id };
+  map.setFeatureState(ref, { pinned });
+  // When unpinning, also clear any lingering hover state. mousemove skips
+  // clearing hover while pinnedFeat is set, so it persists after pin is cleared.
+  if (!pinned) map.setFeatureState(ref, { hovered: false });
 }
 
 function setHoveredState(id, hovered) {
@@ -833,7 +834,7 @@ map.on("mousemove", "utilities-fill", (e) => {
   if (pinnedFeat) return;
   if (!e.features.length) return;
   const feat = e.features[0];
-  const id   = feat.properties.ID;
+  const id   = feat.id;
   if (hoveredId !== null && hoveredId !== id) setHoveredState(hoveredId, false);
   hoveredId = id;
   setHoveredState(id, true);
