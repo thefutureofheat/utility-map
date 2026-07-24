@@ -410,6 +410,17 @@ const SALES_SECTORS = [
   { label: "Other",          vl: "Other Sales [VL]",          cs: "Other Sales [CS]",          ct: "Other Sales [CT]" },
 ];
 
+// Mirror of SALES_SECTORS for utilities that only report transportation volumes
+// (residential natural gas choice / unbundled distribution — see fallback table below).
+const TRANSPORT_SECTORS = [
+  { label: "Residential",    vl: "Residential Transport [VL]",    cs: "Residential Transport [CS]",    ct: "Residential Transport [CT]" },
+  { label: "Commercial",     vl: "Commercial Transport [VL]",     cs: "Commercial Transport [CS]",     ct: "Commercial Transport [CT]" },
+  { label: "Industrial",     vl: "Industrial Transport [VL]",     cs: "Industrial Transport [CS]",     ct: "Industrial Transport [CT]" },
+  { label: "Electric Power", vl: "Electric Power Transport [VL]", cs: "Electric Power Transport [CS]", ct: "Electric Power Transport [CT]" },
+  { label: "Vehicle Fuel",   vl: "Vehicle Fuel Transport [VL]",   cs: "Vehicle Fuel Transport [CS]",   ct: "Vehicle Fuel Transport [CT]" },
+  { label: "Other",          vl: "Other Transport [VL]",          cs: "Other Transport [CS]",          ct: "Other Transport [CT]" },
+];
+
 // ── Color utilities ────────────────────────────────────────────────────────────
 
 function lerpRgb(a, b, t) {
@@ -1328,7 +1339,39 @@ function updateInfo(feat, pinned) {
         html += `</div>`;
       }
     } else {
-      html += `<div style="color:#999;font-size:11px;padding:3px 0 5px">No retail sales data reported</div>`;
+      const hasAnyTransport = TRANSPORT_SECTORS.some(s => p[s.vl] != null || p[s.cs] != null);
+      if (hasAnyTransport) {
+        html += `<table class="sales-table"><thead><tr>
+          <th>Sector</th><th>Vol (MMcf)</th><th>Customers</th>
+          <th>Fee $/Mcf${tipIcon("Derived: transport revenue ÷ volume delivered (EIA Form 176 CS ÷ VL fields, Transport lines). This is the utility's transport fee, not a retail gas price — the utility does not sell the commodity to these customers.")}</th>
+        </tr></thead><tbody>`;
+        let tvl = 0, tcs = 0, tct = 0;
+        for (const s of TRANSPORT_SECTORS) {
+          const vl = p[s.vl], cs = p[s.cs], ct = p[s.ct];
+          if (!vl && !cs && !ct) continue;
+          const price = vl && cs && vl > 0 ? cs / vl : null;
+          tvl += vl || 0; tcs += cs || 0; tct += ct || 0;
+          html += `<tr>
+            <td>${s.label}</td>
+            <td>${vl != null ? fmtNum(vl) : "—"}</td>
+            <td>${ct != null ? fmtNum(ct) : "—"}</td>
+            <td>${price != null ? "$" + price.toFixed(2) : "—"}</td>
+          </tr>`;
+        }
+        const avgP = tvl > 0 && tcs > 0 ? tcs / tvl : null;
+        html += `<tr class="total-row">
+          <td>Total</td>
+          <td>${tvl > 0 ? fmtNum(tvl) : "—"}</td>
+          <td>${tct > 0 ? fmtNum(tct) : "—"}</td>
+          <td>${avgP != null ? "$" + avgP.toFixed(2) : "—"}</td>
+        </tr>`;
+        html += `</tbody></table>`;
+        html += `<div style="margin-top:7px;padding:7px 9px;background:#fff7e6;border-left:3px solid #c07d00;border-radius:3px;font-size:10.5px;line-height:1.5;color:#5c4400">
+          No retail sales reported — figures above are <strong>transportation</strong> volumes. This utility delivers gas but does not sell it directly to these customers; in areas with residential natural gas choice, customers buy the commodity from a separate competitive marketer and pay the utility only to move it through the pipes. Marketer sales and pricing are not captured in EIA Form 176 and are not shown on this map.
+        </div>`;
+      } else {
+        html += `<div style="color:#999;font-size:11px;padding:3px 0 5px">No retail sales data reported</div>`;
+      }
     }
     const supply = p["Total Supply [VL]"], disp = p["Total Disposition [VL]"];
     const losses = p["Losses from Leaks [VL]"];
