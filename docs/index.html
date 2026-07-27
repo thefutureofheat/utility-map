@@ -264,7 +264,7 @@
     <label>Color territories by</label>
     <select id="colorMode">
       <optgroup label="Sales &amp; Customers (EIA)">
-        <option value="res_vol" selected>Residential Sales Volume (MMcf)</option>
+        <option value="res_vol" selected>Residential Sales Volume (Mcf)</option>
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
@@ -498,11 +498,11 @@ const MODES = {
   pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
   leaks:          { label: "Known Leaks",                  unit: "",       scale: "red",      fixed: null       },
   unacc:          { label: "Unaccounted-for Gas",          unit: "%",      scale: "red",      fixed: null       },
-  res_vol:        { label: "Residential Sales Volume",     unit: "MMcf",   scale: "blue",     fixed: null       },
+  res_vol:        { label: "Residential Sales Volume",     unit: "Mcf",   scale: "blue",     fixed: null       },
   res_price:      { label: "Residential Avg Price",        unit: "$/Mcf",  scale: "pricemap", fixed: null       },
   res_customers:  { label: "Residential Customers",        unit: "",       scale: "purple",   fixed: null       },
   com_price:      { label: "Commercial Avg Price",         unit: "$/Mcf",  scale: "pricemap", fixed: null       },
-  total_sales_vol:{ label: "Total Sales Volume",           unit: "MMcf",   scale: "teal",     fixed: null       },
+  total_sales_vol:{ label: "Total Sales Volume",           unit: "Mcf",   scale: "teal",     fixed: null       },
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
   losses_eia:       { label: "% Lost from Leaks",                 unit: "%",         scale: "red",      fixed: null       },
@@ -523,7 +523,7 @@ function fmtVal(v, modeKey) {
   if (unit === "Δ$/Mcf")  return `${v >= 0 ? "+" : ""}$${v.toFixed(2)}/Mcf`;
   if (unit === "%")        return `${v.toFixed(1)}%`;
   if (unit === "yrs")      return `${v.toFixed(0)} yrs`;
-  if (unit === "MMcf")     return `${n} MMcf`;
+  if (unit === "Mcf")     return `${n} Mcf`;
   if (unit === "mi")       return `${n} mi`;
   if (unit === "Mcf/cust") return `${v.toFixed(1)} Mcf/cust`;
   if (unit === "hrs/yr")   return `${v.toFixed(1)} hrs/yr`;
@@ -557,16 +557,41 @@ function buildStaticProps(p) {
   return out;
 }
 
+// Resolve a polygon's EIA id and PHMSA key.
+//
+// poly_map.json wins over the ids baked into the vector tiles. It carries two
+// kinds of entry: territory polygons that had no EIA link at all, and the few
+// whose baked-in link was wrong (NICOR Gas was joined to Illinois Gas Company).
+// Resolving here rather than in the tiles means corrections ship as a small JSON
+// instead of a 279 MB tileset rebuild.
+function polyKey(p) {
+  const st = p.geo_LOCATION || p.STATE || p.phmsa_STOP;
+  return p.geo_NAME ? `${p.geo_NAME}|${st}` : null;
+}
+
+function resolveIds(p) {
+  const opId = p.phmsa_OPERATOR_ID;
+  const stop = p.phmsa_STOP || p.geo_phmsa_STOP || p.geo_LOCATION || p.STATE;
+  let phmsaKey = (opId != null && stop) ? `${Math.round(opId)}_${stop}` : null;
+  let eiaId    = p.ID || null;
+
+  const k  = polyKey(p);
+  const ov = k ? polyMap[k] : null;
+  if (ov) {
+    if (ov.e) eiaId = ov.e;
+    if (ov.p) phmsaKey = ov.p;
+  }
+  if (!eiaId && phmsaKey) eiaId = phmsaToEia[phmsaKey] || null;
+  return { eiaId, phmsaKey };
+}
+
 // Merge static GeoJSON identifiers with timeseries data for selectedYear.
 // Returns feat.properties unchanged if timeseries not yet loaded.
 function getEffectiveProps(feat) {
   if (!timeseriesReady) return feat.properties;
 
-  const p     = feat.properties;
-  const opId  = p.phmsa_OPERATOR_ID;
-  const stop  = p.phmsa_STOP;
-  const phmsaKey  = (opId != null && stop) ? `${opId}_${stop}` : null;
-  const eiaId = p.ID || (phmsaKey && phmsaToEia[phmsaKey]) || null;
+  const p = feat.properties;
+  const { eiaId, phmsaKey } = resolveIds(p);
   const phmsaData = phmsaKey && phmsaTimeseries
     ? (phmsaTimeseries[phmsaKey]?.data?.[selectedYear] ?? null) : null;
   const eiaEntry = eiaId && eiaTimeseries ? (eiaTimeseries[eiaId] ?? null) : null;
@@ -774,14 +799,17 @@ let incidentsData    = null;
 let affordabilityData = null;
 let idMap            = {};   // EIA ID → PHMSA key (e.g. "17600184OK" → "32647_OK")
 let phmsaToEia       = {};   // reverse: PHMSA key → EIA ID (for polygons with no ID property)
+let polyMap          = {};   // "<geo_NAME>|<state>" → {e: EIA ID, p: PHMSA key} — overrides baked-in tile ids
 let mapLoaded        = false;
 
 // ── Choropleth color expression ───────────────────────────────────────────────
 
-function buildPropsForId(eiaId) {
+function buildPropsForId(eiaId, phmsaKeyOverride) {
   const eiaEntry = eiaTimeseries?.[eiaId];
   const eiaData  = eiaEntry?.data?.[selectedYear] ?? {};
-  const phmsaKey = idMap[eiaId];
+  // phmsaKeyOverride comes from poly_map for newly linked territories, whose
+  // EIA id may not be in id_map yet — without it their PHMSA color modes stay grey.
+  const phmsaKey = phmsaKeyOverride || idMap[eiaId];
   const phmsaData = phmsaKey ? (phmsaTimeseries?.[phmsaKey]?.data?.[selectedYear] ?? {}) : {};
   const p = { ID: eiaId, EIA_state: eiaEntry?.state, ...eiaData };
   for (const [k, v] of Object.entries(phmsaData)) p["phmsa_" + k] = v;
@@ -805,11 +833,29 @@ function rebuildColorExpression() {
     const col = modeColor(val, currentMode);
     if (col) pairs.push(phmsaKey, col);
   }
-  // Match on ID when set; fall back to "<OPERATOR_ID>_<STOP>" for null-ID polygons.
-  const matchKey = ["coalesce",
+  // Polygons overridden in poly_map.json — either newly linked territories that
+  // carry no ID in the tiles, or the few whose baked-in ID is wrong. Keyed by
+  // "<geo_NAME>|<state>" so they resolve independently of the tile ids.
+  const ovKeys = [];
+  for (const [k, ov] of Object.entries(polyMap)) {
+    if (!ov.e) continue;
+    const p   = buildPropsForId(ov.e, ov.p);
+    const val = getValue(p, currentMode);
+    const col = modeColor(val, currentMode);
+    if (col) { pairs.push(k, col); ovKeys.push(k); }
+  }
+
+  const geoKey = ["concat", ["to-string", ["get", "geo_NAME"]], "|",
+                  ["to-string", ["coalesce", ["get", "geo_LOCATION"], ["get", "STATE"]]]];
+  // Prefer the override key when this polygon has one; otherwise ID, then the
+  // PHMSA-derived key (Hawaii Gas and friends, which carry no ID in the tiles).
+  const fallback = ["coalesce",
     ["get", "ID"],
     ["concat", ["to-string", ["get", "phmsa_OPERATOR_ID"]], "_", ["get", "phmsa_STOP"]]
   ];
+  const matchKey = ovKeys.length
+    ? ["case", ["match", geoKey, ovKeys, true, false], geoKey, fallback]
+    : fallback;
   const expr = pairs.length
     ? ["match", matchKey, ...pairs, "#e0e0e0"]
     : "#e0e0e0";
@@ -984,6 +1030,11 @@ fetch("id_map.json")
   })
   .catch(() => {});
 
+// Fetch poly_map.json — polygon identity overrides. Must be in hand before the
+// choropleth expression is built, so it is awaited alongside the timeseries.
+const polyPromise = fetch("poly_map.json")
+  .then(r => r.json()).catch(() => ({}));
+
 const phmsaPromise = fetch("phmsa_timeseries.json")
   .then(r => r.json()).catch(() => null);
 
@@ -1061,9 +1112,10 @@ map.on("load", () => {
 
 // ── Timeseries — loaded in background; enable slider + colors when ready ──────
 
-Promise.all([phmsaPromise, eiaPromise]).then(([phmsa, eia]) => {
+Promise.all([phmsaPromise, eiaPromise, polyPromise]).then(([phmsa, eia, pmap]) => {
   phmsaTimeseries = phmsa;
   eiaTimeseries   = eia;
+  polyMap         = pmap || {};
   timeseriesReady = true;
 
   // Build operatorStateMap from PHMSA timeseries keys (e.g. "32647_OK")
@@ -1239,8 +1291,7 @@ function updateInfo(feat, pinned) {
   // Timeseries entry references
   const opId     = p.phmsa_OPERATOR_ID;
   const stop     = p.phmsa_STOP;
-  const phmsaKey = (opId != null && stop) ? `${opId}_${stop}` : null;
-  const eiaId    = p.ID || (phmsaKey && phmsaToEia[phmsaKey]) || null;
+  const { eiaId, phmsaKey } = resolveIds(p);
   const eiaEntry   = eiaId    && eiaTimeseries   ? eiaTimeseries[eiaId]     : null;
   const phmsaEntry = phmsaKey && phmsaTimeseries  ? phmsaTimeseries[phmsaKey] : null;
 
@@ -1265,7 +1316,7 @@ function updateInfo(feat, pinned) {
     html += `<div class="info-section"><div class="info-section-title">Sales (EIA Form 176, ${yr})</div>`;
     if (hasAnySales) {
       html += `<table class="sales-table"><thead><tr>
-        <th>Sector</th><th>Vol (MMcf)</th><th>Customers</th>
+        <th>Sector</th><th>Vol (Mcf)</th><th>Customers</th>
         <th>$/Mcf${tipIcon("Derived: revenue ÷ volume sold (EIA Form 176 CS ÷ VL fields)")}</th>
       </tr></thead><tbody>`;
       let tvl = 0, tcs = 0, tct = 0;
@@ -1363,7 +1414,7 @@ function updateInfo(feat, pinned) {
       const hasAnyTransport = TRANSPORT_SECTORS.some(s => p[s.vl] != null || p[s.cs] != null);
       if (hasAnyTransport) {
         html += `<table class="sales-table"><thead><tr>
-          <th>Sector</th><th>Vol (MMcf)</th><th>Customers</th>
+          <th>Sector</th><th>Vol (Mcf)</th><th>Customers</th>
           <th>Fee $/Mcf${tipIcon("Derived: transport revenue ÷ volume delivered (EIA Form 176 CS ÷ VL fields, Transport lines). This is the utility's transport fee, not a retail gas price — the utility does not sell the commodity to these customers.")}</th>
         </tr></thead><tbody>`;
         let tvl = 0, tcs = 0, tct = 0;
@@ -1396,9 +1447,9 @@ function updateInfo(feat, pinned) {
     }
     const supply = p["Total Supply [VL]"], disp = p["Total Disposition [VL]"];
     const losses = p["Losses from Leaks [VL]"];
-    if (supply) html += `<div style="margin-top:6px">` + statRow("Total Supply",      fmtNum(supply) + " MMcf") + `</div>`;
-    if (disp)   html += statRow("Total Disposition", fmtNum(disp) + " MMcf");
-    if (losses) html += statRow("Losses (Leaks)",    fmtNum(losses) + " MMcf");
+    if (supply) html += `<div style="margin-top:6px">` + statRow("Total Supply",      fmtNum(supply) + " Mcf") + `</div>`;
+    if (disp)   html += statRow("Total Disposition", fmtNum(disp) + " Mcf");
+    if (losses) html += statRow("Losses (Leaks)",    fmtNum(losses) + " Mcf");
     html += `</div>`;
   }
 
@@ -1875,8 +1926,7 @@ function renderTrends(feat) {
   const p       = getEffectiveProps(feat);
   const opId    = p.phmsa_OPERATOR_ID;
   const stop    = p.phmsa_STOP;
-  const phmsaKey = (opId != null && stop) ? `${opId}_${stop}` : null;
-  const eiaId   = p.ID || (phmsaKey && phmsaToEia[phmsaKey]) || null;
+  const { eiaId, phmsaKey } = resolveIds(p);
   const name    = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
 
   destroyTrendCharts();
@@ -1945,11 +1995,11 @@ function renderTrends(feat) {
       <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
     </div>` : ""}
     ${hasSupplyDisp ? `<div class="chart-block">
-      <div class="chart-title">Total Supply &amp; Total Disposition (MMcf)</div>
+      <div class="chart-title">Total Supply &amp; Total Disposition (Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-supplydisp"></canvas></div>
     </div>` : ""}
     ${hasLossEIA ? `<div class="chart-block">
-      <div class="chart-title">Losses from Leaks (MMcf)</div>
+      <div class="chart-title">Losses from Leaks (Mcf)</div>
       <div class="chart-wrap"><canvas id="tc-loss"></canvas></div>
     </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
