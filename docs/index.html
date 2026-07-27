@@ -1156,6 +1156,27 @@ function buildEiaNameEntries(eiaId) {
   return entries;
 }
 
+function buildPhmsaNameEntries(phmsaKey) {
+  if (!phmsaTimeseries || !phmsaKey) return [];
+  const entry = phmsaTimeseries[phmsaKey];
+  if (!entry) return [];
+  const allDataYears = Object.keys(entry.data || {}).map(Number).sort((a, b) => a - b);
+  const backfill = entry._backfill || [];
+  const backfillYears = new Set();
+  for (const b of backfill) {
+    for (let y = b.from; y <= b.to; y++) backfillYears.add(y);
+  }
+  const mainYears = allDataYears.filter(y => !backfillYears.has(y));
+  const entries = [];
+  if (mainYears.length) {
+    entries.push({ name: entry.name, from: mainYears[0], to: mainYears[mainYears.length - 1] });
+  }
+  for (const b of backfill) {
+    entries.push({ name: b.name, from: b.from, to: b.to });
+  }
+  return entries;
+}
+
 // Returns the list of states that share the same MMILES_TOTAL as `stop` in `yr`
 // (>= 2 states with the same non-trivial total = PHMSA combined filing).
 // Returns null if this polygon's state is not part of a combined group.
@@ -1456,8 +1477,11 @@ function updateInfo(feat, pinned) {
     html += nameEntryHtml(nameEntries, "EIA Name", "EIA Name");
   }
 
-  // PHMSA name (year range only if multiple names — not currently tracked, so omit)
-  if (p.phmsa_OPERATOR_NAME) {
+  // PHMSA name(s) with year ranges
+  if (phmsaKey) {
+    const phmsaNameEntries = buildPhmsaNameEntries(phmsaKey);
+    html += nameEntryHtml(phmsaNameEntries, "PHMSA Name", "PHMSA Name");
+  } else if (p.phmsa_OPERATOR_NAME) {
     html += statRow("PHMSA Name", escHtml(p.phmsa_OPERATOR_NAME));
   }
 
