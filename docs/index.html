@@ -238,6 +238,11 @@
       padding: 1px 0 1px 8px; gap: 6px; }
     .name-entry-name  { font-size: 11px; color: #333; flex: 1; }
     .name-entry-years { font-size: 10px; color: #aaa; white-space: nowrap; flex-shrink: 0; }
+    .summed-note {
+      display: block; margin: 3px 0 5px 8px; padding: 4px 7px;
+      background: #fff7e6; border-left: 2px solid #c07d00; border-radius: 3px;
+      font-size: 10px; line-height: 1.45; color: #5c4400;
+    }
 
     /* ── Multi-state note ─────────────────────────────────────── */
     .multi-state-note {
@@ -1348,6 +1353,19 @@ function nameEntryHtml(entries, singleLabel, groupLabel) {
   return h + `</div>`;
 }
 
+// Note for a utility formed by merging several predecessors: the backfilled years
+// are the SUM of all of them (Ameren Illinois = Illinois Power + CILCO + CIPS), so
+// the figures for those years belong to no single name in the list above.
+function summedNoteHtml(entry, source) {
+  const s = entry && entry._summed;
+  if (!s) return "";
+  const range = s.from === s.to ? `${s.from}` : `${s.from}–${s.to}`;
+  return `<div class="summed-note">
+    <strong>${range}</strong> is the combined total of ${s.n} predecessor utilities &mdash;
+    ${source} values for those years are summed, not taken from any one of them.
+  </div>`;
+}
+
 // ── Info panel ────────────────────────────────────────────────────────────────
 
 function updateInfo(feat, pinned) {
@@ -1606,12 +1624,17 @@ function updateInfo(feat, pinned) {
   if (eiaId) {
     const nameEntries = buildEiaNameEntries(eiaId);
     html += nameEntryHtml(nameEntries, "EIA Name", "EIA Name");
+    // Where several predecessors merged into this utility, those years are the SUM
+    // of all of them. Say so explicitly — the name list above otherwise reads as
+    // though any single one of them produced the figures.
+    html += summedNoteHtml(eiaTimeseries && eiaTimeseries[eiaId], "EIA");
   }
 
   // PHMSA name(s) with year ranges
   if (phmsaKey) {
     const phmsaNameEntries = buildPhmsaNameEntries(phmsaKey);
     html += nameEntryHtml(phmsaNameEntries, "PHMSA Name", "PHMSA Name");
+    html += summedNoteHtml(phmsaTimeseries && phmsaTimeseries[phmsaKey], "PHMSA");
   } else if (p.phmsa_OPERATOR_NAME) {
     html += statRow("PHMSA Name", escHtml(p.phmsa_OPERATOR_NAME));
   }
