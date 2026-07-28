@@ -909,8 +909,33 @@ function computeDomains() {
 
 // ── MapLibre event handlers ───────────────────────────────────────────────────
 
+// The fill/stroke layers hide territories tippecanoe tagged "geo_nomatch"
+// (polygons that had no PHMSA operator when the tiles were built). Territories
+// that poly_map.json has since linked to a utility must be let back in, or the
+// new links are invisible on the map. Matched by "<geo_NAME>|<state>" because
+// those features carry no ID in the tiles.
+function overrideVisibilityFilter() {
+  const base = ["!=", ["get", "feature_type"], "geo_nomatch"];
+  const keys = Object.keys(polyMap || {});
+  if (!keys.length) return base;
+  const geoKey = ["concat", ["to-string", ["get", "geo_NAME"]], "|",
+                  ["to-string", ["coalesce", ["get", "geo_LOCATION"], ["get", "STATE"]]]];
+  return ["any", base, ["match", geoKey, keys, true, false]];
+}
+
+function applyLayerFilters() {
+  if (!mapLoaded) return;
+  const f = overrideVisibilityFilter();
+  for (const id of ["utilities-fill", "utilities-stroke"]) {
+    if (map.getLayer(id)) map.setFilter(id, f);
+  }
+}
+
 function setPinnedState(feat, pinned) {
-  if (!feat) return;
+  // Newly linked territories carry no ID in the tiles, so promoteId leaves them
+  // without a feature id and feature-state cannot attach. Skip rather than throw;
+  // the info panel still resolves them via poly_map.
+  if (!feat || feat.id == null) return;
   const ref = { source: "utilities", sourceLayer: "utilities", id: feat.id };
   map.setFeatureState(ref, { pinned });
   // When unpinning, also clear any lingering hover state. mousemove skips
@@ -970,11 +995,20 @@ function pickSmallest(features) {
 // can return empty at tile boundaries and immediately unpin what was just pinned.
 let utilityJustClicked = false;
 
+// Identity for "is this the same polygon I already pinned?". feat.id comes from
+// promoteId "ID", which newly linked territories don't have — every one of them
+// would compare equal as undefined, so clicking a second one would unpin instead
+// of switching. Fall back to the geo_NAME|state key those features do carry.
+function featIdentity(feat) {
+  if (!feat) return null;
+  return feat.id != null ? `id:${feat.id}` : `key:${polyKey(feat.properties || {})}`;
+}
+
 map.on("click", "utilities-fill", (e) => {
   if (!e.features.length) return;
   utilityJustClicked = true;
   const feat = pickSmallest(e.features);
-  if (pinnedFeat && pinnedFeat.id === feat.id) {
+  if (pinnedFeat && featIdentity(pinnedFeat) === featIdentity(feat)) {
     setPinnedState(pinnedFeat, false);
     pinnedFeat = null;
     updateInfo(null, false);
@@ -998,6 +1032,7 @@ map.on("click", (e) => {
 // ── Apply year ────────────────────────────────────────────────────────────────
 
 function applyYear() {
+  applyLayerFilters();
   rebuildColorExpression();
   if (pinnedFeat) updateInfo(pinnedFeat, true);
   updateYearAvail();
