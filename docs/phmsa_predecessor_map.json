@@ -1,0 +1,105 @@
+{
+  "_comment": "Maps current PHMSA operator key (OPERATOR_ID_STOP) to predecessor keys that covered the same territory in earlier years. The build script backfills missing years from predecessor data. Edit this file to add/remove mappings, then re-run build_phmsa_timeseries_json.py.",
+  "40196_MA": {
+    "note": "Eversource Gas of Massachusetts (2020+). Formerly Columbia Gas of Massachusetts; NiSource sold the MA distribution business to Eversource in 2020 following the 2018 Merrimack Valley gas explosions.",
+    "predecessors": [
+      "1209_MA"
+    ]
+  },
+  "32513_IL": {
+    "note": "AMEREN ILLINOIS COMPANY (IL, filings from 2010). Renamed/reorganized from ILLINOIS POWER CO (1997-2009); name match score 64 with nesting place tokens.",
+    "predecessors": [
+      "8040_IL"
+    ]
+  },
+  "15359_WY": {
+    "note": "BLACK HILLS ENERGY (WY, filings from 2016). Renamed/reorganized from BLACK HILLS NORTHWEST WYOMING GAS UTILITY COMPANY, LLC (1997-2015); name match score 76 with nesting place tokens.",
+    "predecessors": [
+      "2537_WY"
+    ]
+  },
+  "31636_MN": {
+    "note": "NORTHERN STATES POWER CO OF MINNESOTA (MN, filings from 2002). Renamed/reorganized from NORTHERN STATES POWER CO (1997-2001); name match score 100 with nesting place tokens.",
+    "predecessors": [
+      "13782_MN"
+    ]
+  },
+  "31632_SD": {
+    "note": "NORTHWESTERN CORPORATION (SD, filings from 2012). Renamed/reorganized from NORTHWESTERN ENERGY LLC (1997-2011); name match score 69 with nesting place tokens.",
+    "predecessors": [
+      "13850_SD"
+    ]
+  },
+  "31632_NE": {
+    "note": "NORTHWESTERN CORPORATION (NE, filings from 2012). Renamed/reorganized from NORTHWESTERN ENERGY LLC (1997-2011); name match score 69 with nesting place tokens.",
+    "predecessors": [
+      "13850_NE"
+    ]
+  },
+  "31232_OR": {
+    "note": "AVISTA CORP (OR, filings from 2003). Renamed/reorganized from AVISTA UTILITIES (1998-2000); name match score 71 with nesting place tokens.",
+    "predecessors": [
+      "31242_OR"
+    ]
+  },
+  "31636_ND": {
+    "note": "NORTHERN STATES POWER CO OF MINNESOTA (ND, filings from 2002). Renamed/reorganized from NORTHERN STATES POWER CO (1998-2001); name match score 100 with nesting place tokens.",
+    "predecessors": [
+      "13782_ND"
+    ]
+  },
+  "31770_MA": {
+    "note": "LIBERTY UTILITIES (NEW ENGLAND NATURAL GAS COMPANY) CORP (MA, filings from 2004). Renamed/reorganized from NEW ENGLAND GAS COMPANY (1997-2003); name match score 65 with nesting place tokens.",
+    "predecessors": [
+      "5060_MA"
+    ]
+  },
+  "31859_IL": {
+    "note": "VILLAGE OF MORTON (IL, filings from 2006). Renamed/reorganized from VILLAGE OF MORTON (1997-2005); name match score 100 with nesting place tokens.",
+    "predecessors": [
+      "12810_IL"
+    ]
+  },
+  "40804_TX": {
+    "note": "STERLING CITY GAS DEPT (TX, filings from 2023). Renamed/reorganized from STERLING NATURAL GAS INC (1997-2022); name match score 71 with nesting place tokens.",
+    "predecessors": [
+      "17058_TX"
+    ]
+  },
+  "31906_MN": {
+    "note": "NORTHWEST NATURAL GAS LLC (MN, filings from 2004). Renamed/reorganized from NORTHWEST NATURAL GAS CO (1997-2003); name match score 94 with nesting place tokens.",
+    "predecessors": [
+      "13840_MN"
+    ]
+  },
+  "31860_LA": {
+    "note": "TOWN OF FRANKLINTON (LA, filings from 2003). Renamed/reorganized from FRANKLINTON, TOWN OF (1997-2002); name match score 97 with nesting place tokens.",
+    "predecessors": [
+      "5570_LA"
+    ]
+  },
+  "31357_MS": {
+    "note": "GEO PETROLEUM ENERGY TRANSMISSION LTD (MS, filings from 1999). Renamed/reorganized from GEO PETROLEUM ENERGY TRANSMISSION, LTD (1998-1998); name match score 99 with nesting place tokens.",
+    "predecessors": [
+      "31306_MS"
+    ]
+  },
+  "31636_SD": {
+    "note": "NORTHERN STATES POWER COMPANY OF MINNESOTA (SD, filings from 2002). Renamed/reorganized from NORTHERN STATES POWER CO (1998-2001); name match score 93 with nesting place tokens.",
+    "predecessors": [
+      "13782_SD"
+    ]
+  },
+  "31945_OH": {
+    "note": "ENERGY MGT SYSTEMS, INC LAKESIDE DIVISION (OH, filings from 2002). Renamed/reorganized from LAKESIDE GAS CO (1997-2001); name match score 70 with nesting place tokens.",
+    "predecessors": [
+      "11172_OH"
+    ]
+  },
+  "30879_OH": {
+    "note": "GASCO DISTRIBUTION SYSTEMS, INC. (OH, filings from 1999). Renamed/reorganized from GASCO DISTRIBUTION SYSTEMS OF KY, INC. (1997-1997); name match score 89 with nesting place tokens.",
+    "predecessors": [
+      "26359_OH"
+    ]
+  }
+}
