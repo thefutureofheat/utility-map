@@ -1439,7 +1439,13 @@ function updateInfo(feat, pinned) {
       </tr>`;
       html += `</tbody></table>`;
       // Residential delivery box
-      const infoState = p.phmsa_STOP || p.EIA_state;
+      // Use the state resolved by resolveIds, not the raw tile properties: newly
+      // linked territories carry neither phmsa_STOP nor EIA_state, so reading those
+      // left infoState undefined and silently dropped every state-keyed stat below
+      // (citygate, delivery price and CAGR, min-wage hours, share of income) while
+      // the charts — which take their state from resolveIds — still worked.
+      const infoState = stop || p.phmsa_STOP || p.EIA_state
+                     || (eiaEntry && eiaEntry.state) || p.STATE || p.geo_LOCATION;
       const resVl = p["Residential Sales [VL]"], resCt = p["Residential Sales [CT]"];
       const resCs2 = p["Residential Sales [CS]"], resVl2 = p["Residential Sales [VL]"];
       const resPr2  = resCs2 && resVl2 && resVl2 > 0 ? resCs2 / resVl2 : null;
