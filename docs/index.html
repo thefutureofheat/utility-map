@@ -570,9 +570,9 @@ function polyKey(p) {
 }
 
 function resolveIds(p) {
-  const opId = p.phmsa_OPERATOR_ID;
-  const stop = p.phmsa_STOP || p.geo_phmsa_STOP || p.geo_LOCATION || p.STATE;
-  let phmsaKey = (opId != null && stop) ? `${Math.round(opId)}_${stop}` : null;
+  const rawOp = p.phmsa_OPERATOR_ID;
+  let stop = p.phmsa_STOP || p.geo_phmsa_STOP || p.geo_LOCATION || p.STATE;
+  let phmsaKey = (rawOp != null && stop) ? `${Math.round(rawOp)}_${stop}` : null;
   let eiaId    = p.ID || null;
 
   const k  = polyKey(p);
@@ -582,7 +582,19 @@ function resolveIds(p) {
     if (ov.p) phmsaKey = ov.p;
   }
   if (!eiaId && phmsaKey) eiaId = phmsaToEia[phmsaKey] || null;
-  return { eiaId, phmsaKey };
+
+  // Derive the operator id from the resolved key rather than the raw tile
+  // property: newly linked territories carry no phmsa_OPERATOR_ID of their own,
+  // so anything keyed by operator (incident table and chart, multi-state badge)
+  // would otherwise come up empty for them.
+  let opKey = null;
+  if (phmsaKey) {
+    const u = phmsaKey.lastIndexOf("_");
+    if (u > 0) { opKey = phmsaKey.slice(0, u); stop = phmsaKey.slice(u + 1) || stop; }
+  }
+  const opId = opKey != null ? Number(opKey)
+             : (rawOp != null ? Math.round(rawOp) : null);
+  return { eiaId, phmsaKey, opId, opKey, stop };
 }
 
 // Merge static GeoJSON identifiers with timeseries data for selectedYear.
@@ -1289,9 +1301,7 @@ function updateInfo(feat, pinned) {
   const subParts = [stateLbl, typeLbl].filter(Boolean);
 
   // Timeseries entry references
-  const opId     = p.phmsa_OPERATOR_ID;
-  const stop     = p.phmsa_STOP;
-  const { eiaId, phmsaKey } = resolveIds(p);
+  const { eiaId, phmsaKey, opId, stop } = resolveIds(p);
   const eiaEntry   = eiaId    && eiaTimeseries   ? eiaTimeseries[eiaId]     : null;
   const phmsaEntry = phmsaKey && phmsaTimeseries  ? phmsaTimeseries[phmsaKey] : null;
 
@@ -1624,9 +1634,8 @@ let incidentsSortAsc = true;
 function openIncidentsPanel(feat) {
   if (!feat) return;
   const p = getEffectiveProps(feat);
-  const opId = p.phmsa_OPERATOR_ID;
-  if (opId == null || !incidentsData) return;
-  const opKey = String(opId).replace(/\.0$/, "");
+  const { opKey } = resolveIds(p);
+  if (opKey == null || !incidentsData) return;
   const rows = incidentsData[opKey];
   if (!rows || rows.length === 0) return;
 
@@ -1711,8 +1720,8 @@ function incidentsSortBy(col) {
     incidentsSortAsc = col !== "inc_year";
   }
   const p = getEffectiveProps(currentInfoFeat);
-  const opKey = String(p.phmsa_OPERATOR_ID).replace(/\.0$/, "");
-  renderIncidentsTable(incidentsData[opKey]);
+  const { opKey } = resolveIds(p);
+  renderIncidentsTable(opKey != null ? incidentsData[opKey] : null);
 }
 
 function destroyTrendCharts() {
@@ -1924,15 +1933,12 @@ function makeLineChart(canvasId, labels, datasets, yTickFmt) {
 
 function renderTrends(feat) {
   const p       = getEffectiveProps(feat);
-  const opId    = p.phmsa_OPERATOR_ID;
-  const stop    = p.phmsa_STOP;
-  const { eiaId, phmsaKey } = resolveIds(p);
+  const { eiaId, phmsaKey, opId, opKey, stop } = resolveIds(p);
   const name    = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
 
   destroyTrendCharts();
 
   const state   = stop || p.EIA_state || null;
-  const opKey   = opId != null ? String(opId).replace(/\.0$/, "") : null;
   const d = assembleTrendsData(eiaId, phmsaKey, state);
 
   const hasIncidents = opKey != null && incidentsData != null
