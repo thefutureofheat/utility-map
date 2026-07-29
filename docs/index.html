@@ -863,12 +863,17 @@ function rebuildColorExpression() {
     // An entry may carry only a PHMSA key: some territories have an operator but no
     // EIA filer. Those still colour correctly in the PHMSA-based modes.
     if (!ov.e && !ov.p) continue;
-    const p   = buildPropsForId(ov.e || null, ov.p);
-    const val = getValue(p, currentMode);
-    const col = modeColor(val, currentMode);
-    if (!col) continue;
-    pairs.push(k, col);
+    // Register the key whether or not it yields a colour in THIS mode. Registering
+    // only coloured keys made the override conditional on the mode, so a corrected
+    // polygon whose utility has no value here fell through to its stale baked-in id
+    // and painted the utility we corrected away from — Ohio Gas Co's territory drew
+    // Ohio Cumberland's sales, the 248x Indiana error could resurface, and the fill
+    // disagreed with the info panel. Falling through to no pair yields grey, which
+    // is the honest result.
     (k.split("|").length > 2 ? ovKeysLong : ovKeys).push(k);
+    const p   = buildPropsForId(ov.e || null, ov.p);
+    const col = modeColor(getValue(p, currentMode), currentMode);
+    if (col) pairs.push(k, col);
   }
 
   const geoKey = ["concat", ["to-string", ["get", "geo_NAME"]], "|",
