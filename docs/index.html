@@ -860,8 +860,10 @@ function rebuildColorExpression() {
   // territory names that host more than one utility and need disambiguating.
   const ovKeys = [], ovKeysLong = [];
   for (const [k, ov] of Object.entries(polyMap)) {
-    if (!ov.e) continue;
-    const p   = buildPropsForId(ov.e, ov.p);
+    // An entry may carry only a PHMSA key: some territories have an operator but no
+    // EIA filer. Those still colour correctly in the PHMSA-based modes.
+    if (!ov.e && !ov.p) continue;
+    const p   = buildPropsForId(ov.e || null, ov.p);
     const val = getValue(p, currentMode);
     const col = modeColor(val, currentMode);
     if (!col) continue;

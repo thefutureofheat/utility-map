@@ -1,4 +1,10 @@
 {
+ "ADAIRSVILLE NATURAL GAS SYSTEM|GA": {
+  "e": "17600081GA"
+ },
+ "AFTON PUBLIC WKS. AUTH.|OK": {
+  "e": "17620238OK"
+ },
  "ALMA, CITY OF NAT. GAS CO.|NE": {
   "e": "17600238NE",
   "p": "342_NE"
@@ -6,6 +12,9 @@
  "ALMA, CITY OF|KS": {
   "e": "17600235KS",
   "p": "333_KS"
+ },
+ "ALTON MUNICIPAL UTILITIES|IA": {
+  "e": "17674470IA"
  },
  "ARGONIA, CITY OF|KS": {
   "e": "17600491KS",
@@ -19,6 +28,12 @@
   "e": "17600538LA",
   "p": "675_LA"
  },
+ "ARTESIA MUN GAS|MS": {
+  "e": "17628037MS"
+ },
+ "ASHBURN NATURAL GAS SYSTEM|GA": {
+  "e": "17613095GA"
+ },
  "ASHLAND, TOWN OF|MS": {
   "e": "17600588MS",
   "p": "729_MS"
@@ -27,9 +42,26 @@
   "e": "17600618AL",
   "p": "766_AL"
  },
+ "ATHENS GAS DEPT, CITY OF|TN": {
+  "e": "17671860TN"
+ },
+ "ATMOS ENERGY CORPORATION|MO": {
+  "e": "17692927MO",
+  "p": "20211_MO"
+ },
+ "ATTICA, CITY OF|KS": {
+  "e": "17620088KS"
+ },
+ "AURORA GAS COMPANY|MI": {
+  "e": "17695250MI",
+  "p": "885_MI"
+ },
  "AURORA UTILITY SYSTEM|IN": {
   "e": "17600688IN",
   "p": "891_IN"
+ },
+ "AURORA, CITY OF|KS": {
+  "e": "17620010KS"
  },
  "BAGLEY PUBLIC UTILITIES|MN": {
   "e": "17695328MN",
@@ -38,6 +70,9 @@
  "BAKER, CITY OF|LA": {
   "e": "17600782LA",
   "p": "1064_LA"
+ },
+ "BARLOW MUNICIPAL GAS CO.|KY": {
+  "e": "17601119KY"
  },
  "BAY ST. LOUIS, CITY OF|MS": {
   "e": "17600937MS",
@@ -67,9 +102,16 @@
   "e": "17629301MO",
   "p": "1456_MO"
  },
+ "BLACKSTONE GAS CO|MA": {
+  "e": "17625015MA",
+  "p": "1504_MA"
+ },
  "BLOOMFIELD, CITY OF|IA": {
   "e": "17601247IA",
   "p": "1536_IA"
+ },
+ "BLUEFIELD GAS|VA": {
+  "p": "2672_VA"
  },
  "BOLIVAR, CITY OF|TN": {
   "e": "17601344TN",
@@ -87,6 +129,10 @@
   "e": "17680423TX",
   "p": "1688_TX"
  },
+ "BRAINARD GAS CORPORATION|OH": {
+  "e": "17695236OH",
+  "p": "31366_OH"
+ },
  "BROOKSVILLE, CITY OF|KY": {
   "e": "17621069KY",
   "p": "1816_KY"
@@ -95,6 +141,9 @@
   "e": "17601605TN",
   "p": "1840_TN"
  },
+ "BUCKLEY, CITY OF|WA": {
+  "e": "17601647WA"
+ },
  "BURLINGAME, CITY OF|KS": {
   "e": "17601715KS",
   "p": "1912_KS"
@@ -102,6 +151,13 @@
  "BURLINGTON, TOWN OF|OK": {
   "e": "17601721OK",
   "p": "1920_OK"
+ },
+ "BYRON, CITY OF|GA": {
+  "e": "17617384GA",
+  "p": "1984_GA"
+ },
+ "CAIRO NATURAL GAS SYSTEM|GA": {
+  "e": "17600047GA"
  },
  "CALERA, CITY OF|AL": {
   "e": "17618617AL",
@@ -114,6 +170,9 @@
  "CARROLLTON, CITY OF|KY": {
   "e": "17601986KY",
   "p": "2116_KY"
+ },
+ "CASHION PUBLIC WORKS AUTHORITY|OK": {
+  "e": "17619846OK"
  },
  "CASTROVILLE, CITY OF|TX": {
   "e": "17602023TX",
@@ -143,6 +202,13 @@
   "e": "17619024IN",
   "p": "22504_IN"
  },
+ "CITIZENS UTIL CO|CO": {
+  "p": "2420_CO"
+ },
+ "CLAY GAS UTILITY DISTRICT|TN": {
+  "e": "17674479TN",
+  "p": "31315_TN"
+ },
  "CLAY, CITY OF|KY": {
   "e": "17602535KY",
   "p": "2472_KY"
@@ -163,6 +229,12 @@
   "e": "17602926TN",
   "p": "2764_TN"
  },
+ "COPAN PUBLIC WORKS AUTHORITY|OK": {
+  "e": "17602970OK"
+ },
+ "CORINTH GAS & WATER DEPT|MS": {
+  "e": "17603000MS"
+ },
  "CORN, TOWN OF|OK": {
   "e": "17619803OK",
   "p": "2792_OK"
@@ -171,9 +243,18 @@
   "e": "17696318TN",
   "p": "30863_TN"
  },
+ "COVINGTON NATURAL GAS SYSTEM|GA": {
+  "e": "17603049GA"
+ },
+ "CREAL SPRINGS GAS UTILITY|IL": {
+  "p": "2868_IL"
+ },
  "DAISETTA, CITY OF|TX": {
   "e": "17648138TX",
   "p": "3070_TX"
+ },
+ "DALTON UTILITY|GA": {
+  "e": "17603202GA"
  },
  "DEKALB CHEROKEE-COUNTIES|AL": {
   "e": "17603332AL",
@@ -207,6 +288,10 @@
   "e": "17610438OH",
   "p": "14130_OH"
  },
+ "EASTERN COLORADO UTILITY CO.|CO": {
+  "e": "17603762CO",
+  "p": "4100_CO"
+ },
  "EDMONTON, CITY OF|KY": {
   "e": "17621014KY",
   "p": "4260_KY"
@@ -214,6 +299,13 @@
  "ELDORADO CITY OF|TX": {
   "e": "17603884TX",
   "p": "4272_TX"
+ },
+ "ELIZABETH NATURAL GAS INC.|LA": {
+  "e": "17694501LA",
+  "p": "4343_LA"
+ },
+ "ENERGY WEST WYOMING|WY": {
+  "e": "17602627WY"
  },
  "ENUMCLAW, CITY OF|WA": {
   "e": "17603995WA",
@@ -223,9 +315,27 @@
   "e": "17617083IL",
   "p": "4507_IL"
  },
+ "EQUITABLE GAS CO. (PEOPLES NATURAL GAS|PA": {
+  "e": "17617365PA"
+ },
+ "ESTHERWOOD, TOWN OF|LA": {
+  "p": "4550_LA"
+ },
  "FAIRBANK MUNICIPAL UTILITY|IA": {
   "e": "17695290IA",
   "p": "860_IA"
+ },
+ "FAIRBANKS NATURAL GAS|AK": {
+  "p": "99128_AK"
+ },
+ "FALFURRIAS, CITY OF|TX": {
+  "e": "17617880TX"
+ },
+ "FALLS CITY, CITY OF|NE": {
+  "e": "17609408NE"
+ },
+ "FERGUSON GAS SERVICE|KY": {
+  "p": "5144_KY"
  },
  "FLEMINGSBURG, CITY OF|KY": {
   "e": "17621916KY",
@@ -234,6 +344,9 @@
  "FLORALA GAS DEPARTMENT|AL": {
   "e": "17600048AL",
   "p": "5290_AL"
+ },
+ "FLORALA GAS DEPARTMENT|FL": {
+  "e": "17612004FL"
  },
  "FOREST HILL, VILLAGE OF|LA": {
   "e": "17604420LA",
@@ -259,6 +372,9 @@
   "e": "17621901TX",
   "p": "6110_TX"
  },
+ "GLENMORA, TOWN OF|LA": {
+  "e": "17604998LA"
+ },
  "GLOSTER, TOWN OF|MS": {
   "e": "17605014MS",
   "p": "6410_MS"
@@ -271,6 +387,10 @@
   "e": "17674465MN",
   "p": "30961_MN"
  },
+ "GRAHAM COUNTY UTILITIES, INC.|AZ": {
+  "e": "17614896AZ",
+  "p": "6484_AZ"
+ },
  "GRAND COTEAU, TOWN OF|LA": {
   "e": "17605111LA",
   "p": "6500_LA"
@@ -278,6 +398,12 @@
  "GRANDFALLS, CITY OF|TX": {
   "e": "17605113TX",
   "p": "6540_TX"
+ },
+ "GRANDVIEW MUN. GAS UTILITY|IN": {
+  "e": "17617867IN"
+ },
+ "GREENSBORO, CITY OF|GA": {
+  "e": "17605209GA"
  },
  "GUD EAST BATON ROUGE PARISH|LA": {
   "e": "17604832LA",
@@ -315,6 +441,9 @@
   "e": "17601310KS",
   "p": "7077_KS"
  },
+ "HARTSVILLE GAS CO.|TN": {
+  "p": "7115_TN"
+ },
  "HARTWELL, CITY OF|GA": {
   "e": "17605562GA",
   "p": "7120_GA"
@@ -351,6 +480,12 @@
   "e": "17605766KY",
   "p": "7255_KY"
  },
+ "HOLLY SPRINGS, CITY OF|MS": {
+  "e": "17605931MS"
+ },
+ "HONESDALE GAS CO|PA": {
+  "p": "7340_PA"
+ },
  "HORNBECK, TOWN OF|LA": {
   "e": "17619708LA",
   "p": "7360_LA"
@@ -383,17 +518,30 @@
   "e": "17606498IN",
   "p": "9140_IN"
  },
+ "JAY UTIL ITY AUTHORITY|OK": {
+  "e": "17601989OK"
+ },
  "JENA, TOWN OF|LA": {
   "e": "17606516LA",
   "p": "9210_LA"
+ },
+ "JOHNSON COUNTY GAS COMPANY INC|KY": {
+  "e": "17672629KY",
+  "p": "9260_KY"
  },
  "KAPLAN, CITY OF|LA": {
   "e": "17606729LA",
   "p": "10060_LA"
  },
+ "KARNAK MUNICIPAL GAS UTILITY|IL": {
+  "p": "10070_IL"
+ },
  "KENNETT BOARD OF PUBLIC WORKS|MO": {
   "e": "17681218MO",
   "p": "10156_MO"
+ },
+ "KEYES UTILITY AUTHORITY|OK": {
+  "e": "17606866OK"
  },
  "KINGS MOUNTAIN, CITY OF|NC": {
   "e": "17606920NC",
@@ -419,9 +567,18 @@
   "e": "17608114GA",
   "p": "11080_GA"
  },
+ "LAKIN, CITY OF|KS": {
+  "e": "17695326KS"
+ },
  "LANETT, CITY OF|AL": {
   "e": "17608183AL",
   "p": "11216_AL"
+ },
+ "LAPEL MUN. WATER & GAS|IN": {
+  "e": "17608201IN"
+ },
+ "LAS CRUCES MUNICIPAL GAS|NM": {
+  "e": "17608222NM"
  },
  "LEBO, CITY OF|KS": {
   "e": "17619808KS",
@@ -467,9 +624,20 @@
   "e": "17600183TN",
   "p": "11752_TN"
  },
+ "LOS YBANEZ, CITY OF|TX": {
+  "e": "17648970TX",
+  "p": "11780_TX"
+ },
  "LOUISBURG, CITY OF|KS": {
   "e": "17608627KS",
   "p": "11784_KS"
+ },
+ "LOXLEY, TOWN OF|AL": {
+  "e": "17608660AL",
+  "p": "11864_AL"
+ },
+ "LUMPKIN, CITY OF|GA": {
+  "e": "17608675GA"
  },
  "LYONS, CITY OF|KS": {
   "e": "17617863KS",
@@ -478,6 +646,9 @@
  "LYONS, CITY OF|NE": {
   "e": "17619692NE",
   "p": "11952_NE"
+ },
+ "LYTLE, CITY OF|TX": {
+  "e": "17608723TX"
  },
  "MADISON, CITY OF|GA": {
   "e": "17608788GA",
@@ -507,13 +678,26 @@
   "e": "17609246KS",
   "p": "12276_KS"
  },
+ "METCALFE NATURAL GAS SYSTEM|MS": {
+  "e": "17628002MS"
+ },
+ "MGTC INC|WY": {
+  "e": "17619745WY"
+ },
  "MILLEN, CITY OF|GA": {
   "e": "17609519GA",
   "p": "12522_GA"
  },
+ "MITCHELL COUNTY UTILITY COMPANY|TX": {
+  "e": "17648150TX",
+  "p": "12618_TX"
+ },
  "MONA, CITY OF|UT": {
   "e": "17674414UT",
   "p": "30509_UT"
+ },
+ "MONROE CITY GAS DEPARTMENT|MO": {
+  "e": "17617878MO"
  },
  "MONROE UTILITIES, CITY OF|GA": {
   "e": "17609776GA",
@@ -547,6 +731,9 @@
   "e": "17609850TX",
   "p": "12798_TX"
  },
+ "MULBERRY MUNICIPAL GAS SYSTEM|KS": {
+  "e": "17620301KS"
+ },
  "MUNFORD, CITY OF|TN": {
   "e": "17647043TN",
   "p": "12697_TN"
@@ -554,6 +741,10 @@
  "MURRAY, CITY OF|KY": {
   "e": "17609958KY",
   "p": "12918_KY"
+ },
+ "NAVAJO TRIBAL UTILITY AUTHORITY|UT": {
+  "e": "17619833UT",
+  "p": "13160_UT"
  },
  "NEODESHA, CITY OF|KS": {
   "e": "17610132KS",
@@ -579,6 +770,10 @@
   "e": "17610359CT",
   "p": "13860_CT"
  },
+ "OBERLIN, TOWN OF|LA": {
+  "e": "17619727LA",
+  "p": "14035_LA"
+ },
  "OBION, TOWN OF|TN": {
   "e": "17610395TN",
   "p": "14040_TN"
@@ -591,6 +786,17 @@
   "e": "17610491KY",
   "p": "14280_KY"
  },
+ "ORONOGO MUN GAS CO|MO": {
+  "e": "17609922MO"
+ },
+ "ORWELL NATURAL GAS|OH": {
+  "e": "17695266OH",
+  "p": "14341_OH"
+ },
+ "ORWELL NATURAL GAS|PA": {
+  "e": "17672380PA",
+  "p": "22070_PA"
+ },
  "PALMER, CITY OF|KS": {
   "e": "17603004KS",
   "p": "15070_KS"
@@ -602,6 +808,9 @@
  "PARIS, CITY OF|MO": {
   "e": "17617881MO",
   "p": "15119_MO"
+ },
+ "PASCAGOULA, CITY OF|MS": {
+  "e": "17610761MS"
  },
  "PEARSALL, CITY OF|TX": {
   "e": "17610818TX",
@@ -627,6 +836,9 @@
   "e": "17616592TX",
   "p": "15581_TX"
  },
+ "PITTSBURG GAS COMPANY|IL": {
+  "e": "17600040IL"
+ },
  "PLATTSBURG, CITY OF|MO": {
   "e": "17611216MO",
   "p": "15686_MO"
@@ -647,6 +859,10 @@
   "e": "17619048IA",
   "p": "15848_IA"
  },
+ "PURE UTILITIES|TX": {
+  "e": "17695244TX",
+  "p": "18649_TX"
+ },
  "QUINCY, CITY OF|FL": {
   "e": "17611576FL",
   "p": "16010_FL"
@@ -654,6 +870,9 @@
  "QUITMAN, CITY OF|GA": {
   "e": "17613082GA",
   "p": "16020_GA"
+ },
+ "RALEIGH GAS CO|MS": {
+  "p": "17040_MS"
  },
  "RED BAY WATER & GAS|AL": {
   "e": "17611343AL",
@@ -671,6 +890,9 @@
   "e": "17611568MS",
   "p": "17480_MS"
  },
+ "ROBSTOWN UTILITY SYSTEM|TX": {
+  "e": "17616593TX"
+ },
  "ROCK RAPIDS MUNICIPAL UTILITIES|IA": {
   "e": "17673904IA",
   "p": "17583_IA"
@@ -678,6 +900,13 @@
  "ROCKFORD, TOWN OF|AL": {
   "e": "17611652AL",
   "p": "17590_AL"
+ },
+ "ROMA, CITY OF|TX": {
+  "e": "17619704TX"
+ },
+ "ROZEL MUNICIPAL GAS|KS": {
+  "e": "17622749KS",
+  "p": "17730_KS"
  },
  "SABULA, CITY OF|IA": {
   "e": "17600187IA",
@@ -727,9 +956,16 @@
   "e": "17621807GA",
   "p": "18288_GA"
  },
+ "SHUQUALAK, TOWN OF|MS": {
+  "e": "17612353MS"
+ },
  "SIMMESPORT, TOWN OF|LA": {
   "e": "17612387LA",
   "p": "18328_LA"
+ },
+ "SIMS MUNICIPAL GAS SYSTEM, VILLAGE OF|IL": {
+  "e": "17600036IL",
+  "p": "18332_IL"
  },
  "SLAUGHTER, TOWN OF|LA": {
   "e": "17612520LA",
@@ -747,13 +983,33 @@
   "e": "17618055IN",
   "p": "18464_IN"
  },
+ "SOUTHEASTERN NATURAL GAS CO|OH": {
+  "e": "17613398OH",
+  "p": "18465_OH"
+ },
+ "SOUTHERN PUBLIC SVC CO|WV": {
+  "e": "17612746WV",
+  "p": "18520_WV"
+ },
  "SPARTA, CITY OF|GA": {
   "e": "17612806GA",
   "p": "18564_GA"
  },
+ "SPEARMAN, CITY OF|TX": {
+  "e": "17612816TX"
+ },
+ "ST JOSEPH MUNICIPAL NATURAL GAS|LA": {
+  "e": "17622060LA"
+ },
+ "ST. LAWRENCE GAS|NY": {
+  "e": "17611894NY"
+ },
  "STARKE, CITY OF|FL": {
   "e": "17612933FL",
   "p": "18620_FL"
+ },
+ "STERLING NATURAL GAS, INC.|TX": {
+  "p": "17058_TX"
  },
  "STINNETT, CITY OF|TX": {
   "e": "17613031TX",
@@ -775,6 +1031,9 @@
   "e": "17617849TX",
   "p": "18764_TX"
  },
+ "SWISSVALE OIL & GAS CO.|PA": {
+  "e": "17613343PA"
+ },
  "SYLACAUGA UTIL BOARD|AL": {
   "e": "17613346AL",
   "p": "18784_AL"
@@ -783,9 +1042,22 @@
   "e": "17618619GA",
   "p": "18792_GA"
  },
+ "SYLVIA, TOWN OF|KS": {
+  "e": "17613349KS"
+ },
  "TALLAHASSEE MUNICIPAL GAS SYSTEM|FL": {
   "e": "17613382FL",
   "p": "19030_FL"
+ },
+ "TAMMS MUNICIPAL GAS SYSTEM|IL": {
+  "p": "19070_IL"
+ },
+ "TANGIPAHOA, PARISH OF|LA": {
+  "p": "19090_LA"
+ },
+ "TEXAS WESTERN MUNICIPAL GAS CORPORATION|TX": {
+  "e": "17648162TX",
+  "p": "19340_TX"
  },
  "THOMASVILLE UTILITIES|GA": {
   "e": "17613604GA",
@@ -807,6 +1079,9 @@
   "e": "17648202TX",
   "p": "19520_TX"
  },
+ "TRIMBLE GAS DEPT.|TN": {
+  "e": "17613830TN"
+ },
  "TROY, TOWN OF|TN": {
   "e": "17613863TN",
   "p": "19710_TN"
@@ -815,9 +1090,16 @@
   "e": "17613952MN",
   "p": "12903_MN"
  },
+ "UNION POINT, CITY OF|GA": {
+  "e": "17614041GA"
+ },
  "UNION, CITY OF|SC": {
   "e": "17613992SC",
   "p": "20170_SC"
+ },
+ "UNITED CITIES GAS COMPANY|KS": {
+  "e": "17600345KS",
+  "p": "20211_KS"
  },
  "UVALDE GAS SYSTEM|TX": {
   "e": "17619717TX",
@@ -826,6 +1108,9 @@
  "VANCEBURG ELECTRIC PLANT BOARD|KY": {
   "e": "17614220KY",
   "p": "21120_KY"
+ },
+ "VERONA NATURAL GAS CO.|OH": {
+  "p": "30633_OH"
  },
  "VIDALIA, CITY OF|LA": {
   "e": "17614298LA",
@@ -847,6 +1132,9 @@
   "e": "17614445AL",
   "p": "22014_AL"
  },
+ "WALNUT, TOWN OF|MS": {
+  "e": "17614498MS"
+ },
  "WARNER ROBINS, CITY OF|GA": {
   "e": "17600048GA",
   "p": "22154_GA"
@@ -862,6 +1150,9 @@
  "WAVELAND, CITY OF|MS": {
   "e": "17614658MS",
   "p": "22259_MS"
+ },
+ "WEST BEND MUNICIPAL GAS|IA": {
+  "e": "17614680IA"
  },
  "WEST POINT, CITY OF|GA": {
   "e": "17614704GA",
@@ -883,9 +1174,19 @@
   "e": "17622069LA",
   "p": "22546_LA"
  },
+ "WHITE DEER, CITY OF|TX": {
+  "e": "17614813TX",
+  "p": "22553_TX"
+ },
+ "WHITTEMORE MUNICIPAL GAS|IA": {
+  "e": "17614849IA"
+ },
  "WICKLIFFE, CITY OF|KY": {
   "e": "17614860KY",
   "p": "22602_KY"
+ },
+ "WILLIAMSPORT, VILLAGE OF|OH": {
+  "e": "17614928OH"
  },
  "WILLOW, TOWN OF|OK": {
   "e": "17614941OK",
@@ -907,8 +1208,14 @@
   "e": "17614999SC",
   "p": "22735_SC"
  },
+ "WISCONSIN PUBLIC SERVICE CORP|MI": {
+  "p": "22791_MI"
+ },
  "WRENS, CITY OF|GA": {
   "e": "17615121GA",
   "p": "22903_GA"
+ },
+ "YORK, CITY OF|AL": {
+  "e": "17622778AL"
  }
 }
