@@ -101,5 +101,39 @@
     "predecessors": [
       "26359_OH"
     ]
+  },
+  "31840_AZ": {
+    "note": "UniSource Energy Services AZ (2003+). Same operator renamed under a new PHMSA id; UniSource acquired Citizens Utilities Arizona gas assets in 2003.",
+    "predecessors": [
+      "2416_AZ"
+    ]
+  },
+  "15359_KS": {
+    "note": "Black Hills Energy KS (2007+). Fills the 1998-2006 gap from Aquila Networks (Kansas); Black Hills acquired Aquila Kansas gas distribution in 2008.",
+    "predecessors": [
+      "31264_KS"
+    ]
+  },
+  "15518_TN": {
+    "note": "Piedmont Natural Gas TN (2007+). Nashville Gas Company is Piedmont Tennessee division under its former PHMSA id.",
+    "predecessors": [
+      "13041_TN"
+    ]
+  },
+  "40400_RI": {
+    "note": "Rhode Island Energy (2022+). Four-stage lineage: Bristol & Warren Gas + Valley Gas + New England Gas consolidated into New England Gas in 2003 (mileage 2,380+593+85=3,058 matches the 3,056 filed that year, so 1997-2002 is correctly summed); National Grid then filed RI gas under the Niagara Mohawk operator id 2006-2021; PPL acquired it as Rhode Island Energy in 2022. Southern Union Gas 18532_RI is deliberately excluded as a duplicate of the New England Gas division.",
+    "predecessors": [
+      "13480_RI",
+      "31770_RI",
+      "15896_RI",
+      "21060_RI",
+      "1760_RI"
+    ]
+  },
+  "39102_MD": {
+    "note": "Sandpiper Energy MD (2013+). Acquired the Eastern Shore Gas Company distribution systems in 2013 and converted them from propane to natural gas.",
+    "predecessors": [
+      "4150_MD"
+    ]
   }
 }

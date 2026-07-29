@@ -257,5 +257,12 @@
     "predecessors": [
       "17614728KY"
     ]
+  },
+  "17698926AZ": {
+    "note": "UNS Gas Inc AZ (2003+). UniSource acquired Citizens Utilities Arizona gas operations in 2003; 1997-2003 is the SUM of the two Citizens filers (main Arizona gas plus the Santa Cruz system).",
+    "predecessors": [
+      "17620212AZ",
+      "17690318AZ"
+    ]
   }
 }
