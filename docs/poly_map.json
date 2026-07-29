@@ -203,6 +203,10 @@
   "e": "17603654MN",
   "p": "3590_MN"
  },
+ "EAST OHIO GAS CO/DOMINION|OH|14130_OH": {
+  "e": "17610438OH",
+  "p": "14130_OH"
+ },
  "EDMONTON, CITY OF|KY": {
   "e": "17621014KY",
   "p": "4260_KY"
@@ -739,6 +743,10 @@
   "e": "17612625NM",
   "p": "18380_NM"
  },
+ "SOUTH EASTERN INDIANA NATURAL|IN": {
+  "e": "17618055IN",
+  "p": "18464_IN"
+ },
  "SPARTA, CITY OF|GA": {
   "e": "17612806GA",
   "p": "18564_GA"
@@ -793,7 +801,7 @@
  },
  "TIPTON, CITY OF|IA": {
   "e": "17618620IA",
-  "p": "19476_IA"
+  "p": "19470_IA"
  },
  "TOMBALL, CITY OF|TX": {
   "e": "17648202TX",

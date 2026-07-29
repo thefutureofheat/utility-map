@@ -580,8 +580,11 @@ function resolveIds(p) {
   let phmsaKey = (rawOp != null && stop) ? `${Math.round(rawOp)}_${stop}` : null;
   let eiaId    = p.ID || null;
 
+  // A few territory names host more than one utility (EAST OHIO GAS CO/DOMINION
+  // covers both Dominion East Ohio and Ohio Gas Co), so try the longer key that
+  // includes the PHMSA operator before falling back to the plain one.
   const k  = polyKey(p);
-  const ov = k ? polyMap[k] : null;
+  const ov = (k && phmsaKey && polyMap[`${k}|${phmsaKey}`]) || (k ? polyMap[k] : null);
   if (ov) {
     if (ov.e) eiaId = ov.e;
     if (ov.p) phmsaKey = ov.p;
@@ -853,26 +856,35 @@ function rebuildColorExpression() {
   // Polygons overridden in poly_map.json — either newly linked territories that
   // carry no ID in the tiles, or the few whose baked-in ID is wrong. Keyed by
   // "<geo_NAME>|<state>" so they resolve independently of the tile ids.
-  const ovKeys = [];
+  // Keys are "<geo_NAME>|<state>", or "<geo_NAME>|<state>|<phmsa_key>" for the few
+  // territory names that host more than one utility and need disambiguating.
+  const ovKeys = [], ovKeysLong = [];
   for (const [k, ov] of Object.entries(polyMap)) {
     if (!ov.e) continue;
     const p   = buildPropsForId(ov.e, ov.p);
     const val = getValue(p, currentMode);
     const col = modeColor(val, currentMode);
-    if (col) { pairs.push(k, col); ovKeys.push(k); }
+    if (!col) continue;
+    pairs.push(k, col);
+    (k.split("|").length > 2 ? ovKeysLong : ovKeys).push(k);
   }
 
   const geoKey = ["concat", ["to-string", ["get", "geo_NAME"]], "|",
                   ["to-string", ["coalesce", ["get", "geo_LOCATION"], ["get", "STATE"]]]];
-  // Prefer the override key when this polygon has one; otherwise ID, then the
-  // PHMSA-derived key (Hawaii Gas and friends, which carry no ID in the tiles).
-  const fallback = ["coalesce",
-    ["get", "ID"],
-    ["concat", ["to-string", ["get", "phmsa_OPERATOR_ID"]], "_", ["get", "phmsa_STOP"]]
-  ];
-  const matchKey = ovKeys.length
-    ? ["case", ["match", geoKey, ovKeys, true, false], geoKey, fallback]
-    : fallback;
+  const phKey  = ["concat", ["to-string", ["get", "phmsa_OPERATOR_ID"]], "_",
+                  ["get", "phmsa_STOP"]];
+  const geoKeyLong = ["concat", geoKey, "|", phKey];
+  // Prefer the override key when this polygon has one — the disambiguated form
+  // first — otherwise ID, then the PHMSA-derived key (Hawaii Gas and friends,
+  // which carry no ID in the tiles).
+  const fallback = ["coalesce", ["get", "ID"], phKey];
+  let matchKey = fallback;
+  if (ovKeys.length) {
+    matchKey = ["case", ["match", geoKey, ovKeys, true, false], geoKey, matchKey];
+  }
+  if (ovKeysLong.length) {
+    matchKey = ["case", ["match", geoKeyLong, ovKeysLong, true, false], geoKeyLong, matchKey];
+  }
   const expr = pairs.length
     ? ["match", matchKey, ...pairs, "#e0e0e0"]
     : "#e0e0e0";
@@ -921,11 +933,20 @@ function computeDomains() {
 // those features carry no ID in the tiles.
 function overrideVisibilityFilter() {
   const base = ["!=", ["get", "feature_type"], "geo_nomatch"];
-  const keys = Object.keys(polyMap || {});
-  if (!keys.length) return base;
+  const all = Object.keys(polyMap || {});
+  if (!all.length) return base;
+  const short = all.filter(k => k.split("|").length === 2);
+  const long  = all.filter(k => k.split("|").length > 2);
   const geoKey = ["concat", ["to-string", ["get", "geo_NAME"]], "|",
                   ["to-string", ["coalesce", ["get", "geo_LOCATION"], ["get", "STATE"]]]];
-  return ["any", base, ["match", geoKey, keys, true, false]];
+  const phKey  = ["concat", ["to-string", ["get", "phmsa_OPERATOR_ID"]], "_",
+                  ["get", "phmsa_STOP"]];
+  const any = ["any", base];
+  if (short.length) any.push(["match", geoKey, short, true, false]);
+  if (long.length) {
+    any.push(["match", ["concat", geoKey, "|", phKey], long, true, false]);
+  }
+  return any;
 }
 
 function applyLayerFilters() {
