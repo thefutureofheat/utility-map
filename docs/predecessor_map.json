@@ -276,5 +276,14 @@
     "predecessors": [
       "17670113MO"
     ]
+  },
+  "17619858KY": {
+    "note": "Delta Natural Gas KY main filer (1997-2023). In 2023 it absorbed the small segment that had filed separately as 17676572KY (customers went 31,289 -> 34,220), and from 2024 the combined utility files under 17676572KY. That id is windowed to 2024+ so it supplies only the later years and is not mistaken for a predecessor of the earlier ones.",
+    "predecessors": [
+      {
+        "id": "17676572KY",
+        "from": 2024
+      }
+    ]
   }
 }
