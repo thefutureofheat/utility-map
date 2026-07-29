@@ -135,5 +135,79 @@
     "predecessors": [
       "4150_MD"
     ]
+  },
+  "15359_AR": {
+    "note": "Black Hills Energy AR (2016+). Black Hills acquired SourceGas in 2016; continuity 0.98.",
+    "predecessors": [
+      "630_AR"
+    ]
+  },
+  "32198_MN": {
+    "note": "Minnesota Energy Resources (2006+). Aquila sold its Minnesota gas utility in 2006; continuity 0.99.",
+    "predecessors": [
+      "15359_MN"
+    ]
+  },
+  "31470_OH": {
+    "note": "Vectren Energy Delivery of Ohio (2000+). Vectren acquired Dayton Power & Light natural gas business in 2000; continuity 0.99.",
+    "predecessors": [
+      "3170_OH"
+    ]
+  },
+  "31349_MN": {
+    "note": "Fairfax, City of MN (1999+). Same town, formerly Fairfax Gas & Water System; continuity 1.00.",
+    "predecessors": [
+      "5020_MN"
+    ]
+  },
+  "31808_WV": {
+    "note": "Canaan Valley Gas Co WV (2002+). Three-way merger of Town Gas, GASCO Distribution Systems and Ashford/Kenna Gas; their 1997-2001 shares (0.50+0.33+0.17) sum to exactly 1.00, so those years are summed.",
+    "predecessors": [
+      "19525_WV",
+      "30881_WV",
+      "31261_WV"
+    ]
+  },
+  "38906_MO": {
+    "note": "Liberty Utilities (Midstates Natural Gas) MO (2012+). Liberty acquired the Atmos Missouri/Iowa/Illinois systems in 2012; continuity 1.00.",
+    "predecessors": [
+      "20211_MO"
+    ]
+  },
+  "38906_IA": {
+    "note": "Liberty Utilities (Midstates Natural Gas) IA (2012+). Iowa side of the same 2012 Liberty/Atmos transaction; continuity 1.01.",
+    "predecessors": [
+      "20211_IA"
+    ]
+  },
+  "38967_GA": {
+    "note": "Liberty Energy (Georgia) (2013+). Liberty acquired the Atmos Georgia system in 2013; continuity 1.06.",
+    "predecessors": [
+      "20211_GA"
+    ]
+  },
+  "32647_OK": {
+    "note": "Navitas Utility Corporation OK (2012+). Formerly Fort Cobb Fuel Irrigation Authority, matching the existing manual EIA match; continuity 0.98.",
+    "predecessors": [
+      "5405_OK"
+    ]
+  },
+  "31348_TX": {
+    "note": "Atmos Energy Mid-Tex (1999+). Lone Star Gas distribution division became TXU Gas and then Atmos Mid-Tex; continuity 0.99.",
+    "predecessors": [
+      "11682_TX"
+    ]
+  },
+  "32397_OH": {
+    "note": "Glenwood Energy of Oxford OH (2007+). Formerly Oxford Natural Gas, same town; continuity 1.00.",
+    "predecessors": [
+      "14430_OH"
+    ]
+  },
+  "31473_MS": {
+    "note": "Northeast Mississippi Natural Gas District (2000+). Verified: the district was created by the state legislature in 1961 as MANTACHIE Natural Gas District and later renamed Northeast Mississippi; source nemsnaturalgas.com history. Continuity 1.04. Williamsville Water Co was NOT included - no evidence it was part of this district.",
+    "predecessors": [
+      "12382_MS"
+    ]
   }
 }

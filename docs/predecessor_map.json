@@ -264,5 +264,17 @@
       "17620212AZ",
       "17690318AZ"
     ]
+  },
+  "17672421MO": {
+    "note": "Empire District Gas MO (2006+). Empire District acquired Aquila Missouri gas operations in 2006; continuity 1.09.",
+    "predecessors": [
+      "17609601MO"
+    ]
+  },
+  "17676062MO": {
+    "note": "Summit Natural Gas of Missouri (2012+). Acquired Southern Missouri Gas Company LP; continuity 1.00.",
+    "predecessors": [
+      "17670113MO"
+    ]
   }
 }
