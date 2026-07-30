@@ -1394,34 +1394,6 @@ function summedNoteHtml(entry, source) {
   </div>`;
 }
 
-// A zero for main mileage or service count with real figures on both sides cannot be
-// literal: mains and service lines do not vanish for a year and come back. PHMSA gives
-// filers no way to record "not reported" though — the field is blank in at most two
-// rows a year and never once after 2003, while literal zeros run 18-60 a year — so the
-// figure is kept and flagged rather than deleted, and this note shows the reader that
-// the gap in the trend line is our reading of the data, not something PHMSA states.
-function suspectZeroNoteHtml(phmsaKey, yr) {
-  const sz = phmsaKey ? phmsaTimeseries?.[phmsaKey]?._suspect_zeros : null;
-  if (!sz) return "";
-  const LABEL = { MMILES_TOTAL: "total main miles", NUM_SRVCS_TOTAL: "total services" };
-  const yrs = new Set(), here = [];
-  for (const col in sz) {
-    for (const y of sz[col]) yrs.add(y);
-    if (sz[col].includes(yr)) here.push(LABEL[col] || col.replace(/^(MMILES|NUM_SRVS?)_/, "").replace(/_/g, " ").toLowerCase());
-  }
-  if (!yrs.size) return "";
-  const list = [...yrs].sort((a, b) => a - b).join(", ");
-  const lead = here.length
-    ? `PHMSA reports <strong>0</strong> for ${here.join(", ")} in ${yr}, between real figures either side.`
-    : `PHMSA reports <strong>0</strong> for some infrastructure figures in ${list}, between real figures either side.`;
-  return `<div class="summed-note">
-    ${lead} A count of zero is treated here as <em>not reported</em> rather than an empty
-    system, so ${here.length ? "it is" : "those years are"} left out of the trend lines
-    instead of being drawn as a drop to zero.
-    ${here.length ? `Affected years for this utility: ${list}.` : ""}
-  </div>`;
-}
-
 // ── Info panel ────────────────────────────────────────────────────────────────
 
 function updateInfo(feat, pinned) {
@@ -1631,7 +1603,6 @@ function updateInfo(feat, pinned) {
       ? ` <span style="font-weight:700;color:#c0392b">&#9679; Multi-state: ${multiStateGroup.join(", ")}</span>`
       : "";
     html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${yr})${multiStateHtml}</div>`;
-    html += suspectZeroNoteHtml(phmsaKey, yr);
 
     // ── Mains
     html += statRow("Total Main Miles", fmtNum(total));
@@ -1902,25 +1873,10 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   // Services by material
   const srvPlastic = [], srvStCp = [], srvStUnp = [], srvCI = [], srvDI = [], srvCu = [], srvOther = [];
 
-  const suspectZeros = phmsaKey ? (phmsaTimeseries?.[phmsaKey]?._suspect_zeros || null) : null;
-
   for (let yr = 1997; yr <= 2025; yr++) {
     const yrStr = String(yr);
     const ed = eiaId    ? eiaTimeseries?.[eiaId]?.data?.[yrStr]      : null;
-    let   pd = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yrStr] : null;
-    // A zero flagged as implausible is almost certainly "not reported" (PHMSA has no
-    // way to say that), so it is hidden from the trend lines to avoid a false cliff to
-    // zero. The value stays in the data and the note below says which years.
-    if (pd && suspectZeros) {
-      let masked = null;
-      for (const col in suspectZeros) {
-        if (pd[col] === 0 && suspectZeros[col].includes(yr)) {
-          masked = masked || Object.assign({}, pd);
-          delete masked[col];
-        }
-      }
-      if (masked) pd = masked;
-    }
+    const pd = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yrStr] : null;
     const cs  = ed?.["Residential Sales [CS]"] ?? null;
     const vl  = ed?.["Residential Sales [VL]"] ?? null;
     const ct  = ed?.["Residential Sales [CT]"] ?? null;
@@ -1945,7 +1901,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
     if (pd) {
       const ci = (pd.MMILES_CI || 0) + (pd.MMILES_CI_WR_TOTAL || 0);
       ciMiles.push(ci > 0 ? ci : null);
-      if (pd.MMILES_BY_DCD_TOTAL > 0) {
+      if (pd.MMILES_BY_DCD_TOTAL != null) {
         const pre70 = (pd.MMILES_BY_DCD_PRE1940     || 0) + (pd.MMILES_BY_DCD_1940_TO_1949 || 0)
                     + (pd.MMILES_BY_DCD_1950_TO_1959 || 0) + (pd.MMILES_BY_DCD_1960_TO_1969 || 0);
         const d7090 = (pd.MMILES_BY_DCD_1970_TO_1979 || 0) + (pd.MMILES_BY_DCD_1980_TO_1989 || 0)
@@ -1960,8 +1916,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
         dcd20s.push(null); dcdUnknown.push(null);
       }
       // Miles by material
-      const mTotal = pd.MMILES_TOTAL || 0;
-      if (mTotal > 0) {
+      const mTotal = pd.MMILES_TOTAL;
+      if (mTotal != null) {
         matPlastic.push(pd.MMILES_PLASTIC || 0);
         matStCp.push(pd.MMILES_STEEL_CP_COATED || 0);
         matStUnp.push((pd.MMILES_STEEL_CP_BARE || 0) + (pd.MMILES_STEEL_UNP_COATED || 0) + (pd.MMILES_STEEL_UNP_BARE || 0));
@@ -1974,15 +1930,15 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
         matCI.push(null); matDI.push(null); matCu.push(null); matOther.push(null);
       }
       // Services by installation era
-      const sTotal = pd.NUM_SRVS_BY_DCD_TOTAL || 0;
-      if (sTotal > 0) {
+      const sTotal = pd.NUM_SRVS_BY_DCD_TOTAL;
+      if (sTotal != null) {
         const sp70  = (pd.NUM_SRVS_BY_DCD_PRE1940      || 0) + (pd.NUM_SRVS_BY_DCD_1940_TO_1949 || 0)
                     + (pd.NUM_SRVS_BY_DCD_1950_TO_1959  || 0) + (pd.NUM_SRVS_BY_DCD_1960_TO_1969 || 0);
         const s7090 = (pd.NUM_SRVS_BY_DCD_1970_TO_1979  || 0) + (pd.NUM_SRVS_BY_DCD_1980_TO_1989 || 0)
                     + (pd.NUM_SRVS_BY_DCD_1990_TO_1999   || 0);
         const s0010 = (pd.NUM_SRVS_BY_DCD_2000_TO_2009   || 0) + (pd.NUM_SRVS_BY_DCD_2010_TO_2019 || 0);
         const s20   =  pd.NUM_SRVS_BY_DCD_2020_TO_2029   || 0;
-        const sUnk  = Math.max(0, sTotal - (sp70 + s7090 + s0010 + s20));
+        const sUnk  = Math.max(0, (sTotal || 0) - (sp70 + s7090 + s0010 + s20));
         srvDcdPre70.push(sp70); srvDcd7090.push(s7090); srvDcd0010.push(s0010);
         srvDcd20s.push(s20); srvDcdUnk.push(sUnk);
       } else {
@@ -1990,8 +1946,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
         srvDcd20s.push(null); srvDcdUnk.push(null);
       }
       // Services by material
-      const smTotal = pd.NUM_SRVCS_TOTAL || 0;
-      if (smTotal > 0) {
+      const smTotal = pd.NUM_SRVCS_TOTAL;
+      if (smTotal != null) {
         srvPlastic.push(pd.NUM_SRVS_PLASTIC || 0);
         srvStCp.push(pd.NUM_SRVS_STEEL_CP_COATED || 0);
         srvStUnp.push((pd.NUM_SRVS_STEEL_CP_BARE || 0) + (pd.NUM_SRVS_STEEL_UNP_COATED || 0) + (pd.NUM_SRVS_STEEL_UNP_BARE || 0));
@@ -2145,6 +2101,28 @@ function renderTrends(feat) {
       multistateRanges.push({ startYr: e.yr, endYr: e.yr, states: e.states });
     }
   }
+  // PHMSA sometimes holds several filings for one operator-state-year — alternative
+  // submissions rather than additive divisions, so the pipeline takes the most complete
+  // one instead of summing. Montana-Dakota North Dakota 1999 filed 1,672 / 1,302 / 904 /
+  // 7 miles where the real figure is 1,672 and a sum would give 3,885. The reader should
+  // know the year had more than one answer on file.
+  const multiReportYears = phmsaKey
+    ? (phmsaTimeseries?.[phmsaKey]?._multi_report || []) : [];
+  const multiReportRanges = [];
+  for (const y of multiReportYears) {
+    const last = multiReportRanges[multiReportRanges.length - 1];
+    if (last && last.endYr + 1 === y) last.endYr = y;
+    else multiReportRanges.push({ startYr: y, endYr: y });
+  }
+  const multiReportNoteHtml = multiReportRanges.length
+    ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
+        <strong>Multiple PHMSA reports filed in</strong>
+        ${multiReportRanges.map(r => r.startYr === r.endYr ? r.startYr
+                                   : r.startYr + "–" + r.endYr).join(", ")}
+        &mdash; above values are taken from the most complete report only.
+      </div>`
+    : "";
+
   const multistateNoteHtml = multistateRanges.length
     ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
         <strong>Multistate filing years (PHMSA data):</strong>
@@ -2195,6 +2173,7 @@ function renderTrends(feat) {
       <div class="chart-title">Number of Services by Material</div>
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
+    ${multiReportNoteHtml}
     ${multistateNoteHtml}
     ${hasIncidents ? `<div class="chart-block">
       <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
