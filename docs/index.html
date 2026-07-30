@@ -1394,6 +1394,34 @@ function summedNoteHtml(entry, source) {
   </div>`;
 }
 
+// A zero for main mileage or service count with real figures on both sides cannot be
+// literal: mains and service lines do not vanish for a year and come back. PHMSA gives
+// filers no way to record "not reported" though — the field is blank in at most two
+// rows a year and never once after 2003, while literal zeros run 18-60 a year — so the
+// figure is kept and flagged rather than deleted, and this note shows the reader that
+// the gap in the trend line is our reading of the data, not something PHMSA states.
+function suspectZeroNoteHtml(phmsaKey, yr) {
+  const sz = phmsaKey ? phmsaTimeseries?.[phmsaKey]?._suspect_zeros : null;
+  if (!sz) return "";
+  const LABEL = { MMILES_TOTAL: "total main miles", NUM_SRVCS_TOTAL: "total services" };
+  const yrs = new Set(), here = [];
+  for (const col in sz) {
+    for (const y of sz[col]) yrs.add(y);
+    if (sz[col].includes(yr)) here.push(LABEL[col] || col.replace(/^(MMILES|NUM_SRVS?)_/, "").replace(/_/g, " ").toLowerCase());
+  }
+  if (!yrs.size) return "";
+  const list = [...yrs].sort((a, b) => a - b).join(", ");
+  const lead = here.length
+    ? `PHMSA reports <strong>0</strong> for ${here.join(", ")} in ${yr}, between real figures either side.`
+    : `PHMSA reports <strong>0</strong> for some infrastructure figures in ${list}, between real figures either side.`;
+  return `<div class="summed-note">
+    ${lead} A count of zero is treated here as <em>not reported</em> rather than an empty
+    system, so ${here.length ? "it is" : "those years are"} left out of the trend lines
+    instead of being drawn as a drop to zero.
+    ${here.length ? `Affected years for this utility: ${list}.` : ""}
+  </div>`;
+}
+
 // ── Info panel ────────────────────────────────────────────────────────────────
 
 function updateInfo(feat, pinned) {
@@ -1603,6 +1631,7 @@ function updateInfo(feat, pinned) {
       ? ` <span style="font-weight:700;color:#c0392b">&#9679; Multi-state: ${multiStateGroup.join(", ")}</span>`
       : "";
     html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${yr})${multiStateHtml}</div>`;
+    html += suspectZeroNoteHtml(phmsaKey, yr);
 
     // ── Mains
     html += statRow("Total Main Miles", fmtNum(total));
@@ -1873,10 +1902,25 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   // Services by material
   const srvPlastic = [], srvStCp = [], srvStUnp = [], srvCI = [], srvDI = [], srvCu = [], srvOther = [];
 
+  const suspectZeros = phmsaKey ? (phmsaTimeseries?.[phmsaKey]?._suspect_zeros || null) : null;
+
   for (let yr = 1997; yr <= 2025; yr++) {
     const yrStr = String(yr);
     const ed = eiaId    ? eiaTimeseries?.[eiaId]?.data?.[yrStr]      : null;
-    const pd = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yrStr] : null;
+    let   pd = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yrStr] : null;
+    // A zero flagged as implausible is almost certainly "not reported" (PHMSA has no
+    // way to say that), so it is hidden from the trend lines to avoid a false cliff to
+    // zero. The value stays in the data and the note below says which years.
+    if (pd && suspectZeros) {
+      let masked = null;
+      for (const col in suspectZeros) {
+        if (pd[col] === 0 && suspectZeros[col].includes(yr)) {
+          masked = masked || Object.assign({}, pd);
+          delete masked[col];
+        }
+      }
+      if (masked) pd = masked;
+    }
     const cs  = ed?.["Residential Sales [CS]"] ?? null;
     const vl  = ed?.["Residential Sales [VL]"] ?? null;
     const ct  = ed?.["Residential Sales [CT]"] ?? null;
