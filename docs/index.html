@@ -2106,20 +2106,35 @@ function renderTrends(feat) {
   // one instead of summing. Montana-Dakota North Dakota 1999 filed 1,672 / 1,302 / 904 /
   // 7 miles where the real figure is 1,672 and a sum would give 3,885. The reader should
   // know the year had more than one answer on file.
-  const multiReportYears = phmsaKey
-    ? (phmsaTimeseries?.[phmsaKey]?._multi_report || []) : [];
-  const multiReportRanges = [];
-  for (const y of multiReportYears) {
-    const last = multiReportRanges[multiReportRanges.length - 1];
-    if (last && last.endYr + 1 === y) last.endYr = y;
-    else multiReportRanges.push({ startYr: y, endYr: y });
-  }
-  const multiReportNoteHtml = multiReportRanges.length
+  const fmtYears = ys => {
+    const out = [];
+    for (const y of ys) {
+      const last = out[out.length - 1];
+      if (last && last.endYr + 1 === y) last.endYr = y;
+      else out.push({ startYr: y, endYr: y });
+    }
+    return out.map(r => r.startYr === r.endYr ? String(r.startYr)
+                                              : r.startYr + "–" + r.endYr).join(", ");
+  };
+  const pEntry = phmsaKey ? phmsaTimeseries?.[phmsaKey] : null;
+  const multiReportYears = pEntry?._multi_report || [];
+  const stateMatchedYears = pEntry?._state_matched || [];
+  // Say WHICH rule chose the figure, not just that a choice happened — the two cases are
+  // answering different questions and a reader checking an odd year needs to know which.
+  const provenanceLines = [];
+  if (multiReportYears.length)
+    provenanceLines.push(`<strong>Multiple PHMSA reports filed in</strong>
+      ${fmtYears(multiReportYears)} &mdash; above values are taken from the most complete
+      report only (the one reporting both mileage and service counts; where several are
+      complete, the largest).`);
+  if (stateMatchedYears.length)
+    provenanceLines.push(`<strong>PHMSA labelled several single-state filings with one
+      combined multi-state code in</strong> ${fmtYears(stateMatchedYears)} &mdash; each was
+      matched to the state whose figures for the surrounding years it continues, rather
+      than being treated as one system spanning all of them.`);
+  const multiReportNoteHtml = provenanceLines.length
     ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
-        <strong>Multiple PHMSA reports filed in</strong>
-        ${multiReportRanges.map(r => r.startYr === r.endYr ? r.startYr
-                                   : r.startYr + "–" + r.endYr).join(", ")}
-        &mdash; above values are taken from the most complete report only.
+        ${provenanceLines.join('<div style="height:5px"></div>')}
       </div>`
     : "";
 
