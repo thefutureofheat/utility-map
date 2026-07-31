@@ -1599,8 +1599,11 @@ function updateInfo(feat, pinned) {
     const dcdTot = p.phmsa_MMILES_BY_DCD_TOTAL || 0;
 
     const multiStateGroup = getMultiStateGroup(opId, stop, yr);
+    const combinedFlag = !!(phmsaKey && phmsaTimeseries?.[phmsaKey]?.data?.[yr]?.COMBINED_REPORT);
     const multiStateHtml = multiStateGroup
       ? ` <span style="font-weight:700;color:#c0392b">&#9679; Multi-state: ${multiStateGroup.join(", ")}</span>`
+      : combinedFlag
+      ? ` <span style="font-weight:700;color:#c0392b">&#9679; Combined multi-state filing</span>`
       : "";
     html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${yr})${multiStateHtml}</div>`;
 
@@ -2084,12 +2087,18 @@ function renderTrends(feat) {
   const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
+  // COMBINED_REPORT on the record is the authoritative signal. getMultiStateGroup only
+  // infers it by matching mileage across states of the SAME operator id, which misses two
+  // whole classes: years backfilled from predecessors, where the combined filing belongs
+  // to a different operator entirely (Black Hills Wyoming 1997-2003), and small systems,
+  // which its >100 mile floor discards. That hid the badge on 107 of 352 combined years.
+  // The cross-state match is still used where it works, because it can NAME the states.
   const multistateEntries = [];
-  if (opId != null && stop) {
-    for (const yr of d.years) {
-      const group = getMultiStateGroup(opId, stop, yr);
-      if (group) multistateEntries.push({ yr, states: group.join(", ") });
-    }
+  for (const yr of d.years) {
+    const group = (opId != null && stop) ? getMultiStateGroup(opId, stop, yr) : null;
+    const rec = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yr] : null;
+    if (group) multistateEntries.push({ yr, states: group.join(", ") });
+    else if (rec && rec.COMBINED_REPORT) multistateEntries.push({ yr, states: "" });
   }
   // Collapse consecutive years with the same states into ranges for display
   const multistateRanges = [];
@@ -2142,9 +2151,12 @@ function renderTrends(feat) {
     ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
         <strong>Multistate filing years (PHMSA data):</strong>
         ${multistateRanges.map(r =>
-          `${r.startYr === r.endYr ? r.startYr : r.startYr + "–" + r.endYr} <span style="color:#888">(${r.states})</span>`
+          `${r.startYr === r.endYr ? r.startYr : r.startYr + "–" + r.endYr}`
+          + (r.states ? ` <span style="color:#888">(${r.states})</span>` : "")
         ).join(", ")}
-        — data for these years may reflect combined operations across states.
+        — data for these years may reflect combined operations across states. Years shown
+        without a state list are combined filings whose constituent states the source does
+        not record here, which is usual where the figures come from a predecessor.
       </div>`
     : "";
 
