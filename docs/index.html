@@ -1599,8 +1599,12 @@ function updateInfo(feat, pinned) {
     const dcdTot = p.phmsa_MMILES_BY_DCD_TOTAL || 0;
 
     const multiStateGroup = getMultiStateGroup(opId, stop, yr);
-    const combinedFlag = !!(phmsaKey && phmsaTimeseries?.[phmsaKey]?.data?.[yr]?.COMBINED_REPORT);
-    const multiStateHtml = multiStateGroup
+    const yrRec = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yr] : null;
+    const combinedFlag = !!(yrRec && yrRec.COMBINED_REPORT);
+    const splitFlag = !!(yrRec && yrRec.SPLIT_ESTIMATE);
+    const multiStateHtml = splitFlag
+      ? ` <span style="font-weight:700;color:#c07d00">&#9679; Apportioned from a multi-state filing</span>`
+      : multiStateGroup
       ? ` <span style="font-weight:700;color:#c0392b">&#9679; Multi-state: ${multiStateGroup.join(", ")}</span>`
       : combinedFlag
       ? ` <span style="font-weight:700;color:#c0392b">&#9679; Combined multi-state filing</span>`
@@ -2093,13 +2097,23 @@ function renderTrends(feat) {
   // to a different operator entirely (Black Hills Wyoming 1997-2003), and small systems,
   // which its >100 mile floor discards. That hid the badge on 107 of 352 combined years.
   // The cross-state match is still used where it works, because it can NAME the states.
-  const multistateEntries = [];
+  const multistateEntries = [], apportionedYears = [];
   for (const yr of d.years) {
     const group = (opId != null && stop) ? getMultiStateGroup(opId, stop, yr) : null;
     const rec = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yr] : null;
-    if (group) multistateEntries.push({ yr, states: group.join(", ") });
+    if (rec && rec.SPLIT_ESTIMATE) apportionedYears.push(yr);
+    else if (group) multistateEntries.push({ yr, states: group.join(", ") });
     else if (rec && rec.COMBINED_REPORT) multistateEntries.push({ yr, states: "" });
   }
+  // Where several utilities are summed, name the one that filed across states — the
+  // reader otherwise has no way to tell which of three predecessors was the multi-state
+  // filer. Black Hills Wyoming sums three and only SourceGas is.
+  const msSources = (phmsaTimeseries?.[phmsaKey]?._backfill || [])
+    .filter(b => b.multistate).map(b => b.name);
+  const msWho = msSources.length
+    ? ` The multi-state filer is ${msSources.join(" and ")}, not the other
+        ${msSources.length === 1 ? "utilities" : "ones"} summed for these years.`
+    : "";
   // Collapse consecutive years with the same states into ranges for display
   const multistateRanges = [];
   for (const e of multistateEntries) {
@@ -2144,6 +2158,16 @@ function renderTrends(feat) {
   const multiReportNoteHtml = provenanceLines.length
     ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
         ${provenanceLines.join('<div style="height:5px"></div>')}
+      </div>`
+    : "";
+
+  const apportionedNoteHtml = apportionedYears.length
+    ? `<div class="multi-state-note" style="margin:10px 4px 4px;padding:7px 10px;background:#fff8e1;border-left:3px solid #e6a817;border-radius:3px;font-size:10.5px;color:#6b4c00;">
+        <strong>Apportioned across states in</strong> ${fmtYears(apportionedYears)}
+        &mdash; the filing for these years covered several states at once, so the total was
+        split between them in proportion to what this operator reported for each state
+        separately in the nearest years available. These figures are an estimate, not filed
+        values.${msWho}
       </div>`
     : "";
 
@@ -2201,6 +2225,7 @@ function renderTrends(feat) {
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
     ${multiReportNoteHtml}
+    ${apportionedNoteHtml}
     ${multistateNoteHtml}
     ${hasIncidents ? `<div class="chart-block">
       <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
