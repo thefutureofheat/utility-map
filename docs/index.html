@@ -1151,7 +1151,11 @@ map.on("load", () => {
   map.addSource("utilities", {
     type: "vector",
     url: `pmtiles://${TILES_BASE}/utilities.pmtiles`,
-    promoteId: { utilities: "ID" },
+    // FID, not ID. ID is the EIA filer id, which only matched territories carry, so
+    // every territory linked later through poly_map.json had no feature id and could not
+    // use feature-state at all. FID is baked for all of them, prefixed so an invented id
+    // is never mistaken for a real one: "eia:<filer id>" or "geo:<territory>|<state>".
+    promoteId: { utilities: "FID" },
   });
 
   // Insert utility layers below the first label/symbol layer in the CARTO style
