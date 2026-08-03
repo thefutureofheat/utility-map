@@ -964,26 +964,9 @@ function applyLayerFilters() {
   }
 }
 
-// A filter that matches nothing — the highlight layer's resting state.
-const HIGHLIGHT_NONE = ["==", ["get", "geo_NAME"], " "];
-
-// Show the hover/pin outline for a polygon that feature-state cannot reach.
-// Polygons that do have a feature id keep using feature-state, so their
-// appearance is untouched; passing one of those (or null) clears the layer.
-function setHighlight(feat) {
-  if (!map.getLayer("utilities-highlight")) return;
-  const p = feat && feat.id == null ? (feat.properties || null) : null;
-  const k = p ? polyKey(p) : null;
-  if (!k) { map.setFilter("utilities-highlight", HIGHLIGHT_NONE); return; }
-  const geoKey = ["concat", ["to-string", ["get", "geo_NAME"]], "|",
-                  ["to-string", ["coalesce", ["get", "geo_LOCATION"], ["get", "STATE"]]]];
-  map.setFilter("utilities-highlight", ["==", geoKey, k]);
-}
-
 function setPinnedState(feat, pinned) {
-  // Newly linked territories carry no ID in the tiles, so promoteId leaves them
-  // without a feature id and feature-state cannot attach. Skip rather than throw;
-  // the info panel still resolves them via poly_map.
+  // Every polygon carries an FID now, so feature-state reaches all of them. The guard
+  // stays as a cheap defence against a feature arriving without one.
   if (!feat || feat.id == null) return;
   const ref = { source: "utilities", sourceLayer: "utilities", id: feat.id };
   map.setFeatureState(ref, { pinned });
@@ -1008,7 +991,6 @@ map.on("mousemove", "utilities-fill", (e) => {
   if (hoveredId !== null && hoveredId !== id) setHoveredState(hoveredId, false);
   hoveredId = id;
   setHoveredState(id, true);
-  setHighlight(feat);
   map.getCanvas().style.cursor = "pointer";
   updateInfo(feat, false);
 });
@@ -1016,7 +998,6 @@ map.on("mousemove", "utilities-fill", (e) => {
 map.on("mouseleave", "utilities-fill", () => {
   if (pinnedFeat) return;
   if (hoveredId !== null) { setHoveredState(hoveredId, false); hoveredId = null; }
-  setHighlight(null);
   map.getCanvas().style.cursor = "";
   updateInfo(null, false);
 });
@@ -1062,13 +1043,11 @@ map.on("click", "utilities-fill", (e) => {
   if (pinnedFeat && featIdentity(pinnedFeat) === featIdentity(feat)) {
     setPinnedState(pinnedFeat, false);
     pinnedFeat = null;
-    setHighlight(null);
     updateInfo(null, false);
   } else {
     if (pinnedFeat) setPinnedState(pinnedFeat, false);
     pinnedFeat = feat;
     setPinnedState(feat, true);
-    setHighlight(feat);
     updateInfo(feat, true);
   }
 });
@@ -1079,7 +1058,6 @@ map.on("click", (e) => {
   if (!pinnedFeat) return;
   setPinnedState(pinnedFeat, false);
   pinnedFeat = null;
-  setHighlight(null);
   updateInfo(null, false);
 });
 
@@ -1208,19 +1186,6 @@ map.on("load", () => {
     },
   }, firstSymbolId);
 
-  // Highlight layer — the hover/pin outline for territories that carry no ID in
-  // the tiles. promoteId has nothing to promote for them, so feature-state can't
-  // attach and the layers above can't react. This one is driven by setFilter on
-  // geo_NAME|state instead. It is deliberately scoped to id-less polygons only,
-  // so styling for everything else stays exactly as it was.
-  map.addLayer({
-    id: "utilities-highlight",
-    type: "line",
-    source: "utilities",
-    "source-layer": "utilities",
-    filter: HIGHLIGHT_NONE,
-    paint: { "line-color": "#222", "line-width": 2.5 },
-  }, firstSymbolId);
 
   map.getCanvas().style.cursor = "";
   updateLegend();
