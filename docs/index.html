@@ -1677,8 +1677,7 @@ function updateInfo(feat, pinned) {
       html += `<div id="trends-body" style="margin-top:4px"></div>`;
     }
     if (opId != null && incidentsData) {
-      const opKey = String(opId).replace(/\.0$/, "");
-      const incRows = incidentsData[opKey];
+      const incRows = incidentsFor(p);
       if (incRows && incRows.length > 0) {
         html += `<button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Significant Incidents Since 2010 (${incRows.length}) &#9888;</button>`;
       }
@@ -1741,12 +1740,41 @@ function statRow(label, val, tip) {
 let incidentsSortCol = "inc_year";
 let incidentsSortAsc = true;
 
+// Incidents are keyed on operator id alone, so a utility whose data is built by summing
+// predecessors showed only its own: Narragansett's table was empty for 2010-2021 while
+// Niagara Mohawk, whose years the charts use, has nine. Gather the predecessors too, bounded
+// exactly the way the data is — to the years each one supplies, and to this polygon's state,
+// because one operator id can cover several and the incident records name where each happened.
+function incidentsFor(p) {
+  if (!incidentsData || !p) return [];
+  const { phmsaKey, opId, stop } = resolveIds(p);
+  const entry = phmsaKey ? (phmsaTimeseries || {})[phmsaKey] : null;
+  const seen = new Set(), out = [];
+  const take = (op, lo, hi) => {
+    const rows = incidentsData[String(op).replace(/\.0$/, "")] || [];
+    for (const r of rows) {
+      if (stop && r.state && r.state !== stop) continue;
+      if (lo != null && r.inc_year != null && r.inc_year < lo) continue;
+      if (hi != null && r.inc_year != null && r.inc_year > hi) continue;
+      const k = [r.inc_year, r.state, r.fatal, r.injure, r.MAP_EIGHT_CAUSE,
+                 r.system_part, r.total_cost_current].join("|");
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(r);
+    }
+  };
+  // The utility's own years are its own — only the predecessors get a window.
+  if (opId != null) take(opId, null, null);
+  for (const b of (entry && entry._backfill) || []) if (b.op != null) take(b.op, b.from, b.to);
+  return out;
+}
+
 function openIncidentsPanel(feat) {
   if (!feat) return;
   const p = getEffectiveProps(feat);
   const { opKey } = resolveIds(p);
   if (opKey == null || !incidentsData) return;
-  const rows = incidentsData[opKey];
+  const rows = incidentsFor(p);
   if (!rows || rows.length === 0) return;
 
   const name = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
@@ -1831,7 +1859,7 @@ function incidentsSortBy(col) {
   }
   const p = getEffectiveProps(currentInfoFeat);
   const { opKey } = resolveIds(p);
-  renderIncidentsTable(opKey != null ? incidentsData[opKey] : null);
+  renderIncidentsTable(opKey != null ? incidentsFor(p) : null);
 }
 
 function destroyTrendCharts() {
@@ -2100,8 +2128,8 @@ function renderTrends(feat) {
   const state   = stop || p.EIA_state || null;
   const d = assembleTrendsData(eiaId, phmsaKey, state);
 
-  const hasIncidents = opKey != null && incidentsData != null
-                    && Array.isArray(incidentsData[opKey]) && incidentsData[opKey].length >= 5;
+  const incAll = incidentsFor(p);
+  const hasIncidents = opKey != null && incidentsData != null && incAll.length >= 5;
 
   const hasDcd      = d.dcdPre70.some(v => v != null && v > 0) || d.dcd7090.some(v => v != null && v > 0)
                    || d.dcd0010.some(v => v != null && v > 0)  || d.dcd20s.some(v => v != null && v > 0);
@@ -2325,7 +2353,7 @@ function renderTrends(feat) {
       "ALL OTHER CAUSES",
     ];
     const CAUSE_COLORS = ["#8B4513","#8e44ad","#2471a3","#e67e22","#27ae60","#d4ac0d","#c0392b","#95a5a6"];
-    const incRows = incidentsData[opKey];
+    const incRows = incAll;
 
     const minYr = Math.min(...incRows.map(r => r.inc_year));
     const maxYr = Math.max(...incRows.map(r => r.inc_year));
