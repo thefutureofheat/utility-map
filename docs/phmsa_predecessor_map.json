@@ -7,15 +7,19 @@
     ]
   },
   "32513_IL": {
-    "note": "AMEREN ILLINOIS COMPANY (IL, filings from 2010). Renamed/reorganized from ILLINOIS POWER CO (1997-2009); name match score 64 with nesting place tokens.",
+    "note": "Ameren Illinois (2010+). Three predecessors, matching the EIA side: Illinois Power (8,051 mi), AmerenCIPS (5,071) and Central Illinois Light/CILCO (3,718). They sum to 16,840 against the 16,874 filed in 2010, a ratio of 0.998. Only Illinois Power had been mapped, leaving the series to double at the handover.",
     "predecessors": [
-      "8040_IL"
+      "8040_IL",
+      "2204_IL",
+      "2200_IL"
     ]
   },
   "15359_WY": {
-    "note": "BLACK HILLS ENERGY (WY, filings from 2016). Renamed/reorganized from BLACK HILLS NORTHWEST WYOMING GAS UTILITY COMPANY, LLC (1997-2015); name match score 76 with nesting place tokens.",
+    "note": "Black Hills Energy WY (2016+). Three predecessors, not one: Black Hills NW Wyoming (419 mi), SourceGas LLC (2,009 - Black Hills acquired SourceGas in 2016) and Cheyenne Light Fuel & Power (947, a Black Hills subsidiary folded in). They sum to 3,375 against the 3,396 filed in 2016, a ratio of 0.994. Mapping only the first left an 8x discontinuity.",
     "predecessors": [
-      "2537_WY"
+      "2537_WY",
+      "10030_WY",
+      "2332_WY"
     ]
   },
   "31636_MN": {
@@ -193,9 +197,14 @@
     ]
   },
   "31348_TX": {
-    "note": "Atmos Energy Mid-Tex (1999+). Lone Star Gas distribution division became TXU Gas and then Atmos Mid-Tex; continuity 0.99.",
+    "note": "Atmos Energy Mid-Tex (1999+). Lone Star Gas distribution division became TXU Gas and then Atmos Mid-Tex; continuity 0.99. The same system filed 2003 alone under operator 31978 'TXU GAS COMPANY' \u2014 26,435 miles and 1,384,291 services, between 26,135/1,380,712 in 2002 and 27,038/1,420,543 in 2004 \u2014 so that year is windowed in from 31978_TX, which files no other year and has no territory of its own.",
     "predecessors": [
-      "11682_TX"
+      "11682_TX",
+      {
+        "id": "31978_TX",
+        "from": 2003,
+        "to": 2003
+      }
     ]
   },
   "32397_OH": {
@@ -208,6 +217,41 @@
     "note": "Northeast Mississippi Natural Gas District (2000+). Verified: the district was created by the state legislature in 1961 as MANTACHIE Natural Gas District and later renamed Northeast Mississippi; source nemsnaturalgas.com history. Continuity 1.04. Williamsville Water Co was NOT included - no evidence it was part of this district.",
     "predecessors": [
       "12382_MS"
+    ]
+  },
+  "6243_HI": {
+    "note": "Hawaii Gas. The same system filed 1999 as operator 30569 'GAS COMPANY, THE' at 598 miles and 2002 as operator 31273 'THE GAS CO' at 603 miles; each ID files that one year only. Matched on size, not name \u2014 598 and 603 sit between the years either side.",
+    "predecessors": [
+      {
+        "id": "30569_HI",
+        "from": 1999,
+        "to": 1999
+      },
+      {
+        "id": "31273_HI",
+        "from": 2002,
+        "to": 2002
+      }
+    ]
+  },
+  "18496_CT": {
+    "note": "Southern Connecticut Gas. 2002 filed under operator 18490 'SOUTHERN LNG, INC' at 2,202 miles, matching the 2,202 wanted between 2001 and 2003. That ID files no other year.",
+    "predecessors": [
+      {
+        "id": "18490_CT",
+        "from": 2002,
+        "to": 2002
+      }
+    ]
+  },
+  "31632_MT": {
+    "note": "NorthWestern Corporation bought Montana Power's utility business in 2002. Montana Power (12690) kept filing through 2003, and NorthWestern's own 2003 is missing, so only 2003 is windowed in \u2014 3,992 miles against 4,009 wanted. Its 1997-2001 years are NOT taken: NorthWestern's series starts at 2002 and a wider window would extend the utility back before it held the system.",
+    "predecessors": [
+      {
+        "id": "12690_MT",
+        "from": 2003,
+        "to": 2003
+      }
     ]
   }
 }

@@ -107,9 +107,10 @@
     ]
   },
   "17676012MN": {
-    "note": "Minnesota Energy Resources Corp MN (2004+). Reorganized from 'Minnesota Energy Resources - NMU' division.",
+    "note": "Minnesota Energy Resources Corp MN (own filings 2013+). MERC filed as two divisions until 2012 and as one entity afterwards: MINNESOTA ENERGY RESOURCES - NMU (35,817 customers) and MERC PNG (155,127), which together are 190,944 against the 191,350 the combined filer reports for 2013 - a ratio of 0.998. Only NMU had been mapped, which accounted for under a fifth of the utility. Residential volume alone looks like a 0.76 mismatch because 2012 was an exceptionally warm winter (70 Mcf per customer) and 2013 cold (92), so customer counts are the reliable check here.",
     "predecessors": [
-      "17606411MN"
+      "17606411MN",
+      "17611464MN"
     ]
   },
   "17672173NJ": {
@@ -159,14 +160,10 @@
   },
   "_section_pa_ugi_consolidation": "UGI acquired PPL Gas Utilities, which had merged North Penn Gas and Penn Fuel Gas",
   "17671661PA": {
-    "note": "UGI Central Penn Gas Inc PA (2005-2017). North Penn Gas Co and Penn Fuel Gas Inc (PFG Gas Inc) merged into PPL Gas Utilities Corporation effective December 31, 2004; UGI then acquired PPL Gas Utilities in 2008 and reorganized the combined entity as UGI Central Penn Gas Inc. In January 2019 UGI merged Central Penn Gas and Penn Natural Gas into UGI Utilities (17614088PA); that entry fills 2018+ data for this territory. UGI Utilities is windowed to 2018+ so it is not summed into the pre-2005 years.",
+    "note": "UGI Central Penn Gas Inc PA (2005-2017). North Penn Gas Co and Penn Fuel Gas Inc (PFG Gas Inc) merged into PPL Gas Utilities Corporation effective December 31, 2004; UGI then acquired PPL Gas Utilities in 2008 and reorganized the combined entity as UGI Central Penn Gas Inc. In January 2019 UGI merged Central Penn Gas and Penn Natural Gas into UGI Utilities is NOT listed as a source: Central Penn merged INTO it in 2018, so filling Central Penn's later years from its parent made this entry read 512,116 customers against its own 70,171 \u2014 a 7x overstatement. Central Penn's series simply ends; the combined system is reported under UGI Utilities.",
     "predecessors": [
       "17610286PA",
-      "17650212PA",
-      {
-        "id": "17614088PA",
-        "from": 2018
-      }
+      "17650212PA"
     ]
   },
   "_section_centerpoint_intrastate": "CenterPoint Energy Intrastate descended from PanEnergy via Duke Energy reorganization",
@@ -196,9 +193,10 @@
     ]
   },
   "17696331IA": {
-    "note": "Interstate Power and Light Company IA (2000+). Same utility as 'Interstate Pwr Co', subsidiary of IES Industries / Alliant Energy.",
+    "note": "Interstate Power and Light IA (own filings 2002+). Alliant merged Interstate Power Co (30,901 customers) and IES Utilities (159,041) into IPL in 2002; together 189,942 against the 191,268 IPL reports for 2002, a ratio of 0.993. Only Interstate Power Co had been mapped, about a sixth of the utility. IES stops at 2000 because of the truncated 2001 EIA source year, so 2001 is a partial sum and is skipped.",
     "predecessors": [
-      "17606336IA"
+      "17606336IA",
+      "17616543IA"
     ]
   },
   "17675803NH": {
@@ -233,11 +231,27 @@
     ]
   },
   "17671862IL": {
-    "note": "Ameren Illinois (EIA data from 2005). Formed by merging Ameren's three Illinois gas utilities; 1997-2004 is the SUM of all three, not any one of them.",
+    "note": "Ameren Illinois. 1997-2004 is the SUM of its three Illinois gas utilities, none of them alone. For 2006-2009 Ameren filed only one division (~170k customers) while the other two still filed separately, so those years are ADDITIVE: its own figure plus the predecessors still reporting. That lands at 745-773k against 745,105 in 2010, its first year filing the whole system. 2005 is deliberately left out of the additive window \u2014 all three predecessors filed that year as well, so adding Ameren's own would double-count to ~905k against a true ~733k.",
     "predecessors": [
-      "17606308IL",
-      "17602170IL",
-      "17602171IL"
+      {
+        "id": "17606308IL",
+        "from": 1997,
+        "to": 2009
+      },
+      {
+        "id": "17602170IL",
+        "from": 1997,
+        "to": 2009
+      },
+      {
+        "id": "17602171IL",
+        "from": 1997,
+        "to": 2009
+      }
+    ],
+    "additive": true,
+    "exclude_own": [
+      2005
     ]
   },
   "17600343WV": {
@@ -272,9 +286,10 @@
     ]
   },
   "17676062MO": {
-    "note": "Summit Natural Gas of Missouri (2012+). Acquired Southern Missouri Gas Company LP; continuity 1.00.",
+    "note": "Summit Natural Gas of Missouri. Two predecessors, not one: Southern Missouri Gas (8,321 residential customers at 2011) and Missouri Gas Utility (2,395), both ending 2011, the year before Summit's own filings begin. With only the first mapped, 1997-2011 read 8,321 against 11,337 in 2012; summed they give 10,716, and Summit grew steadily to 12,702 the following year.",
     "predecessors": [
-      "17670113MO"
+      "17670113MO",
+      "17673230MO"
     ]
   },
   "17619858KY": {
@@ -283,6 +298,22 @@
       {
         "id": "17676572KY",
         "from": 2024
+      }
+    ]
+  },
+  "17614088PA": {
+    "note": "UGI Utilities, which holds the UGI CENTRAL PENN GAS territory. Central Penn and Penn Natural Gas merged into it in 2018: UGI's own residential customers step 291,758 -> 504,954 that year, and 291,758 + Central Penn 68,582 + Penn Natural Gas 147,134 = 507,474, within 0.5% of it. So 1997-2017 is ADDITIVE \u2014 UGI's own filing plus both subsidiaries \u2014 which makes one continuous series for the footprint the polygon actually covers, instead of a 1.7x step at the merger.",
+    "additive": true,
+    "predecessors": [
+      {
+        "id": "17671661PA",
+        "from": 1997,
+        "to": 2017
+      },
+      {
+        "id": "17610893PA",
+        "from": 1997,
+        "to": 2017
       }
     ]
   }
