@@ -273,11 +273,20 @@
     ]
   },
   "17698926AZ": {
-    "note": "UNS Gas Inc AZ (2003+). UniSource acquired Citizens Utilities Arizona gas operations in 2003; 1997-2003 is the SUM of the two Citizens filers (main Arizona gas plus the Santa Cruz system).",
+    "note": "UNS Gas Inc AZ (2003+). UniSource acquired Citizens' Arizona gas operations in 2003. 2003 is filed THREE ways: UNS itself reports 42,079 residential customers while both Citizens filers report that year too, 72,869 and 3,735. Summed they give 118,683 against 118,617 for 2004 \u2014 within 0.06% \u2014 so 2003 is additive, not a handover. Shown alone, UNS read about a third of the utility, which is what produced its 2004 shelf.",
     "predecessors": [
-      "17620212AZ",
-      "17690318AZ"
-    ]
+      {
+        "id": "17620212AZ",
+        "from": 1997,
+        "to": 2003
+      },
+      {
+        "id": "17690318AZ",
+        "from": 1998,
+        "to": 2003
+      }
+    ],
+    "additive": true
   },
   "17672421MO": {
     "note": "Empire District Gas MO (2006+). Empire District acquired Aquila Missouri gas operations in 2006; continuity 1.09.",

@@ -71,10 +71,11 @@
     ]
   },
   "31906_MN": {
-    "note": "NORTHWEST NATURAL GAS LLC (MN, filings from 2004). Renamed/reorganized from NORTHWEST NATURAL GAS CO (1997-2003); name match score 94 with nesting place tokens.",
+    "note": "NORTHWEST NATURAL GAS LLC (MN, own filings from 2004). Renamed/reorganized from NORTHWEST NATURAL GAS CO (1997-2003); name match score 94 with nesting place tokens. allow_level_change because the predecessor really does drop from 145 to 78 miles in 2002 and the successor's own 2004 reads 79.6 \u2014 the collapse guard read that genuine step as a partial sum and discarded 2002 and 2003.",
     "predecessors": [
       "13840_MN"
-    ]
+    ],
+    "allow_level_change": true
   },
   "31860_LA": {
     "note": "TOWN OF FRANKLINTON (LA, filings from 2003). Renamed/reorganized from FRANKLINTON, TOWN OF (1997-2002); name match score 97 with nesting place tokens.",
