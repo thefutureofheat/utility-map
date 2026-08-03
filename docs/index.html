@@ -1339,8 +1339,15 @@ function nameEntryHtml(entries, singleLabel, groupLabel) {
   if (entries.length === 1) {
     return statRow(singleLabel, escHtml(entries[0].name));
   }
+  // Most recent first, reading backwards through the lineage. The predecessors arrive in
+  // _backfill order, which is ascending by start year, so Narragansett listed Niagara
+  // Mohawk (2006-2021) last, below three utilities that ended in 2002-2003. Sorted on the
+  // END year, since that is what says how recently a name applied; ties fall back to the
+  // start year so a longer run comes first. Sorted on a copy — the caller's array is also
+  // used for the summed note.
+  const ordered = entries.slice().sort((x, y) => (y.to - x.to) || (y.from - x.from));
   let h = `<div class="name-group"><div class="name-group-label">${groupLabel}</div>`;
-  for (const e of entries) {
+  for (const e of ordered) {
     const range = e.from === e.to ? `${e.from}` : `${e.from}–${e.to}`;
     h += `<div class="name-entry">
       <span class="name-entry-name">${escHtml(e.name)}</span>
