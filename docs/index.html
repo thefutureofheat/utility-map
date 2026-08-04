@@ -1495,13 +1495,13 @@ function updateInfo(feat, pinned) {
       if (hasConsump || hasDelivery || delivCagrHtml) {
         html += `<div style="margin-top:7px;padding:7px 9px;background:#f0f4fa;border-left:3px solid #1a3a5c;border-radius:3px">`;
         if (hasConsump)
-          html += statRow("Res. consumption/customer", (resVl / resCt).toFixed(1) + " Mcf",
-            "Derived: residential volume ÷ residential customers (EIA Form 176 VL ÷ CT)");
+          html += statRow("Avg. annual consumption per res. customer", (resVl / resCt).toFixed(1) + " Mcf",
+            "Derived from EIA 176: residential volume \u00f7 residential customers.");
         if (hasDelivery) {
           html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`,
-            "Statewide. Annual value is the volume-weighted average of the monthly citygate prices: sum(monthly price \u00d7 monthly volume delivered to consumers) \u00f7 sum(monthly volume), so winter months carry more weight than summer ones. Source: EIA Form 857 (monthly citygate price and monthly gas delivered to consumers, by state).");
+            "Statewide. Volume-weighted mean of the monthly citygate prices, so winter months weigh more. Source: EIA 857.");
           html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`,
-            "Derived: this utility's residential average price minus the statewide citygate price, so it approximates the distribution margin rather than measuring it. The citygate side is a state average from EIA Form 857, not this utility's own supply cost.");
+            "Derived: residential price minus statewide citygate. Approximates the distribution margin.");
         }
         html += delivCagrHtml;
         html += `</div>`;
@@ -1515,12 +1515,12 @@ function updateInfo(feat, pinned) {
       const incomeSh   = annualBill != null && incomePC != null && incomePC > 0 ? annualBill / incomePC * 100 : null;
       if (annualBill != null || hoursAtMW != null || incomeSh != null) {
         html += `<div style="margin-top:6px;padding:7px 9px;background:#f5f2fb;border-left:3px solid #6a3a8c;border-radius:3px">`;
-        if (annualBill != null) html += statRow("Avg. annual gas cost/customer", `$${annualBill.toFixed(0)}`,
-          "Derived: total residential revenue ÷ number of residential customers (EIA Form 176 CS ÷ CT)");
+        if (annualBill != null) html += statRow("Avg. annual gas cost per res. customer", `$${annualBill.toFixed(0)}`,
+          "Derived from EIA 176: residential revenue \u00f7 residential customers.");
         if (hoursAtMW  != null) html += statRow("Hours at state min. wage to pay", `${hoursAtMW.toFixed(1)} hrs/yr`,
-          "Derived: this utility's annual gas cost \u00f7 the statewide hourly minimum wage. Min. wage source: FRED (Federal Reserve Bank of St. Louis)");
-        if (incomeSh   != null) html += statRow("Gas cost as % of per capita income", `${incomeSh.toFixed(2)}%`,
-          "Derived: (this utility's annual gas cost \u00f7 statewide per capita income) \u00d7 100. The income side is a state average, not this utility's service area. Source: BEA (Bureau of Economic Analysis)");
+          "Derived: annual gas cost \u00f7 statewide hourly minimum wage. Source: FRED.");
+        if (incomeSh   != null) html += statRow("Gas cost as % of state per capita income", `${incomeSh.toFixed(2)}%`,
+          "Derived: annual gas cost \u00f7 statewide per capita income, \u00d7 100. Source: BEA.");
         html += `</div>`;
       }
     } else {
