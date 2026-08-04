@@ -1686,7 +1686,7 @@ function updateInfo(feat, pinned) {
       const incRows = incidentsFor(p);
       if (incRows && incRows.length > 0) {
         html += `<div class="info-section" style="margin-top:14px">
-          <div class="info-section-title">Significant Incidents</div>
+          <div class="info-section-title">Incidents</div>
           <div id="incidents-chart-slot"></div>
           <button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Significant Incidents Since 2010 (${incRows.length}) &#9888;</button>
         </div>`;
@@ -2054,6 +2054,26 @@ const isolatedYearBands = {
   },
 };
 
+// Where each chart's numbers come from. Worth stating per chart because the panel mixes four
+// sources: EIA Form 176 for anything the utility files, PHMSA's annual reports for the pipe,
+// and two outside series (FRED, BEA) that only the affordability chart uses. The citygate
+// price is the one that most needs saying — it is a STATE average, not this utility's.
+const CHART_SOURCE = {
+  "price-consump": "EIA Form 176: residential revenue, volume and customers. Price is revenue \u00f7 volume; consumption is volume \u00f7 customers.",
+  "pricebkdn":     "EIA Form 176 for the residential price, less EIA's state citygate series (NG_PRI_SUM_A_EPG0_PG1_DMCF_A) for supply. Citygate is a state average, not utility-specific, so the delivery portion is an approximation.",
+  "afford":        "EIA Form 176 for the annual bill. State hourly minimum wage from FRED (Federal Reserve Bank of St. Louis); per capita income from BEA (Bureau of Economic Analysis).",
+  "supplydisp":    "EIA Form 176, total supply and total disposition.",
+  "loss":          "EIA Form 176, losses from leaks.",
+  "dcd":           "PHMSA annual distribution report: main mileage by decade installed.",
+  "mat":           "PHMSA annual distribution report: main mileage by material.",
+  "srvdcd":        "PHMSA annual distribution report: service count by decade installed.",
+  "srvmat":        "PHMSA annual distribution report: service count by material.",
+};
+function chartTitle(id, label) {
+  const src = CHART_SOURCE[id];
+  return `<div class="chart-title">${label}${src ? tipIcon(src) : ""}</div>`;
+}
+
 function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return null;
@@ -2253,39 +2273,39 @@ function renderTrends(feat) {
   document.getElementById("trends-body").innerHTML = `
     <div class="info-section"><div class="info-section-title">Trends</div>
     ${hasPriceConsump ? `<div class="chart-block">
-      <div class="chart-title">Residential Price &amp; Consumption</div>
+      ${chartTitle("price-consump", "Residential Price &amp; Consumption")}
       <div class="chart-wrap"><canvas id="tc-price-consump"></canvas></div>
     </div>` : ""}
     ${hasPriceBkdn ? `<div class="chart-block">
-      <div class="chart-title">Residential Price Breakdown: Supply vs. Delivery ($/Mcf)</div>
+      ${chartTitle("pricebkdn", "Residential Price Breakdown: Supply vs. Delivery ($/Mcf)")}
       <div class="chart-wrap"><canvas id="tc-pricebkdn"></canvas></div>
     </div>` : ""}
     ${hasAffordability ? `<div class="chart-block">
-      <div class="chart-title">Gas Bill Affordability</div>
+      ${chartTitle("afford", "Gas Bill Affordability")}
       <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
     </div>` : ""}
     ${hasSupplyDisp ? `<div class="chart-block">
-      <div class="chart-title">Total Supply &amp; Total Disposition (Mcf)</div>
+      ${chartTitle("supplydisp", "Total Supply &amp; Total Disposition (Mcf)")}
       <div class="chart-wrap"><canvas id="tc-supplydisp"></canvas></div>
     </div>` : ""}
     ${hasLossEIA ? `<div class="chart-block">
-      <div class="chart-title">Losses from Leaks (Mcf)</div>
+      ${chartTitle("loss", "Losses from Leaks (Mcf)")}
       <div class="chart-wrap"><canvas id="tc-loss"></canvas></div>
     </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
-      <div class="chart-title">Main Miles by Installation Era</div>
+      ${chartTitle("dcd", "Main Miles by Installation Era")}
       <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
     </div>` : ""}
     ${hasMatMiles ? `<div class="chart-block">
-      <div class="chart-title">Main Miles by Material</div>
+      ${chartTitle("mat", "Main Miles by Material")}
       <div class="chart-wrap" style="height:290px"><canvas id="tc-mat"></canvas></div>
     </div>` : ""}
     ${hasSrvDcd ? `<div class="chart-block">
-      <div class="chart-title">Number of Services by Installation Era</div>
+      ${chartTitle("srvdcd", "Number of Services by Installation Era")}
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvdcd"></canvas></div>
     </div>` : ""}
     ${hasSrvMat ? `<div class="chart-block">
-      <div class="chart-title">Number of Services by Material</div>
+      ${chartTitle("srvmat", "Number of Services by Material")}
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
     ${multiReportNoteHtml}
@@ -2301,7 +2321,7 @@ function renderTrends(feat) {
   if (incSlot) {
     incSlot.innerHTML = hasIncidents
       ? `<div class="chart-block">
-           <div class="chart-title">Incidents Since 2010 by Cause</div>
+           <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
            <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
          </div>`
       : "";
