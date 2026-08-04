@@ -287,7 +287,7 @@
         <option value="pct_ci">% Iron Main Mileage (Cast &amp; Ductile)</option>
         <option value="pct_unp_steel">% Unprotected Steel Main Mileage</option>
         <option value="pct_pre1970">% Pre-1970 Main Mileage</option>
-        <option value="excav_damage_rate">Damages per 1K Excavation Tickets</option>
+        <option value="excav_damage_rate">Damages per 10K Excavation Tickets</option>
       </optgroup>
     </select>
   </div>
@@ -520,7 +520,7 @@ const MODES = {
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
   afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
   afford_pct:       { label: "Gas Bill as % of Per Capita Income", unit: "%income", scale: "pricemap", fixed: null },
-  excav_damage_rate:{ label: "Damages per 1K Excavation Tickets", unit: "/1K",      scale: "red",      fixed: null },
+  excav_damage_rate:{ label: "Damages per 10K Excavation Tickets", unit: "/10K",    scale: "red",      fixed: null },
 };
 
 const DOMAINS = {};
@@ -538,7 +538,9 @@ function fmtVal(v, modeKey) {
   if (unit === "Mcf/cust") return `${v.toFixed(1)} Mcf/cust`;
   if (unit === "hrs/yr")   return `${v.toFixed(1)} hrs/yr`;
   if (unit === "%income")  return `${v.toFixed(2)}%`;
-  if (unit === "/1K")      return `${v.toFixed(2)}/1K`;
+  // per 10K rather than 1K: at 1K the rate runs 0.xx for most utilities and the leading
+  // zeros dominate. One decimal is enough at this scale.
+  if (unit === "/10K")     return `${v.toFixed(1)}/10K`;
   return n;
 }
 
@@ -752,7 +754,7 @@ function getValue(p, mode) {
     }
     case "excav_damage_rate": {
       const dmg = p.phmsa_PARTDTOTDAMAGES, tix = p.phmsa_PARTDTOTTICKETS;
-      return tix != null && tix > 0 ? 1000 * (dmg || 0) / tix : null;
+      return tix != null && tix > 0 ? 10000 * (dmg || 0) / tix : null;
     }
     case "afford_hours":
     case "afford_pct": {
@@ -1633,8 +1635,8 @@ function updateInfo(feat, pinned) {
     // ── Excavation damage prevention (Part D)
     const excavTix = p.phmsa_PARTDTOTTICKETS, excavDmg = p.phmsa_PARTDTOTDAMAGES;
     if (excavTix != null && excavTix > 0)
-      html += statRow("Damages per 1K excavation tickets", `${(1000 * (excavDmg || 0) / excavTix).toFixed(2)}`,
-        "Derived: (total dig-in damages ÷ total excavation tickets) × 1,000. Only available from 2024.");
+      html += statRow("Damages per 10K excavation tickets", `${(10000 * (excavDmg || 0) / excavTix).toFixed(1)}`,
+        "Derived from PHMSA: dig-in damages \u00f7 excavation tickets, \u00d7 10,000. Reported from 2010.");
 
     html += `</div>`;
   }
