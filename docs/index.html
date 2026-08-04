@@ -1499,9 +1499,9 @@ function updateInfo(feat, pinned) {
             "Derived: residential volume ÷ residential customers (EIA Form 176 VL ÷ CT)");
         if (hasDelivery) {
           html += statRow("Supply price (citygate)", `$${cgPrice.toFixed(2)}/Mcf`,
-            "STATEWIDE, not utility-specific. Annual value is the volume-weighted average of the monthly citygate prices: sum(monthly price \u00d7 monthly volume delivered to consumers) \u00f7 sum(monthly volume), so winter months carry more weight than summer ones. Source: EIA Form 857 (monthly citygate price and monthly gas delivered to consumers, by state).");
+            "Statewide. Annual value is the volume-weighted average of the monthly citygate prices: sum(monthly price \u00d7 monthly volume delivered to consumers) \u00f7 sum(monthly volume), so winter months carry more weight than summer ones. Source: EIA Form 857 (monthly citygate price and monthly gas delivered to consumers, by state).");
           html += statRow("Delivery price", `$${(resPr2 - cgPrice).toFixed(2)}/Mcf`,
-            "Derived: this utility's residential average price minus the STATEWIDE citygate price, so it approximates the distribution margin rather than measuring it. The citygate side is a state average from EIA Form 857, not this utility's own supply cost.");
+            "Derived: this utility's residential average price minus the statewide citygate price, so it approximates the distribution margin rather than measuring it. The citygate side is a state average from EIA Form 857, not this utility's own supply cost.");
         }
         html += delivCagrHtml;
         html += `</div>`;
@@ -1518,9 +1518,9 @@ function updateInfo(feat, pinned) {
         if (annualBill != null) html += statRow("Avg. annual gas cost/customer", `$${annualBill.toFixed(0)}`,
           "Derived: total residential revenue ÷ number of residential customers (EIA Form 176 CS ÷ CT)");
         if (hoursAtMW  != null) html += statRow("Hours at state min. wage to pay", `${hoursAtMW.toFixed(1)} hrs/yr`,
-          "Derived: this utility's annual gas cost \u00f7 the STATEWIDE hourly minimum wage, which is not utility-specific. Min. wage source: FRED (Federal Reserve Bank of St. Louis)");
+          "Derived: this utility's annual gas cost \u00f7 the statewide hourly minimum wage. Min. wage source: FRED (Federal Reserve Bank of St. Louis)");
         if (incomeSh   != null) html += statRow("Gas cost as % of per capita income", `${incomeSh.toFixed(2)}%`,
-          "Derived: (this utility's annual gas cost \u00f7 STATEWIDE per capita income) \u00d7 100. The income side is a state average, not this utility's service area. Source: BEA (Bureau of Economic Analysis)");
+          "Derived: (this utility's annual gas cost \u00f7 statewide per capita income) \u00d7 100. The income side is a state average, not this utility's service area. Source: BEA (Bureau of Economic Analysis)");
         html += `</div>`;
       }
     } else {
@@ -2056,20 +2056,20 @@ const isolatedYearBands = {
   },
 };
 
-// Where each chart's numbers come from. Worth stating per chart because the panel mixes four
-// sources: EIA Form 176 for anything the utility files, PHMSA's annual reports for the pipe,
-// and two outside series (FRED, BEA) that only the affordability chart uses. The citygate
-// price is the one that most needs saying — it is a STATE average, not this utility's.
+// Where each chart's numbers come from. Kept short on purpose: these answer "which dataset",
+// not "how was it computed" — the formulas live on the Sales stat rows, which is where a reader
+// goes for the arithmetic. "Derived from" marks a chart whose series is computed rather than
+// filed, and "statewide" marks a figure that is a state average rather than this utility's.
 const CHART_SOURCE = {
-  "price-consump": "EIA Form 176: residential revenue, volume and customers. Price is revenue \u00f7 volume; consumption is volume \u00f7 customers.",
-  "pricebkdn":     "EIA Form 176 for this utility's residential price, less the citygate price from EIA Form 857 for supply. The citygate figure is STATEWIDE, not utility-specific, and is the volume-weighted average of the monthly values \u2014 so the delivery portion is an approximation, not this utility's actual margin.",
-  "afford":        "EIA Form 176 for this utility's annual bill, divided by two STATEWIDE measures that are not utility-specific: hourly minimum wage from FRED (Federal Reserve Bank of St. Louis) and per capita income from BEA (Bureau of Economic Analysis).",
-  "supplydisp":    "EIA Form 176, total supply and total disposition.",
-  "loss":          "EIA Form 176, losses from leaks.",
-  "dcd":           "PHMSA annual distribution report: main mileage by decade installed.",
-  "mat":           "PHMSA annual distribution report: main mileage by material.",
-  "srvdcd":        "PHMSA annual distribution report: service count by decade installed.",
-  "srvmat":        "PHMSA annual distribution report: service count by material.",
+  "price-consump": "Data source: derived from EIA 176.",
+  "pricebkdn":     "Data source: EIA 176, less statewide citygate price from EIA 857.",
+  "afford":        "Data source: derived from EIA 176, with statewide minimum wage (FRED) and per capita income (BEA).",
+  "supplydisp":    "Data source: EIA 176.",
+  "loss":          "Data source: EIA 176.",
+  "dcd":           "Data source: PHMSA annual report.",
+  "mat":           "Data source: PHMSA annual report.",
+  "srvdcd":        "Data source: PHMSA annual report.",
+  "srvmat":        "Data source: PHMSA annual report.",
 };
 function chartTitle(id, label) {
   const src = CHART_SOURCE[id];
