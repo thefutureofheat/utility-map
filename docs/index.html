@@ -216,9 +216,12 @@
     /* ── Chart styles (inline in sidebar) ──────────────────── */
     .chart-block { margin-bottom: 20px; }
     .chart-title {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.6px; color: #1a3a5c;
-      border-bottom: 2px solid #1a3a5c; padding-bottom: 3px; margin-bottom: 8px;
+      /* Deliberately NOT the same as .info-section-title, which it used to match exactly —
+         same size, weight, caps and 2px rule — so each chart read as a section of its own.
+         Sentence case, lighter weight and a hairline rule put it a level below the heading. */
+      font-size: 11px; font-weight: 600; color: #3d5a75;
+      letter-spacing: 0.1px; border-bottom: 1px solid #e4e8ec;
+      padding-bottom: 3px; margin-bottom: 8px;
     }
     .chart-wrap { position: relative; width: 100%; height: 220px; }
 
@@ -1676,10 +1679,17 @@ function updateInfo(feat, pinned) {
     if (hasTrends) {
       html += `<div id="trends-body" style="margin-top:4px"></div>`;
     }
+    // Incidents get their own section at the very bottom, holding both the chart and the
+    // button. renderTrends fills the slot, because the chart cannot be built until Chart.js
+    // has the assembled series.
     if (opId != null && incidentsData) {
       const incRows = incidentsFor(p);
       if (incRows && incRows.length > 0) {
-        html += `<button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Significant Incidents Since 2010 (${incRows.length}) &#9888;</button>`;
+        html += `<div class="info-section" style="margin-top:14px">
+          <div class="info-section-title">Significant Incidents</div>
+          <div id="incidents-chart-slot"></div>
+          <button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Significant Incidents Since 2010 (${incRows.length}) &#9888;</button>
+        </div>`;
       }
     }
     html += `<p class="pinned-note">Pinned — click territory again or click map to unpin</p>`;
@@ -2241,6 +2251,7 @@ function renderTrends(feat) {
   const priceTickFmt = v => v != null ? "$" + v.toFixed(2) : "";
 
   document.getElementById("trends-body").innerHTML = `
+    <div class="info-section"><div class="info-section-title">Trends</div>
     ${hasPriceConsump ? `<div class="chart-block">
       <div class="chart-title">Residential Price &amp; Consumption</div>
       <div class="chart-wrap"><canvas id="tc-price-consump"></canvas></div>
@@ -2280,11 +2291,21 @@ function renderTrends(feat) {
     ${multiReportNoteHtml}
     ${apportionedNoteHtml}
     ${multistateNoteHtml}
-    ${hasIncidents ? `<div class="chart-block">
-      <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
-      <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
-    </div>` : ""}
+    </div>
   `;
+
+  // The incidents chart belongs to the Significant Incidents section that updateInfo put at
+  // the bottom, next to its button — not to Trends. Written into that slot rather than
+  // appended here, so the section holds both halves of the same subject.
+  const incSlot = document.getElementById("incidents-chart-slot");
+  if (incSlot) {
+    incSlot.innerHTML = hasIncidents
+      ? `<div class="chart-block">
+           <div class="chart-title">Incidents Since 2010 by Cause</div>
+           <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
+         </div>`
+      : "";
+  }
 
   const BASE  = { fill: false, tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, spanGaps: true };
   const SBASE = { tension: 0.3, borderWidth: 1, pointRadius: 1, pointHoverRadius: 3, spanGaps: false };
