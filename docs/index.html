@@ -1140,22 +1140,29 @@ function updateHeaderSub() {
 
 function updateYearAvail() {}
 
+// Always revalidate the data files. Without this the browser serves whatever it cached, and a
+// change to the SHAPE of a file goes unnoticed: affordability.json grew from 2 slots to 5 as the
+// energy-burden work went in, and a cached 2-slot copy silently produced no burden lines at all
+// while the file on disk was correct. "no-cache" still uses the cache — it sends a conditional
+// request and takes a 304 when nothing changed — so this costs a round trip, not a re-download.
+const NO_STALE = { cache: "no-cache" };
+
 // ── Data load ─────────────────────────────────────────────────────────────────
 
 // Fetch affordability lookup (state × year min wage + income per capita)
-fetch("affordability.json")
+fetch("affordability.json", NO_STALE)
   .then(r => r.json())
   .then(d => { affordabilityData = d; })
   .catch(() => {});
 
 // Fetch incidents.json early — small file, needed for click panel
-fetch("incidents.json")
+fetch("incidents.json", NO_STALE)
   .then(r => r.json())
   .then(d => { incidentsData = d; })
   .catch(() => {});
 
 // Fetch id_map.json — maps EIA ID → PHMSA key for choropleth join
-fetch("id_map.json")
+fetch("id_map.json", NO_STALE)
   .then(r => r.json())
   .then(d => {
     idMap = d;
@@ -1165,13 +1172,13 @@ fetch("id_map.json")
 
 // Fetch poly_map.json — polygon identity overrides. Must be in hand before the
 // choropleth expression is built, so it is awaited alongside the timeseries.
-const polyPromise = fetch("poly_map.json")
+const polyPromise = fetch("poly_map.json", NO_STALE)
   .then(r => r.json()).catch(() => ({}));
 
-const phmsaPromise = fetch("phmsa_timeseries.json")
+const phmsaPromise = fetch("phmsa_timeseries.json", NO_STALE)
   .then(r => r.json()).catch(() => null);
 
-const eiaPromise = fetch("eia_timeseries.json")
+const eiaPromise = fetch("eia_timeseries.json", NO_STALE)
   .then(r => r.json()).catch(() => null);
 
 // ── MapLibre source + layers (added once the style is loaded) ─────────────────
