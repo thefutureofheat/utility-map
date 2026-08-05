@@ -1889,6 +1889,10 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   const supplyPr = [];
   const hoursMinWage = [], incomeSharePct = [];
   const totSupply = [], totDisp = [], lossEIA = [];
+  // Excavation damage, normalised per 10,000 one-call tickets. The raw damage count mostly
+  // tracks how much digging happened that year, so only the rate says whether a utility's pipe
+  // is actually being struck more often.
+  const excavRate = [];
   const knownLeaks = [], unaccPct = [];
   const dcdPre70 = [], dcd7090 = [], dcd0010 = [], dcd20s = [], dcdUnknown = [];
   // Material breakdown — mains miles
@@ -1924,6 +1928,8 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
     totDisp.push((ed?.["Total Disposition [VL]"] ?? 0) > 0 ? ed["Total Disposition [VL]"] : null);
     lossEIA.push(ed != null ? (ed["Losses from Leaks [VL]"] ?? null) : null);
     if (pd) {
+      const tix = pd.PARTDTOTTICKETS, dmg = pd.PARTDTOTDAMAGES;
+      excavRate.push(tix != null && tix > 0 ? 10000 * (dmg || 0) / tix : null);
       const ci = (pd.MMILES_CI || 0) + (pd.MMILES_CI_WR_TOTAL || 0);
       ciMiles.push(ci > 0 ? ci : null);
       if (pd.MMILES_BY_DCD_TOTAL != null) {
@@ -1987,6 +1993,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
       knownLeaks.push(pd.KNOWN_LEAKS != null ? pd.KNOWN_LEAKS : null);
       unaccPct.push(pd.PERCENT_UNACC_GAS != null ? Number(pd.PERCENT_UNACC_GAS) : null);
     } else {
+      excavRate.push(null);
       ciMiles.push(null);
       dcdPre70.push(null); dcd7090.push(null); dcd0010.push(null);
       dcd20s.push(null); dcdUnknown.push(null);
@@ -2002,7 +2009,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   return {
     years, nomPrice, realPrice, totVol, perCust, ciMiles, supplyPr,
     hoursMinWage, incomeSharePct,
-    totSupply, totDisp, lossEIA, knownLeaks, unaccPct,
+    totSupply, totDisp, lossEIA, knownLeaks, unaccPct, excavRate,
     dcdPre70, dcd7090, dcd0010, dcd20s, dcdUnknown,
     matPlastic, matStCp, matStUnp, matCI, matDI, matCu, matOther,
     srvDcdPre70, srvDcd7090, srvDcd0010, srvDcd20s, srvDcdUnk,
@@ -2072,6 +2079,7 @@ const CHART_SOURCE = {
   "mat":           "Data source: PHMSA annual report.",
   "srvdcd":        "Data source: PHMSA annual report.",
   "srvmat":        "Data source: PHMSA annual report.",
+  "excav":         "Data source: derived from PHMSA annual report. Reported from 2010.",
 };
 function chartTitle(id, label) {
   const src = CHART_SOURCE[id];
@@ -2174,6 +2182,7 @@ function renderTrends(feat) {
   const hasSrvMat    = d.srvPlastic.some(v => v != null);
   const hasSupplyDisp = d.totSupply.some(v => v != null) || d.totDisp.some(v => v != null);
   const hasLossEIA    = d.lossEIA.some(v => v != null && v > 0);
+  const hasExcav      = d.excavRate.some(v => v != null);
   const hasPriceConsump   = d.nomPrice.some(v => v != null) || d.perCust.some(v => v != null);
   const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
 
@@ -2311,6 +2320,10 @@ function renderTrends(feat) {
     ${hasSrvMat ? `<div class="chart-block">
       ${chartTitle("srvmat", "Number of Services by Material")}
       <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
+    </div>` : ""}
+    ${hasExcav ? `<div class="chart-block">
+      ${chartTitle("excav", "Excavation Damage Rate (per 10K tickets)")}
+      <div class="chart-wrap"><canvas id="tc-excav"></canvas></div>
     </div>` : ""}
     ${multiReportNoteHtml}
     ${apportionedNoteHtml}
@@ -2467,6 +2480,12 @@ function renderTrends(feat) {
     trendCharts.lossEIA = makeLineChart("tc-loss", d.years, [
       { ...BASE, label: "Losses from Leaks", data: d.lossEIA, borderColor: "#c0392b" },
     ], milesTickFmt);
+  }
+
+  if (hasExcav) {
+    trendCharts.excav = makeLineChart("tc-excav", d.years, [
+      { ...BASE, label: "Damages per 10K tickets", data: d.excavRate, borderColor: "#8e44ad" },
+    ], v => v != null ? v.toFixed(0) : "");
   }
 
   if (hasDcd) {
