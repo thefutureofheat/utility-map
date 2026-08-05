@@ -276,7 +276,7 @@
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
-        <option value="losses_eia">% Known Losses (EIA)</option>
+        <option value="losses_eia">Known Losses (Mcf, EIA)</option>
       </optgroup>
       <optgroup label="Affordability (EIA + State Data)">
         <option value="afford_hours">Hours at Min. Wage for Gas Bill</option>
@@ -517,7 +517,7 @@ const MODES = {
   total_sales_vol:{ label: "Total Sales Volume",           unit: "Mcf",   scale: "teal",     fixed: null       },
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
-  losses_eia:       { label: "% Known Losses"     ,                 unit: "%",         scale: "red",      fixed: null       },
+  losses_eia:      { label: "Known Losses",                  unit: "Mcf",    scale: "red",      fixed: null       },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
   afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
@@ -684,10 +684,11 @@ function getValue(p, mode) {
                 + (p.phmsa_MMILES_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_MMILES_BY_DCD_1960_TO_1969 || 0);
       return dcdTotal > 0 ? pre / dcdTotal * 100 : null;
     }
-    case "losses_eia": {
-      const loss = p["Losses from Leaks [VL]"], supply = p["Total Supply [VL]"];
-      return loss != null && supply > 0 ? loss / supply * 100 : null;
-    }
+    case "losses_eia":
+      // The volume as filed, not a share of supply. Absolute volume means this layer tracks
+      // utility SIZE as much as leakiness — a large system will read high simply for being
+      // large — which is the tradeoff for showing the reported figure directly.
+      return p["Losses from Leaks [VL]"] ?? null;
     case "delivery_cagr": {
       if (!eiaTimeseries || !p.ID) return null;
       const entry = eiaTimeseries[p.ID];
