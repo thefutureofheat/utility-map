@@ -276,7 +276,7 @@
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
-        <option value="losses_eia">Known Losses (Mcf, EIA)</option>
+        <option value="losses_eia">Known Losses (Mcf)</option>
       </optgroup>
       <optgroup label="Affordability (EIA + State Data)">
         <option value="afford_hours">Hours at Min. Wage for Gas Bill</option>
@@ -509,7 +509,7 @@ const MODES = {
   pct_ci:         { label: "% Iron Main Mileage (Cast & Ductile)", unit: "%",    scale: "ci_red",   fixed: [0,  50]   },
   pct_unp_steel:  { label: "% Unprotected Steel Main Mileage",   unit: "%",      scale: "unp_steel", fixed: null       },
   pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
-  unacc:          { label: "% of Unaccounted for Gas",          unit: "%",      scale: "red",      fixed: null       },
+  unacc:          { label: "% of Unaccounted for Gas",          unit: "%",      scale: "diverge",  fixed: null, diverging: true },
   res_vol:        { label: "Residential Sales Volume",     unit: "Mcf",   scale: "blue",     fixed: null       },
   res_price:      { label: "Residential Avg Price",        unit: "$/Mcf",  scale: "pricemap", fixed: null       },
   res_customers:  { label: "Residential Customers",        unit: "",       scale: "purple",   fixed: null       },
