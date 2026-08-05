@@ -276,7 +276,7 @@
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
-        <option value="losses_eia">% Lost from Leaks (EIA)</option>
+        <option value="losses_eia">% Known Losses (EIA)</option>
       </optgroup>
       <optgroup label="Affordability (EIA + State Data)">
         <option value="afford_hours">Hours at Min. Wage for Gas Bill</option>
@@ -517,7 +517,7 @@ const MODES = {
   total_sales_vol:{ label: "Total Sales Volume",           unit: "Mcf",   scale: "teal",     fixed: null       },
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
-  losses_eia:       { label: "% Lost from Leaks",                 unit: "%",         scale: "red",      fixed: null       },
+  losses_eia:       { label: "% Known Losses"     ,                 unit: "%",         scale: "red",      fixed: null       },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
   afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
@@ -1531,7 +1531,15 @@ function updateInfo(feat, pinned) {
       const incomePC   = affEntry ? affEntry[1] : null;
       const hoursAtMW  = annualBill != null && minWage  != null && minWage  > 0 ? annualBill / minWage  : null;
       const incomeSh   = annualBill != null && incomePC != null && incomePC > 0 ? annualBill / incomePC * 100 : null;
-      if (annualBill != null || hoursAtMW != null || incomeSh != null) {
+      // One box, five rows. The bill, then the two typical-income measures, then the two
+      // low-income thresholds. Splitting them read as two unrelated panels; the grouping is
+      // still legible from the row labels.
+      const smi60   = affEntry ? affEntry[2] : null;
+      const fpl3    = affEntry ? affEntry[3] : null;
+      const burdSMI = annualBill != null && smi60 ? annualBill / smi60 * 100 : null;
+      const burdFPL = annualBill != null && fpl3  ? annualBill / fpl3  * 100 : null;
+      if (annualBill != null || hoursAtMW != null || incomeSh != null
+          || burdSMI != null || burdFPL != null) {
         html += `<div style="margin-top:6px;padding:7px 9px;background:#f5f2fb;border-left:3px solid #6a3a8c;border-radius:3px">`;
         if (annualBill != null) html += statRow("Avg. annual gas cost per res. customer", `$${annualBill.toFixed(0)}`,
           "Derived from EIA 176: residential revenue \u00f7 residential customers.");
@@ -1539,21 +1547,10 @@ function updateInfo(feat, pinned) {
           "Derived: annual gas cost \u00f7 statewide hourly minimum wage. Source: FRED.");
         if (incomeSh   != null) html += statRow("Gas cost as % of state per capita income", `${incomeSh.toFixed(2)}%`,
           "Derived: annual gas cost \u00f7 statewide per capita income, \u00d7 100. Source: BEA.");
-        html += `</div>`;
-      }
-      // Energy burden gets its own box rather than joining the one above: those two measure the
-      // bill against a typical income, these measure it against a LOW-INCOME threshold, which is
-      // a different question and reads on a different scale.
-      const smi60   = affEntry ? affEntry[2] : null;
-      const fpl3    = affEntry ? affEntry[3] : null;
-      const burdSMI = annualBill != null && smi60 ? annualBill / smi60 * 100 : null;
-      const burdFPL = annualBill != null && fpl3  ? annualBill / fpl3  * 100 : null;
-      if (burdSMI != null || burdFPL != null) {
-        html += `<div style="margin-top:6px;padding:7px 9px;background:#f3f0fa;border-left:3px solid #6a51a3;border-radius:3px">`;
-        if (burdSMI != null) html += statRow("Gas energy burden (% of 60% state median income)",
-          `${burdSMI.toFixed(2)}%`, "Gas only. Annual gas cost \u00f7 60% of statewide median household income, the LIHEAP threshold. Uses the utility's average bill. Source: Census H-8.");
-        if (burdFPL != null) html += statRow("Gas energy burden (% of federal poverty level)",
-          `${burdFPL.toFixed(2)}%`, "Gas only. Annual gas cost \u00f7 the federal poverty guideline for a 3-person household \u2014 size scales the result. No figure for AK or HI. Source: HHS/ASPE.");
+        if (burdSMI    != null) html += statRow("Gas energy burden (% of 60% state median income)", `${burdSMI.toFixed(2)}%`,
+          "Gas only. Annual gas cost \u00f7 60% of statewide median household income, the LIHEAP threshold. Uses the utility's average bill. Source: Census H-8.");
+        if (burdFPL    != null) html += statRow("Gas energy burden (% of federal poverty level)", `${burdFPL.toFixed(2)}%`,
+          "Gas only. Annual gas cost \u00f7 the federal poverty guideline for a 3-person household \u2014 size scales the result. No figure for AK or HI. Source: HHS/ASPE.");
         html += `</div>`;
       }
     } else {
@@ -1595,7 +1592,8 @@ function updateInfo(feat, pinned) {
     const losses = p["Losses from Leaks [VL]"];
     if (supply) html += `<div style="margin-top:6px">` + statRow("Total Supply",      fmtNum(supply) + " Mcf") + `</div>`;
     if (disp)   html += statRow("Total Disposition", fmtNum(disp) + " Mcf");
-    if (losses) html += statRow("Losses (Leaks)",    fmtNum(losses) + " Mcf");
+    if (losses) html += statRow("Known losses", fmtNum(losses) + " Mcf",
+      "EIA definition: known volumes of natural gas resulting from leaks, damage, accidents, migration, and/or blowdowns. Also includes fuel used in liquefaction and regasification. Not asked before 2002, and optional since \u2014 about two thirds of filers report it.");
     html += `</div>`;
   }
 
@@ -2114,7 +2112,7 @@ const CHART_SOURCE = {
   "afford":        "Data source: derived from EIA 176, with statewide minimum wage from FRED and statewide per capita income from BEA.",
   "burden":        "Data source: gas only, derived from EIA 176, with statewide median household income from Census H-8 and the federal poverty guideline from HHS/ASPE.",
   "supplydisp":    "Data source: EIA 176.",
-  "loss":          "Data source: EIA 176.",
+  "loss":          "Data source: EIA 176. Known volumes lost to leaks, damage, accidents, migration and blowdowns, plus liquefaction and regasification fuel. Not asked before 2002; optional since.",
   "dcd":           "Data source: PHMSA annual report.",
   "mat":           "Data source: PHMSA annual report.",
   "srvdcd":        "Data source: PHMSA annual report.",
@@ -2373,7 +2371,7 @@ function renderTrends(feat) {
       <div class="chart-wrap"><canvas id="tc-supplydisp"></canvas></div>
     </div>` : ""}
     ${hasLossEIA ? `<div class="chart-block">
-      ${chartTitle("loss", "Losses from Leaks (Mcf)")}
+      ${chartTitle("loss", "Known Losses (Mcf)")}
       <div class="chart-wrap"><canvas id="tc-loss"></canvas></div>
     </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
@@ -2561,7 +2559,7 @@ function renderTrends(feat) {
 
   if (hasLossEIA) {
     trendCharts.lossEIA = makeLineChart("tc-loss", d.years, [
-      { ...BASE, label: "Losses from Leaks", data: d.lossEIA, borderColor: "#c0392b" },
+      { ...BASE, label: "Known losses", data: d.lossEIA, borderColor: "#c0392b" },
     ], milesTickFmt);
   }
 
