@@ -1456,14 +1456,24 @@ function updateInfo(feat, pinned) {
 
   const name     = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
   const stateLbl = [p.EIA_state, p.phmsa_STOP, p.geo_LOCATION].filter(Boolean).find(Boolean) || "";
-  const rawType  = p.TYPE || "";
-  const typeLbl  = rawType
-    ? rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase().replace(/-([a-z])/g, (_, c) => "-" + c.toUpperCase())
-    : "";
-  const subParts = [stateLbl, typeLbl].filter(Boolean);
 
   // Timeseries entry references
   const { eiaId, phmsaKey, opId, stop } = resolveIds(p);
+
+  // Ownership: prefer what the operator told PHMSA for the selected year. The territory
+  // shapefile's TYPE is the fallback and is not reliable — it calls Peoples Gas Light of Chicago
+  // MUNICIPAL when it is investor owned, and nationally it is short 32 investor-owned, 145
+  // private and 25 cooperative against PHMSA, all apparently folded into "municipal". PHMSA only
+  // carries the field from 2015, so earlier years still fall back to the shapefile.
+  const phType   = phmsaKey && phmsaTimeseries
+    ? (phmsaTimeseries[phmsaKey]?.data?.[String(yr)]?.OPERATOR_TYPE || null) : null;
+  const rawType  = p.TYPE || "";
+  // PHMSA's wording is already presentable ("Investor Owned"); only the shapefile's SHOUTING
+  // values need re-casing.
+  const typeLbl  = phType ? phType
+    : rawType ? rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase().replace(/-([a-z])/g, (_, c) => "-" + c.toUpperCase())
+    : "";
+  const subParts = [stateLbl, typeLbl].filter(Boolean);
   const eiaEntry   = eiaId    && eiaTimeseries   ? eiaTimeseries[eiaId]     : null;
   const phmsaEntry = phmsaKey && phmsaTimeseries  ? phmsaTimeseries[phmsaKey] : null;
 
