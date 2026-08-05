@@ -67,7 +67,12 @@
     #legend { padding: 8px 16px 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
     .legend-title { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
     .legend-gradient { height: 10px; border-radius: 5px; margin-bottom: 3px; }
-    .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #777; }
+    .legend-labels { display: flex; justify-content: space-between; font-size: 9px; color: #777;
+      font-variant-numeric: tabular-nums; }
+    /* short rules under the bar, so a label can be tied to a position rather than guessed at */
+    .legend-ticks { position: relative; height: 4px; }
+    .legend-ticks i { position: absolute; top: 0; width: 1px; height: 4px; background: #bbb;
+      transform: translateX(-0.5px); }
     .legend-na { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 10px; color: #888; }
     .legend-na-swatch { width: 12px; height: 12px; border-radius: 2px; background: #fbfbfb; border: 1px solid #c8ccd0; flex-shrink: 0; }
 
@@ -1277,15 +1282,31 @@ function updateLegend() {
   const [lo, hi] = DOMAINS[currentMode] || [0, 1];
   const scale = SCALES[m.scale];
 
-  const stops = [0, 0.25, 0.5, 0.75, 1]
-    .map(t => `${scale(t)} ${t * 100}%`).join(", ");
+  // Sample the scale densely instead of handing CSS four stops to interpolate between. The
+  // diverging scales apply a gamma, and the ci_red / unp_steel / orange ones a special case at
+  // zero, so a four-stop gradient drew a straight line through curves the map does not follow —
+  // the key showed a mapping that was not the one on screen.
+  const N = 24;
+  const stops = Array.from({ length: N + 1 }, (_, i) => {
+    const t = i / N;
+    return `${scale(t)} ${(t * 100).toFixed(1)}%`;
+  }).join(", ");
 
-  const lbl = [lo, (lo + hi) / 2, hi].map(v => fmtVal(v, currentMode));
+  // Position is linear in VALUE, so evenly spaced labels read as an axis; the colour beneath
+  // them curves instead. Five rather than three, so a colour can be placed to within a quarter.
+  const TICKS = [0, 0.25, 0.5, 0.75, 1];
+  const labels = TICKS
+    .map(t => `<span>${fmtVal(lo + t * (hi - lo), currentMode)}</span>`)
+    .join("");
+  const ticks = TICKS
+    .map(t => `<i style="left:${(t * 100).toFixed(1)}%"></i>`)
+    .join("");
 
   document.getElementById("legend").innerHTML = `
     <div class="legend-title">${m.label}${m.unit ? " (" + m.unit + ")" : ""}</div>
     <div class="legend-gradient" style="background: linear-gradient(to right, ${stops})"></div>
-    <div class="legend-labels"><span>${lbl[0]}</span><span>${lbl[1]}</span><span>${lbl[2]}</span></div>
+    <div class="legend-ticks">${ticks}</div>
+    <div class="legend-labels">${labels}</div>
     <div class="legend-na"><div class="legend-na-swatch"></div> No data</div>
   `;
 }
