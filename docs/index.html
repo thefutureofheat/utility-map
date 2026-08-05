@@ -705,6 +705,15 @@ function getValue(p, mode) {
       delivPts.sort((a, b) => a.yr - b.yr);
       if (delivPts.length < 2) return null;
       const end = delivPts[delivPts.length - 1];
+      // A colour on the map has no window label attached, so it must not be a different
+      // measurement from the one the legend claims. Atlanta Gas Light has residential sales in
+      // 1997-1999 only — Georgia deregulated and its customers moved to marketers — so the
+      // "~10yr" CAGR was a TWO-year rate across that transition, and 1999 is the year its price
+      // halved. Require the window to end near the end of this utility's own record, and to be
+      // long enough to call a decade. The Sales panel is free to show the short window because
+      // it prints the actual years beside it.
+      const lastYr = Math.max(...Object.keys(entry.data).map(Number));
+      if (end.yr < lastYr - 2) return null;
       const targetYr = end.yr - 10;
       let best = null, bestDist = Infinity;
       for (const pt of delivPts) {
@@ -1501,6 +1510,7 @@ function updateInfo(feat, pinned) {
           }
           if (best) {
             const n = end.yr - best.yr;
+      if (n < 7) return null;
             const cagr = Math.pow(end.v / best.v, 1 / n) - 1;
             const sign = cagr >= 0 ? "+" : "";
             delivCagrHtml = statRow(
