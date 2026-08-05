@@ -325,5 +325,17 @@
         "to": 2017
       }
     ]
+  },
+  "17641129KS": {
+    "note": "Atmos Energy Kansas. Acquired United Cities Gas in 1997: Atmos gains 76,595 residential customers at the handover against United Cities' 74,207.",
+    "predecessors": [
+      "17600345KS"
+    ]
+  },
+  "17695242OH": {
+    "note": "Northeast Ohio Natural Gas. Absorbed Orwell Natural Gas in 2019: NEO gains 11,989 residential customers against Orwell's 11,073.",
+    "predecessors": [
+      "17695266OH"
+    ]
   }
 }

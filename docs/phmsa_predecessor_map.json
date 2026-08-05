@@ -260,5 +260,17 @@
     "predecessors": [
       "99128_AK"
     ]
+  },
+  "6720_KS": {
+    "note": "ATMOS ENERGY - COLORADO/KANSAS. Atmos acquired United Cities Gas in 1997; United Cities' Kansas series ends 1998 at 1,877 miles and Atmos Kansas steps 1,084 to 3,414 the next year. On the EIA side Atmos Kansas gains 76,595 residential customers exactly at the handover against United Cities' 74,207, within 3%.",
+    "predecessors": [
+      "20211_KS"
+    ]
+  },
+  "13635_OH": {
+    "note": "NORTHEAST OHIO NATURAL GAS. Absorbed Orwell Natural Gas, whose series ends 2018 at 431.71 miles; NEO steps 866.26 to 1,582.25 for 2019. EIA agrees: NEO gains 11,989 residential customers against Orwell's 11,073. NEO's gain exceeds Orwell alone, so at least one further Gas Natural Inc. subsidiary was folded in at the same time and is not yet mapped.",
+    "predecessors": [
+      "14341_OH"
+    ]
   }
 }
