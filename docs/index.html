@@ -1552,9 +1552,9 @@ function updateInfo(feat, pinned) {
       if (burdSMI != null || burdFPL != null) {
         html += `<div style="margin-top:6px;padding:7px 9px;background:#f3f0fa;border-left:3px solid #6a51a3;border-radius:3px">`;
         if (burdSMI != null) html += statRow("Gas energy burden (% of 60% state median income)",
-          `${burdSMI.toFixed(2)}%`, "Gas-only energy burden: annual gas cost \u00f7 60% of statewide median household income, the LIHEAP eligibility threshold. The 6% rule of thumb in this literature covers gas PLUS electricity, so this figure alone does not say whether a household is above it. Uses the utility's average bill, not a low-income-specific bill. Income source: Census table H-8 (CPS).");
+          `${burdSMI.toFixed(2)}%`, "Gas only. Annual gas cost \u00f7 60% of statewide median household income, the LIHEAP threshold. Uses the utility's average bill. Source: Census H-8.");
         if (burdFPL != null) html += statRow("Gas energy burden (% of federal poverty level)",
-          `${burdFPL.toFixed(2)}%`, "Gas-only energy burden: annual gas cost \u00f7 the federal poverty guideline for a 3-person household. Household size scales the result \u2014 the guideline for one person is about half that for four. Not available for AK or HI, whose separate guidelines are not in the source table. Same two caveats as the SMI measure: gas only, and the utility's average bill. Source: HHS/ASPE.");
+          `${burdFPL.toFixed(2)}%`, "Gas only. Annual gas cost \u00f7 the federal poverty guideline for a 3-person household \u2014 size scales the result. No figure for AK or HI. Source: HHS/ASPE.");
         html += `</div>`;
       }
     } else {
@@ -2112,7 +2112,7 @@ const CHART_SOURCE = {
   "price-consump": "Data source: derived from EIA 176.",
   "pricebkdn":     "Data source: statewide supply derived from EIA 857, delivery derived from supply and EIA 176.",
   "afford":        "Data source: derived from EIA 176, with statewide minimum wage from FRED and statewide per capita income from BEA.",
-  "burden":        "Data source: derived from EIA 176, with statewide median household income from Census table H-8 (CPS) and the federal poverty guideline from HHS/ASPE. Gas only \u2014 the 6% rule of thumb in this literature covers gas plus electricity. Uses the utility's average bill, not a low-income-specific bill.",
+  "burden":        "Data source: gas only, derived from EIA 176, with statewide median household income from Census H-8 and the federal poverty guideline from HHS/ASPE.",
   "supplydisp":    "Data source: EIA 176.",
   "loss":          "Data source: EIA 176.",
   "dcd":           "Data source: PHMSA annual report.",
