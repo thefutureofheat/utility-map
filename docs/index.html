@@ -509,7 +509,6 @@ const MODES = {
   pct_ci:         { label: "% Iron Main Mileage (Cast & Ductile)", unit: "%",    scale: "ci_red",   fixed: [0,  50]   },
   pct_unp_steel:  { label: "% Unprotected Steel Main Mileage",   unit: "%",      scale: "unp_steel", fixed: null       },
   pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
-  leaks:          { label: "Known Leaks",                  unit: "",       scale: "red",      fixed: null       },
   unacc:          { label: "% of Unaccounted for Gas",          unit: "%",      scale: "red",      fixed: null       },
   res_vol:        { label: "Residential Sales Volume",     unit: "Mcf",   scale: "blue",     fixed: null       },
   res_price:      { label: "Residential Avg Price",        unit: "$/Mcf",  scale: "pricemap", fixed: null       },
@@ -685,7 +684,6 @@ function getValue(p, mode) {
                 + (p.phmsa_MMILES_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_MMILES_BY_DCD_1960_TO_1969 || 0);
       return dcdTotal > 0 ? pre / dcdTotal * 100 : null;
     }
-    case "leaks":    return p.phmsa_KNOWN_LEAKS != null ? p.phmsa_KNOWN_LEAKS : null;
     case "losses_eia": {
       const loss = p["Losses from Leaks [VL]"], supply = p["Total Supply [VL]"];
       return loss != null && supply > 0 ? loss / supply * 100 : null;
@@ -2175,12 +2173,36 @@ function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
   });
 }
 
+// A subtle rule at zero, for charts whose data goes negative. Unaccounted-for gas does, and
+// without it there is nothing to read the sign against — the axis baseline sits at the bottom of
+// the plot, not at zero. Draws nothing when the scale starts at or above zero, which is every
+// other chart, since beginAtZero already puts the baseline there.
+const zeroLine = {
+  id: "zeroLine",
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea, scales: { y } } = chart;
+    if (!y || y.min >= 0) return;
+    const py = y.getPixelForValue(0);
+    if (!(py > chartArea.top && py < chartArea.bottom)) return;
+    ctx.save();
+    ctx.strokeStyle = "#b0b6bb";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, py);
+    ctx.lineTo(chartArea.right, py);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
 function makeLineChart(canvasId, labels, datasets, yTickFmt) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return null;
   return new Chart(ctx, {
     type: "line",
     data: { labels, datasets },
+    plugins: [zeroLine],
     options: {
       responsive: true,
       maintainAspectRatio: false,
