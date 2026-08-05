@@ -1979,7 +1979,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   // Energy burden: annual gas bill as a percentage of a low-income threshold. Two denominators
   // from affordability.json slots 2 and 3 — 60% of state median income, the LIHEAP eligibility
   // line, and the federal poverty guideline for a 3-person household.
-  const burdenSMI = [], burdenFPL = [];
+  const burdenSMI = [], burdenFPL = [], burdenFPL4 = [];
   const totSupply = [], totDisp = [], lossEIA = [];
   // Excavation damage, normalised per 10,000 one-call tickets. The raw damage count mostly
   // tracks how much digging happened that year, so only the rate says whether a utility's pipe
@@ -2015,9 +2015,10 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
     const ip  = aff ? aff[1] : null;
     hoursMinWage.push(annualBill != null && mw != null && mw > 0 ? annualBill / mw : null);
     incomeSharePct.push(annualBill != null && ip != null && ip > 0 ? annualBill / ip * 100 : null);
-    const smi60 = aff ? aff[2] : null, fpl3 = aff ? aff[3] : null;
+    const smi60 = aff ? aff[2] : null, fpl3 = aff ? aff[3] : null, fpl4 = aff ? aff[4] : null;
     burdenSMI.push(annualBill != null && smi60 ? annualBill / smi60 * 100 : null);
     burdenFPL.push(annualBill != null && fpl3  ? annualBill / fpl3  * 100 : null);
+    burdenFPL4.push(annualBill != null && fpl4 ? annualBill / fpl4  * 100 : null);
     supplyPr.push(cg);
     totSupply.push((ed?.["Total Supply [VL]"] ?? 0) > 0 ? ed["Total Supply [VL]"] : null);
     totDisp.push((ed?.["Total Disposition [VL]"] ?? 0) > 0 ? ed["Total Disposition [VL]"] : null);
@@ -2103,7 +2104,7 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   }
   return {
     years, nomPrice, realPrice, totVol, perCust, ciMiles, supplyPr,
-    hoursMinWage, incomeSharePct, burdenSMI, burdenFPL,
+    hoursMinWage, incomeSharePct, burdenSMI, burdenFPL, burdenFPL4,
     totSupply, totDisp, lossEIA, knownLeaks, unaccPct, excavRate,
     dcdPre70, dcd7090, dcd0010, dcd20s, dcdUnknown,
     matPlastic, matStCp, matStUnp, matCI, matDI, matCu, matOther,
@@ -2306,7 +2307,8 @@ function renderTrends(feat) {
   const hasExcav      = d.excavRate.some(v => v != null);
   const hasPriceConsump   = d.nomPrice.some(v => v != null) || d.perCust.some(v => v != null);
   const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
-  const hasBurden         = d.burdenSMI.some(v => v != null) || d.burdenFPL.some(v => v != null);
+  const hasBurden         = d.burdenSMI.some(v => v != null) || d.burdenFPL.some(v => v != null)
+                            || d.burdenFPL4.some(v => v != null);
   const hasUnacc          = d.unaccPct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
@@ -2605,6 +2607,8 @@ function renderTrends(feat) {
       { ...BASE, label: "% of 60% state median income", data: d.burdenSMI, borderColor: "#6a51a3" },
       { ...BASE, label: "% of federal poverty level (3-person)", data: d.burdenFPL,
         borderColor: "#d95f0e", borderDash: [4, 3] },
+      { ...BASE, label: "% of federal poverty level (4-person)", data: d.burdenFPL4,
+        borderColor: "#fdae6b", borderDash: [2, 2] },
     ], v => v != null ? v.toFixed(1) + "%" : "");
   }
 
