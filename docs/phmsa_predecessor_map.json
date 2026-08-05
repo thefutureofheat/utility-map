@@ -254,5 +254,11 @@
         "to": 2003
       }
     ]
+  },
+  "39257_AK": {
+    "note": "INTERIOR GAS UTILITY (own filings from 2020). Acquired Fairbanks Natural Gas, whose PHMSA series ends 2019. Continuity is clean: Fairbanks reports 136.01 miles and 1,206 services for 2019, Interior 142.408 and 1,391 for 2020 \u2014 ratios of 1.05 and 1.15, consistent with a handover plus a year's growth. Interior then builds out fast, reaching 248.64 miles by 2025.",
+    "predecessors": [
+      "99128_AK"
+    ]
   }
 }
