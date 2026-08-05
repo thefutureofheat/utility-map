@@ -290,6 +290,7 @@
         <option value="pct_unp_steel">% Unprotected Steel Main Mileage</option>
         <option value="pct_pre1970">% Pre-1970 Main Mileage</option>
         <option value="excav_damage_rate">Damages per 10K Excavation Tickets</option>
+        <option value="unacc">% of Unaccounted for Gas</option>
       </optgroup>
     </select>
   </div>
@@ -1660,17 +1661,17 @@ function updateInfo(feat, pinned) {
         html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Pre-1970${tipIcon("Derived: service lines installed before 1970 ÷ total service lines with a known decade of construction.")}</span><span class="stat-val">${pctSvcPre70.toFixed(1)}%</span></div>`;
     }
 
-    // ── Leak / unaccounted-for gas
-    if (p.phmsa_KNOWN_LEAKS != null) html += statRow("Known Leaks", fmtNum(p.phmsa_KNOWN_LEAKS));
-    if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("% of unaccounted for gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`,
-    "PHMSA definition: [(purchased + produced gas) \u2212 (customer use + company use + adjustments)] \u00f7 (customer use + company use + adjustments) \u00d7 100. Negative when more gas is accounted for than received that year \u2014 usually a timing effect, since meter-reading cycles and storage movements do not align with the calendar year, and it tends to reverse the following year.");
-
     // ── Excavation damage prevention (Part D)
     const excavTix = p.phmsa_PARTDTOTTICKETS, excavDmg = p.phmsa_PARTDTOTDAMAGES;
     if (excavTix != null && excavTix > 0)
       html += statRow("Damages per 10K excavation tickets", `${(10000 * (excavDmg || 0) / excavTix).toFixed(1)}`,
         "Derived from PHMSA: dig-in damages \u00f7 excavation tickets, \u00d7 10,000. Reported from 2010.");
 
+
+    // Unaccounted-for gas last: it is a balance residual rather than a
+    // property of the pipe, so it reads oddly among the material and age rows.
+    if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("% of unaccounted for gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`,
+    "PHMSA definition: [(purchased + produced gas) \u2212 (customer use + company use + adjustments)] \u00f7 (customer use + company use + adjustments) \u00d7 100. Negative when more gas is accounted for than received that year \u2014 usually a timing effect, since meter-reading cycles and storage movements do not align with the calendar year, and it tends to reverse the following year.");
     html += `</div>`;
   }
 
@@ -2121,6 +2122,7 @@ const CHART_SOURCE = {
   "srvdcd":        "Data source: PHMSA annual report.",
   "srvmat":        "Data source: PHMSA annual report.",
   "excav":         "Data source: derived from PHMSA annual report. Reported from 2010.",
+  "unacc":         "Data source: PHMSA annual report. Can be negative \u2014 see the definition in Infrastructure.",
 };
 function chartTitle(id, label) {
   const src = CHART_SOURCE[id];
@@ -2227,6 +2229,7 @@ function renderTrends(feat) {
   const hasPriceConsump   = d.nomPrice.some(v => v != null) || d.perCust.some(v => v != null);
   const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
   const hasBurden         = d.burdenSMI.some(v => v != null) || d.burdenFPL.some(v => v != null);
+  const hasUnacc          = d.unaccPct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
   // COMBINED_REPORT on the record is the authoritative signal. getMultiStateGroup only
@@ -2370,6 +2373,10 @@ function renderTrends(feat) {
     ${hasExcav ? `<div class="chart-block">
       ${chartTitle("excav", "Excavation Damage Rate (per 10K tickets)")}
       <div class="chart-wrap"><canvas id="tc-excav"></canvas></div>
+    </div>` : ""}
+    ${hasUnacc ? `<div class="chart-block">
+      ${chartTitle("unacc", "% of Unaccounted for Gas")}
+      <div class="chart-wrap"><canvas id="tc-unacc"></canvas></div>
     </div>` : ""}
     ${multiReportNoteHtml}
     ${apportionedNoteHtml}
@@ -2540,6 +2547,12 @@ function renderTrends(feat) {
     trendCharts.excav = makeLineChart("tc-excav", d.years, [
       { ...BASE, label: "Damages per 10K tickets", data: d.excavRate, borderColor: "#8e44ad" },
     ], v => v != null ? v.toFixed(0) : "");
+  }
+
+  if (hasUnacc) {
+    trendCharts.unacc = makeLineChart("tc-unacc", d.years, [
+      { ...BASE, label: "% unaccounted for", data: d.unaccPct, borderColor: "#00838f" },
+    ], v => v != null ? v.toFixed(1) + "%" : "");
   }
 
   if (hasDcd) {
