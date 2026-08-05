@@ -477,11 +477,21 @@ const SCALES = {
     { at: 0.5, rgb: [255, 230, 50] },
     { at: 1,   rgb: [180,  0,  0]  },
   ], t),
-  diverge: t => multiStop([
-    { at: 0,    rgb: [13,  71, 161] },
-    { at: 0.5,  rgb: [202, 202, 202] },   // zero is GREY; no data is near-white
-    { at: 1,    rgb: [160,   0,   0] },
-  ], t),
+  // Diverging, with a signed gamma so the middle of the distribution gets real colour.
+  // Unaccounted-for gas is heavy-tailed: its interquartile range is 0 to 2.9% while a handful of
+  // small cities reach 60%, so a symmetric linear domain of +/-17 left 74% of utilities within a
+  // tenth of the grey midpoint — one muddy mass with a few bright dots. The exponent expands
+  // deviations near zero and still lands the outliers at full colour: a value a sixth of the way
+  // to the extreme now reads about half-saturated instead of nearly grey.
+  diverge: t => {
+    const d = (t - 0.5) * 2;                                    // -1 .. 1, zero at the middle
+    const e = Math.sign(d) * Math.pow(Math.abs(d), 0.45);
+    return multiStop([
+      { at: 0,    rgb: [13,  71,  161] },
+      { at: 0.5,  rgb: [202, 202, 202] },
+      { at: 1,    rgb: [160,   0,   0] },
+    ], (e + 1) / 2);
+  },
   // Distinct gray for 0%; power curve so even small values read as clearly colored
   ci_red: t => {
     if (t <= 0) return 'rgb(202,202,202)';   // exactly zero: grey, matching the diverging midpoint
