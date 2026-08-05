@@ -281,6 +281,8 @@
       <optgroup label="Affordability (EIA + State Data)">
         <option value="afford_hours">Hours at Min. Wage for Gas Bill</option>
         <option value="afford_pct">Gas Bill as % of Per Capita Income</option>
+        <option value="burden_smi">Gas Energy Burden (% of 60% State Median Income)</option>
+        <option value="burden_fpl">Gas Energy Burden (% of Federal Poverty Level)</option>
       </optgroup>
       <optgroup label="Infrastructure (PHMSA)">
         <option value="miles">Total Main Miles</option>
@@ -520,6 +522,8 @@ const MODES = {
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
   afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
   afford_pct:       { label: "Gas Bill as % of Per Capita Income", unit: "%income", scale: "pricemap", fixed: null },
+  burden_smi:       { label: "Gas Energy Burden (% of 60% State Median Income)", unit: "%income", scale: "pricemap", fixed: null },
+  burden_fpl:       { label: "Gas Energy Burden (% of Federal Poverty Level)",   unit: "%income", scale: "pricemap", fixed: null },
   excav_damage_rate:{ label: "Damages per 10K Excavation Tickets", unit: "/10K",    scale: "red",      fixed: null },
 };
 
@@ -766,6 +770,19 @@ function getValue(p, mode) {
       if (!aff) return null;
       if (mode === "afford_hours") return aff[0] > 0 ? bill / aff[0] : null;
       return aff[1] > 0 ? bill / aff[1] * 100 : null;
+    }
+    case "burden_smi":
+    case "burden_fpl": {
+      const cs = p["Residential Sales [CS]"], ct = p["Residential Sales [CT]"];
+      if (!cs || !ct || ct <= 0) return null;
+      const bill = cs / ct;
+      const state = p.phmsa_STOP || p.EIA_state;
+      const aff = state ? affordabilityData?.[state]?.[selectedYear] : null;
+      if (!aff) return null;
+      // slot 2 is 60% of state median income, slot 3 the 3-person poverty guideline. The FPL
+      // slot is null for AK and HI, so those polygons simply have no value in that mode.
+      const denom = mode === "burden_smi" ? aff[2] : aff[3];
+      return denom > 0 ? bill / denom * 100 : null;
     }
   }
   return null;
@@ -1523,6 +1540,21 @@ function updateInfo(feat, pinned) {
           "Derived: annual gas cost \u00f7 statewide hourly minimum wage. Source: FRED.");
         if (incomeSh   != null) html += statRow("Gas cost as % of state per capita income", `${incomeSh.toFixed(2)}%`,
           "Derived: annual gas cost \u00f7 statewide per capita income, \u00d7 100. Source: BEA.");
+        html += `</div>`;
+      }
+      // Energy burden gets its own box rather than joining the one above: those two measure the
+      // bill against a typical income, these measure it against a LOW-INCOME threshold, which is
+      // a different question and reads on a different scale.
+      const smi60   = affEntry ? affEntry[2] : null;
+      const fpl3    = affEntry ? affEntry[3] : null;
+      const burdSMI = annualBill != null && smi60 ? annualBill / smi60 * 100 : null;
+      const burdFPL = annualBill != null && fpl3  ? annualBill / fpl3  * 100 : null;
+      if (burdSMI != null || burdFPL != null) {
+        html += `<div style="margin-top:6px;padding:7px 9px;background:#f3f0fa;border-left:3px solid #6a51a3;border-radius:3px">`;
+        if (burdSMI != null) html += statRow("Gas energy burden (% of 60% state median income)",
+          `${burdSMI.toFixed(2)}%`, "Gas-only energy burden: annual gas cost \u00f7 60% of statewide median household income, the LIHEAP eligibility threshold. The 6% rule of thumb in this literature covers gas PLUS electricity, so this figure alone does not say whether a household is above it. Uses the utility's average bill, not a low-income-specific bill. Income source: Census table H-8 (CPS).");
+        if (burdFPL != null) html += statRow("Gas energy burden (% of federal poverty level)",
+          `${burdFPL.toFixed(2)}%`, "Gas-only energy burden: annual gas cost \u00f7 the federal poverty guideline for a 3-person household. Household size scales the result \u2014 the guideline for one person is about half that for four. Not available for AK or HI, whose separate guidelines are not in the source table. Same two caveats as the SMI measure: gas only, and the utility's average bill. Source: HHS/ASPE.");
         html += `</div>`;
       }
     } else {
