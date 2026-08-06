@@ -2176,7 +2176,7 @@ const CHART_SOURCE = {
   "price-consump": "Data source: derived from EIA 176.",
   "pricebkdn":     "Data source: statewide supply derived from EIA 857, delivery derived from supply and EIA 176.",
   "afford":        "Data source: derived from EIA 176, with statewide minimum wage from FRED and statewide per capita income from BEA.",
-  "burden":        "Data source: gas only, derived from EIA 176, with statewide median household income from Census H-8 and the federal poverty guideline from HHS/ASPE.",
+  "burden":        "Data source: derived from EIA 176, with statewide median household income from Census H-8 and the federal poverty guideline from HHS/ASPE.",
   "supplydisp":    "Data source: EIA 176.",
   "loss":          "Data source: EIA 176. Known volumes lost to leaks, damage, accidents, migration and blowdowns, plus liquefaction and regasification fuel. Not asked before 2002; optional since.",
   "dcd":           "Data source: PHMSA annual report.",
@@ -2314,8 +2314,9 @@ function renderTrends(feat) {
   const hasExcav      = d.excavRate.some(v => v != null);
   const hasPriceConsump   = d.nomPrice.some(v => v != null) || d.perCust.some(v => v != null);
   const hasAffordability  = d.hoursMinWage.some(v => v != null) && d.incomeSharePct.some(v => v != null);
-  const hasBurden         = d.burdenSMI.some(v => v != null) || d.burdenFPL.some(v => v != null)
-                            || d.burdenFPL4.some(v => v != null);
+  // burdenFPL4 is still assembled but no longer drawn: it is the 3-person line times a
+  // constant 1.20, so it added a parallel line and no information.
+  const hasBurden         = d.burdenSMI.some(v => v != null) || d.burdenFPL.some(v => v != null);
   const hasUnacc          = d.unaccPct.some(v => v != null);
 
   // Determine which PHMSA years were multistate combined filings
@@ -2430,7 +2431,7 @@ function renderTrends(feat) {
       <div class="chart-wrap"><canvas id="tc-afford"></canvas></div>
     </div>` : ""}
     ${hasBurden ? `<div class="chart-block">
-      ${chartTitle("burden", "Gas Energy Burden (% of low-income threshold)")}
+      ${chartTitle("burden", "Gas-Only Energy Burden (% of low-income threshold)")}
       <div class="chart-wrap"><canvas id="tc-burden"></canvas></div>
     </div>` : ""}
     ${hasSupplyDisp ? `<div class="chart-block">
@@ -2611,11 +2612,11 @@ function renderTrends(feat) {
 
   if (hasBurden) {
     trendCharts.burden = makeLineChart("tc-burden", d.years, [
-      { ...BASE, label: "% of 60% state median income", data: d.burdenSMI, borderColor: "#6a51a3" },
+      // FPL first: it sits above the SMI line on every utility we have looked at, so listing it
+      // first makes the hover tooltip read in the same order as the lines on screen.
       { ...BASE, label: "% of federal poverty level (3-person)", data: d.burdenFPL,
         borderColor: "#d95f0e", borderDash: [4, 3] },
-      { ...BASE, label: "% of federal poverty level (4-person)", data: d.burdenFPL4,
-        borderColor: "#fdae6b", borderDash: [2, 2] },
+      { ...BASE, label: "% of 60% state median income", data: d.burdenSMI, borderColor: "#6a51a3" },
     ], v => v != null ? v.toFixed(1) + "%" : "");
   }
 
