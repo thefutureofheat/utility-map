@@ -1609,13 +1609,13 @@ function updateInfo(feat, pinned) {
         if (annualBill != null) html += statRow("Avg. annual gas cost per res. customer", `$${annualBill.toFixed(0)}`,
           "Derived from EIA 176: residential revenue \u00f7 residential customers.");
         if (hoursAtMW  != null) html += statRow("Hours at state min. wage to pay", `${hoursAtMW.toFixed(1)} hrs/yr`,
-          "Derived: annual gas cost \u00f7 statewide hourly minimum wage. Source: FRED.");
+          "Derived: average annual gas cost \u00f7 statewide hourly minimum wage. Source: FRED.");
         if (incomeSh   != null) html += statRow("Gas cost as % of state per capita income", `${incomeSh.toFixed(2)}%`,
-          "Derived: annual gas cost \u00f7 statewide per capita income, \u00d7 100. Source: BEA.");
-        if (burdSMI    != null) html += statRow("Gas energy burden (% of 60% state median income)", `${burdSMI.toFixed(2)}%`,
-          "Gas only. Annual gas cost \u00f7 60% of statewide median household income, the LIHEAP threshold. Uses the utility's average bill. Source: Census H-8.");
-        if (burdFPL    != null) html += statRow("Gas energy burden (% of federal poverty level)", `${burdFPL.toFixed(2)}%`,
-          "Gas only. Annual gas cost \u00f7 the federal poverty guideline for a 3-person household \u2014 size scales the result. No figure for AK or HI. Source: HHS/ASPE.");
+          "Derived: average annual gas cost \u00f7 statewide per capita income, \u00d7 100. Source: BEA.");
+        if (burdSMI    != null) html += statRow("Gas-only energy burden (% of 60% state median income)", `${burdSMI.toFixed(2)}%`,
+          "Average annual gas cost \u00f7 60% of statewide median household income, the LIHEAP threshold. Source: Census H-8.");
+        if (burdFPL    != null) html += statRow("Gas-only energy burden (% of federal poverty level)", `${burdFPL.toFixed(2)}%`,
+          "Average annual gas cost \u00f7 the federal poverty guideline for a 3-person household. No figure for AK or HI. Source: HHS/ASPE.");
         html += `</div>`;
       }
     } else {
@@ -2179,9 +2179,9 @@ const CHART_SOURCE = {
   "burden":        "Data source: derived from EIA 176, with statewide median household income from Census H-8 and the federal poverty guideline from HHS/ASPE.",
   "supplydisp":    "Data source: EIA 176.",
   "loss":          "Data source: EIA 176. Known volumes lost to leaks, damage, accidents, migration and blowdowns, plus liquefaction and regasification fuel. Not asked before 2002; optional since.",
-  "dcd":           "Data source: PHMSA annual report.",
+  "dcd":           "Data source: PHMSA annual report. Reported from 2004.",
   "mat":           "Data source: PHMSA annual report.",
-  "srvdcd":        "Data source: PHMSA annual report.",
+  "srvdcd":        "Data source: PHMSA annual report. Reported from 2004.",
   "srvmat":        "Data source: PHMSA annual report.",
   "excav":         "Data source: derived from PHMSA annual report. Reported from 2010.",
   "unacc":         "Data source: PHMSA annual report. Can be negative \u2014 see the definition in Infrastructure.",
