@@ -448,10 +448,6 @@ const SCALES = {
   blue:     t => multiStop([{ at:0, rgb:[232,244,255] }, { at:1, rgb:[13,71,161] }], t),
   green:    t => multiStop([{ at:0, rgb:[240,255,240] }, { at:1, rgb:[27,94,32]  }], t),
   red:      t => multiStop([{ at:0, rgb:[255,245,245] }, { at:1, rgb:[160,0,0]   }], t),
-  // % Pre-1970 only. Zero gets the same grey as the other zero-bearing scales: its warm
-  // near-white was within 1.02:1 of the no-data fill, so 0% and "not reported" were one colour.
-  orange:   t => t <= 0 ? 'rgb(202,202,202)'
-                        : multiStop([{ at:0, rgb:[255,248,230] }, { at:1, rgb:[230,81,0]  }], t),
   purple:   t => multiStop([{ at:0, rgb:[248,244,255] }, { at:1, rgb:[74,20,140] }], t),
   teal:     t => multiStop([{ at:0, rgb:[232,248,250] }, { at:1, rgb:[0,96,100]  }], t),
   pricemap: t => multiStop([
@@ -475,15 +471,6 @@ const SCALES = {
     ], (e + 1) / 2);
   },
   // Distinct gray for 0%; power curve so even small values read as clearly colored
-  ci_red: t => {
-    if (t <= 0) return 'rgb(202,202,202)';   // exactly zero: grey, matching the diverging midpoint
-    const s = Math.pow(t, 0.38);
-    return multiStop([
-      { at: 0,   rgb: [255, 195, 178] },
-      { at: 0.5, rgb: [210,  50,  30] },
-      { at: 1,   rgb: [140,   0,   0] },
-    ], s);
-  },
   unp_steel: t => {
     if (t <= 0) return 'rgb(202,202,202)';   // exactly zero: grey, matching the diverging midpoint
     const s = Math.pow(t, 0.38);
@@ -501,9 +488,9 @@ const MODES = {
   age:            { label: "Avg. Pipe Age",                 unit: "yrs",    scale: "age",      fixed: [0,  80]  },
   miles:          { label: "Total Main Miles",                    unit: "mi",     scale: "blue",     fixed: null       },
   pct_plastic:    { label: "% Plastic Main Mileage",             unit: "%",      scale: "green",    fixed: [0, 100]   },
-  pct_ci:         { label: "% Iron Main Mileage (Cast & Ductile)", unit: "%",    scale: "ci_red",   fixed: [0,  50]   },
+  pct_ci:         { label: "% Iron Main Mileage (Cast & Ductile)", unit: "%",    scale: "unp_steel", fixed: [0,  50]   },
   pct_unp_steel:  { label: "% Unprotected Steel Main Mileage",   unit: "%",      scale: "unp_steel", fixed: null       },
-  pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "orange",   fixed: [0, 100]   },
+  pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "unp_steel", fixed: [0, 100]   },
   unacc:          { label: "% of Unaccounted for Gas",          unit: "%",      scale: "diverge",  fixed: null, diverging: true },
   res_vol:        { label: "Residential Sales Volume",     unit: "Mcf",   scale: "blue",     fixed: null       },
   res_price:      { label: "Residential Avg Price",        unit: "$/Mcf",  scale: "pricemap", fixed: null       },
@@ -1277,7 +1264,7 @@ function updateLegend() {
   const scale = SCALES[m.scale];
 
   // Sample the scale densely instead of handing CSS four stops to interpolate between. The
-  // diverging scales apply a gamma, and the ci_red / unp_steel / orange ones a special case at
+  // diverging scales apply a gamma, and unp_steel a special case at
   // zero, so a four-stop gradient drew a straight line through curves the map does not follow —
   // the key showed a mapping that was not the one on screen.
   const N = 24;
