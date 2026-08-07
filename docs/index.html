@@ -1658,7 +1658,7 @@ function updateInfo(feat, pinned) {
     if (supply) html += `<div style="margin-top:6px">` + statRow("Total Supply",      fmtNum(supply) + " Mcf") + `</div>`;
     if (disp)   html += statRow("Total Disposition", fmtNum(disp) + " Mcf");
     if (losses) html += statRow("Known losses", fmtNum(losses) + " Mcf",
-      "EIA definition: known volumes of natural gas resulting from leaks, damage, accidents, migration, and/or blowdowns. Also includes fuel used in liquefaction and regasification. Not asked before 2002, and optional since \u2014 about two thirds of filers report it.");
+      "EIA definition: known volumes of natural gas resulting from leaks, damage, accidents, migration, and/or blowdowns. Also includes fuel used in liquefaction and regasification.");
     html += `</div>`;
   }
 
@@ -1732,7 +1732,7 @@ function updateInfo(feat, pinned) {
     // Unaccounted-for gas last: it is a balance residual rather than a
     // property of the pipe, so it reads oddly among the material and age rows.
     if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("% of unaccounted for gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`,
-    "PHMSA definition: [(purchased + produced gas) \u2212 (customer use + company use + adjustments)] \u00f7 (customer use + company use + adjustments) \u00d7 100. Negative when more gas is accounted for than received that year \u2014 usually a timing effect, since meter-reading cycles and storage movements do not align with the calendar year, and it tends to reverse the following year.");
+    "PHMSA definition: [(purchased + produced gas) \u2212 (customer use + company use + adjustments)] \u00f7 (customer use + company use + adjustments) \u00d7 100. Negative when more gas is accounted for than received that year \u2014 usually a timing effect, since meter-reading cycles and storage movements do not align with the calendar year.");
     html += `</div>`;
   }
 
