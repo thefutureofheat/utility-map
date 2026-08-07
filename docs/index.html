@@ -44,19 +44,6 @@
     }
 
     /* ── Year slider ──────────────────────────────────────── */
-    .year-section { padding: 9px 16px 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
-    .year-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-    .year-header label {
-      font-weight: 700; font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.6px; color: #666;
-    }
-    #yearDisplay { font-size: 15px; font-weight: 700; color: #1a3a5c; }
-    #yearSlider {
-      width: 100%; margin: 2px 0 3px; accent-color: #1a3a5c;
-      cursor: pointer;
-    }
-    #yearSlider:disabled { opacity: 0.4; cursor: not-allowed; }
-    .year-ticks { display: flex; justify-content: space-between; font-size: 9px; color: #bbb; margin-bottom: 4px; }
     .year-avail { font-size: 10px; color: #888; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .avail-item { display: flex; align-items: center; gap: 4px; }
     .avail-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -300,16 +287,6 @@
     </select>
   </div>
 
-  <div class="year-section">
-    <div class="year-header">
-      <label>Year</label>
-      <span id="yearDisplay">2024</span>
-    </div>
-    <input type="range" id="yearSlider" min="1997" max="2024" value="2024" disabled>
-    <div class="year-ticks">
-      <span>1997</span><span>2004</span><span>2011</span><span>2018</span><span>2024</span>
-    </div>
-  </div>
 
   <div id="legend"></div>
   <div id="info-panel">
@@ -580,7 +557,20 @@ function fmtNum(v) {
 let phmsaTimeseries = null;
 let eiaTimeseries   = null;
 let timeseriesReady = false;
-let selectedYear    = "2024";
+// The two sources run to different years — EIA 176 to 2024, PHMSA annual reports to 2025 — so
+// each is read at its own latest year rather than at one shared year. Detected from the data so
+// a rebuild that adds a year needs no edit here; the floor of 50 filers stops a single record
+// with a mistyped year (a 2026 or a 3024) from dragging the whole map to an empty year.
+let eiaYear   = "2024";
+let phmsaYear = "2025";
+
+function latestYear(ts, floor = 50) {
+  const n = {};
+  for (const v of Object.values(ts || {}))
+    for (const y of Object.keys(v?.data || {})) n[y] = (n[y] || 0) + 1;
+  const ys = Object.keys(n).filter(y => n[y] >= floor).sort();
+  return ys.length ? ys[ys.length - 1] : null;
+}
 
 // Fields that don't change across years — pulled from GeoJSON properties
 function buildStaticProps(p) {
@@ -634,7 +624,7 @@ function resolveIds(p) {
   return { eiaId, phmsaKey, opId, opKey, stop };
 }
 
-// Merge static GeoJSON identifiers with timeseries data for selectedYear.
+// Merge static GeoJSON identifiers with each source's latest reporting year.
 // Returns feat.properties unchanged if timeseries not yet loaded.
 function getEffectiveProps(feat) {
   if (!timeseriesReady) return feat.properties;
@@ -642,9 +632,9 @@ function getEffectiveProps(feat) {
   const p = feat.properties;
   const { eiaId, phmsaKey } = resolveIds(p);
   const phmsaData = phmsaKey && phmsaTimeseries
-    ? (phmsaTimeseries[phmsaKey]?.data?.[selectedYear] ?? null) : null;
+    ? (phmsaTimeseries[phmsaKey]?.data?.[phmsaYear] ?? null) : null;
   const eiaEntry = eiaId && eiaTimeseries ? (eiaTimeseries[eiaId] ?? null) : null;
-  const eiaData  = eiaEntry?.data?.[selectedYear] ?? null;
+  const eiaData  = eiaEntry?.data?.[eiaYear] ?? null;
 
   // Start from identifier-only fields (no stale metric data from GeoJSON)
   const merged = buildStaticProps(p);
@@ -767,7 +757,7 @@ function getValue(p, mode) {
       return vl && ct && ct > 0 ? vl / ct : null;
     }
     case "res_price_chg_10y": {
-      const yr = +selectedYear;
+      const yr = +eiaYear;
       const yr10 = yr - 10;
       if (!eiaTimeseries || !p.ID) return null;
       const entry = eiaTimeseries[p.ID];
@@ -793,7 +783,7 @@ function getValue(p, mode) {
       if (!cs || !ct || ct <= 0) return null;
       const bill = cs / ct;
       const state = p.phmsa_STOP || p.EIA_state;
-      const aff = state ? affordabilityData?.[state]?.[selectedYear] : null;
+      const aff = state ? affordabilityData?.[state]?.[eiaYear] : null;
       if (!aff) return null;
       if (mode === "afford_hours") return aff[0] > 0 ? bill / aff[0] : null;
       return aff[1] > 0 ? bill / aff[1] * 100 : null;
@@ -804,7 +794,7 @@ function getValue(p, mode) {
       if (!cs || !ct || ct <= 0) return null;
       const bill = cs / ct;
       const state = p.phmsa_STOP || p.EIA_state;
-      const aff = state ? affordabilityData?.[state]?.[selectedYear] : null;
+      const aff = state ? affordabilityData?.[state]?.[eiaYear] : null;
       if (!aff) return null;
       // slot 2 is 60% of state median income, slot 3 the 3-person poverty guideline. The FPL
       // slot is null for AK and HI, so those polygons simply have no value in that mode.
@@ -877,11 +867,11 @@ let mapLoaded        = false;
 
 function buildPropsForId(eiaId, phmsaKeyOverride) {
   const eiaEntry = eiaTimeseries?.[eiaId];
-  const eiaData  = eiaEntry?.data?.[selectedYear] ?? {};
+  const eiaData  = eiaEntry?.data?.[eiaYear] ?? {};
   // phmsaKeyOverride comes from poly_map for newly linked territories, whose
   // EIA id may not be in id_map yet — without it their PHMSA color modes stay grey.
   const phmsaKey = phmsaKeyOverride || idMap[eiaId];
-  const phmsaData = phmsaKey ? (phmsaTimeseries?.[phmsaKey]?.data?.[selectedYear] ?? {}) : {};
+  const phmsaData = phmsaKey ? (phmsaTimeseries?.[phmsaKey]?.data?.[phmsaYear] ?? {}) : {};
   const p = { ID: eiaId, EIA_state: eiaEntry?.state, ...eiaData };
   for (const [k, v] of Object.entries(phmsaData)) p["phmsa_" + k] = v;
   return p;
@@ -1126,12 +1116,9 @@ function applyYear() {
 }
 
 function updateHeaderSub() {
-  const yr = selectedYear;
-  const hasPhmsa = phmsaTimeseries && parseInt(yr) >= 1997;
-  const hasEia   = eiaTimeseries   && parseInt(yr) >= 1997 && parseInt(yr) <= 2024;
   const parts = [];
-  if (hasEia)   parts.push(`EIA Form 176 (${yr})`);
-  if (hasPhmsa) parts.push(`PHMSA Annual Report (${yr})`);
+  if (eiaTimeseries)   parts.push(`EIA Form 176 (${eiaYear})`);
+  if (phmsaTimeseries) parts.push(`PHMSA Annual Report (${phmsaYear})`);
   document.getElementById("headerSub").textContent =
     parts.length ? parts.join(" · ") : `Year ${yr}`;
   document.getElementById("footerSub").textContent =
@@ -1274,11 +1261,11 @@ Promise.all([phmsaPromise, eiaPromise, polyPromise]).then(([phmsa, eia, pmap]) =
     if (!operatorStateMap[opId].includes(stop)) operatorStateMap[opId].push(stop);
   }
 
+  // Before computeDomains: the choropleth domains are measured at these years.
+  eiaYear   = latestYear(eiaTimeseries)   || eiaYear;
+  phmsaYear = latestYear(phmsaTimeseries) || phmsaYear;
+
   computeDomains();
-
-  const slider = document.getElementById("yearSlider");
-  slider.disabled = false;
-
   applyYear();
 });
 
@@ -1324,19 +1311,6 @@ document.getElementById("colorMode").addEventListener("change", function () {
   currentMode = this.value;
   rebuildColorExpression();
   updateLegend();
-});
-
-const sliderEl = document.getElementById("yearSlider");
-const yearDisplayEl = document.getElementById("yearDisplay");
-
-// Update label live while dragging; re-style on release
-sliderEl.addEventListener("input", () => {
-  yearDisplayEl.textContent = sliderEl.value;
-});
-sliderEl.addEventListener("change", () => {
-  selectedYear = sliderEl.value;
-  yearDisplayEl.textContent = selectedYear;
-  applyYear();
 });
 
 // ── Info panel helpers ────────────────────────────────────────────────────────
@@ -1459,7 +1433,7 @@ function updateInfo(feat, pinned) {
   }
 
   const p  = getEffectiveProps(feat);
-  const yr = selectedYear;
+  const eiaYr = eiaYear, phmsaYr = phmsaYear;
 
   const name     = p.Name || p.geo_NAME || p.phmsa_OPERATOR_NAME || "Unknown";
   const stateLbl = [p.EIA_state, p.phmsa_STOP, p.geo_LOCATION].filter(Boolean).find(Boolean) || "";
@@ -1473,7 +1447,7 @@ function updateInfo(feat, pinned) {
   // private and 25 cooperative against PHMSA, all apparently folded into "municipal". PHMSA only
   // carries the field from 2015, so earlier years still fall back to the shapefile.
   const phType   = phmsaKey && phmsaTimeseries
-    ? (phmsaTimeseries[phmsaKey]?.data?.[String(yr)]?.OPERATOR_TYPE || null) : null;
+    ? (phmsaTimeseries[phmsaKey]?.data?.[String(phmsaYr)]?.OPERATOR_TYPE || null) : null;
   const rawType  = p.TYPE || "";
   // PHMSA's wording is already presentable ("Investor Owned"); only the shapefile's SHOUTING
   // values need re-casing.
@@ -1502,7 +1476,7 @@ function updateInfo(feat, pinned) {
   // ── EIA Sales section
   const hasAnySales = SALES_SECTORS.some(s => p[s.vl] != null || p[s.cs] != null);
   if (hasAnySales || p._eiaHasData) {
-    html += `<div class="info-section"><div class="info-section-title">Sales (EIA Form 176, ${yr})</div>`;
+    html += `<div class="info-section"><div class="info-section-title">Sales (EIA Form 176, ${eiaYr})</div>`;
     if (hasAnySales) {
       html += `<table class="sales-table"><thead><tr>
         <th>Sector</th><th>Vol (Mcf)</th><th>Customers</th>
@@ -1540,7 +1514,7 @@ function updateInfo(feat, pinned) {
       const resVl = p["Residential Sales [VL]"], resCt = p["Residential Sales [CT]"];
       const resCs2 = p["Residential Sales [CS]"], resVl2 = p["Residential Sales [VL]"];
       const resPr2  = resCs2 && resVl2 && resVl2 > 0 ? resCs2 / resVl2 : null;
-      const cgPrice = infoState ? (CITYGATE_PRICE[infoState]?.[String(yr)] ?? null) : null;
+      const cgPrice = infoState ? (CITYGATE_PRICE[infoState]?.[String(eiaYr)] ?? null) : null;
       const hasConsump = resVl && resCt && resCt > 0;
       const hasDelivery = resPr2 != null && cgPrice != null;
       let delivCagrHtml = "";
@@ -1591,7 +1565,7 @@ function updateInfo(feat, pinned) {
       }
       // Affordability box
       const annualBill = resCs2 && resCt && resCt > 0 ? resCs2 / resCt : null;
-      const affEntry   = infoState ? affordabilityData?.[infoState]?.[String(yr)] : null;
+      const affEntry   = infoState ? affordabilityData?.[infoState]?.[String(eiaYr)] : null;
       const minWage    = affEntry ? affEntry[0] : null;
       const incomePC   = affEntry ? affEntry[1] : null;
       const hoursAtMW  = annualBill != null && minWage  != null && minWage  > 0 ? annualBill / minWage  : null;
@@ -1675,8 +1649,8 @@ function updateInfo(feat, pinned) {
                  + (p.phmsa_MMILES_BY_DCD_1950_TO_1959 || 0) + (p.phmsa_MMILES_BY_DCD_1960_TO_1969 || 0);
     const dcdTot = p.phmsa_MMILES_BY_DCD_TOTAL || 0;
 
-    const multiStateGroup = getMultiStateGroup(opId, stop, yr);
-    const yrRec = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[yr] : null;
+    const multiStateGroup = getMultiStateGroup(opId, stop, phmsaYr);
+    const yrRec = phmsaKey ? phmsaTimeseries?.[phmsaKey]?.data?.[phmsaYr] : null;
     const combinedFlag = !!(yrRec && yrRec.COMBINED_REPORT);
     const splitFlag = !!(yrRec && yrRec.SPLIT_ESTIMATE);
     const multiStateHtml = splitFlag
@@ -1686,7 +1660,7 @@ function updateInfo(feat, pinned) {
       : combinedFlag
       ? ` <span style="font-weight:700;color:#c0392b">&#9679; Combined multi-state filing</span>`
       : "";
-    html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${yr})${multiStateHtml}</div>`;
+    html += `<div class="info-section"><div class="info-section-title">Infrastructure (PHMSA, ${phmsaYr})${multiStateHtml}</div>`;
 
     // ── Mains
     html += statRow("Total Main Miles", fmtNum(total));
