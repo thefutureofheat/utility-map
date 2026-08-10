@@ -205,6 +205,23 @@
     .incidents-btn:hover { background: #3e1010; }
     .incidents-empty { color: #aaa; font-size: 12px; font-style: italic; padding: 12px 0; }
 
+    /* ── Data download ─────────────────────────────────────── */
+    /* Same shape as .incidents-btn but a neutral slate, so the download reads as an
+       ordinary action rather than borrowing the incident panel's warning colour. */
+    .download-btn {
+      display: block; width: 100%; margin-top: 6px; padding: 7px 12px;
+      background: #2f4858; color: white; border: none; border-radius: 5px;
+      font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
+      text-decoration: none; box-sizing: border-box;
+    }
+    .download-btn:hover { background: #1d2e39; }
+    .download-btn.disabled {
+      background: #e4e4e4; color: #9a9a9a; cursor: default; pointer-events: none;
+    }
+    .download-note {
+      color: #777; font-size: 10.5px; line-height: 1.45; margin-top: 6px;
+    }
+
     /* ── Chart styles (inline in sidebar) ──────────────────── */
     .chart-block { margin-bottom: 20px; }
     .chart-title {
@@ -1755,6 +1772,32 @@ function updateInfo(feat, pinned) {
           <button class="incidents-btn" onclick="openIncidentsPanel(currentInfoFeat)">View Significant Incidents Since 2010 (${incRows.length}) &#9888;</button>
         </div>`;
       }
+    }
+    // ── Data Download, at the very bottom, below Incidents.
+    // Both buttons render in every state so the feature is discoverable everywhere;
+    // only New Hampshire's CSV has been built during the pilot, so the rest are greyed
+    // with the reason given rather than hidden.
+    //
+    // The CSV is a plain <a download>, NOT a fetch(). deploy.py's MANIFEST check reads
+    // the fetch() argument literally, so the template string a per-state fetch would
+    // need — `utility_data_${st}.csv` — could never match a MANIFEST key, and every
+    // deploy would start failing the moment this grows past one state.
+    {
+      const READY_STATES = ["NH"];   // a CSV exists in docs/ for each of these
+      const dlState = stop || p.phmsa_STOP || p.EIA_state
+        || (eiaId && eiaTimeseries && eiaTimeseries[eiaId] ? eiaTimeseries[eiaId].state : null)
+        || p.STATE || p.geo_LOCATION || "";
+      const ready = READY_STATES.includes(dlState);
+      html += `<div class="info-section" style="margin-top:14px">
+        <div class="info-section-title">Data Download</div>
+        ${ready
+          ? `<a class="download-btn" href="utility_data_${dlState}.csv" download="${dlState.toLowerCase()}-gas-utilities-eia-phmsa-as-filed.csv">Download state utility data (EIA + PHMSA) &#8595;</a>`
+          : `<span class="download-btn disabled">Download state utility data (EIA + PHMSA)</span>`}
+        <span class="download-btn disabled">Download state incident data</span>
+        <div class="download-note">${ready
+          ? `Every EIA Form 176 and PHMSA annual filing for ${escHtml(dlState)}, one row per utility and year, <strong>exactly as filed</strong> &mdash; including utilities with no territory on this map. It does not fill a utility's early years from the companies it absorbed, so totals can legitimately differ from the panel above. Incident data is not available yet.`
+          : `Downloads cover New Hampshire only during the pilot${dlState ? `; this utility is in ${escHtml(dlState)}` : ""}.`}</div>
+      </div>`;
     }
     html += `<p class="pinned-note">Pinned — click territory again or click map to unpin</p>`;
   }
