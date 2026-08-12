@@ -1802,7 +1802,7 @@ function updateInfo(feat, pinned) {
           : `<span class="download-btn disabled">Download state utility data (EIA + PHMSA)</span>`}
         <span class="download-btn disabled">Download state incident data</span>
         <div class="download-note">${ready
-          ? `Every EIA Form 176 and PHMSA annual filing for ${escHtml(dlState)}, one row per utility and year, <strong>exactly as filed</strong> &mdash; including utilities with no territory on this map. It does not fill a utility's early years from the companies it absorbed, so totals can legitimately differ from the panel above. Incident data is not available yet.`
+          ? `Every EIA Form 176 and PHMSA annual filing for ${escHtml(dlState)}, one row per utility and year, <strong>exactly as filed</strong> &mdash; including utilities with no territory on this map. It does not fill a utility's early years from the companies it absorbed, so totals can legitimately differ from the panel above. Incident data is not available yet.<br><a href="DATA_DICTIONARY.md" target="_blank" rel="noopener">What every column means &rarr;</a>`
           : `Downloads cover New Hampshire only during the pilot${dlState ? `; this utility is in ${escHtml(dlState)}` : ""}.`}</div>
       </div>`;
     }
