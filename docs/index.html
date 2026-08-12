@@ -1790,7 +1790,9 @@ function updateInfo(feat, pinned) {
     // need — `utility_data_${st}.csv` — could never match a MANIFEST key, and every
     // deploy would start failing the moment this grows past one state.
     {
-      const READY_STATES = ["NH"];   // a CSV exists in docs/ for each of these
+      // A CSV exists in docs/ for each of these. Add a state here only after adding its
+      // file to deploy.py's MANIFEST, or the deploy check will not know it exists.
+      const READY_STATES = ["NH", "WY"];
       const dlState = stop || p.phmsa_STOP || p.EIA_state
         || (eiaId && eiaTimeseries && eiaTimeseries[eiaId] ? eiaTimeseries[eiaId].state : null)
         || p.STATE || p.geo_LOCATION || "";
@@ -1802,8 +1804,8 @@ function updateInfo(feat, pinned) {
           : `<span class="download-btn disabled">Download state utility data (EIA + PHMSA)</span>`}
         <span class="download-btn disabled">Download state incident data</span>
         <div class="download-note">${ready
-          ? `Every EIA Form 176 and PHMSA annual filing for ${escHtml(dlState)}, one row per utility and year, <strong>exactly as filed</strong> &mdash; including utilities with no territory on this map. It does not fill a utility's early years from the companies it absorbed, so totals can legitimately differ from the panel above. Incident data is not available yet.<br><a href="DATA_DICTIONARY.md" target="_blank" rel="noopener">What every column means &rarr;</a>`
-          : `Downloads cover New Hampshire only during the pilot${dlState ? `; this utility is in ${escHtml(dlState)}` : ""}.`}</div>
+          ? `Every EIA Form 176 and PHMSA annual filing for ${escHtml(dlState)}, by utility and year, <strong>exactly as filed</strong> &mdash; including utilities with no territory on this map. It does not fill a utility's early years from the companies it absorbed, so totals can legitimately differ from the panel above. Read the column guide before aggregating: a merger year splits one utility across several filings. Incident data is not available yet.<br><a href="DATA_DICTIONARY.md" target="_blank" rel="noopener">What every column means &rarr;</a>`
+          : `Downloads are being added state by state &mdash; so far ${READY_STATES.join(", ")}${dlState ? `, not ${escHtml(dlState)}` : ""}.`}</div>
       </div>`;
     }
     html += `<p class="pinned-note">Pinned — click territory again or click map to unpin</p>`;
