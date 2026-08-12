@@ -1792,7 +1792,7 @@ function updateInfo(feat, pinned) {
     {
       // A CSV exists in docs/ for each of these. Add a state here only after adding its
       // file to deploy.py's MANIFEST, or the deploy check will not know it exists.
-      const READY_STATES = ["NH", "WY"];
+      const READY_STATES = ["AR", "NH", "WY"];
       const dlState = stop || p.phmsa_STOP || p.EIA_state
         || (eiaId && eiaTimeseries && eiaTimeseries[eiaId] ? eiaTimeseries[eiaId].state : null)
         || p.STATE || p.geo_LOCATION || "";
