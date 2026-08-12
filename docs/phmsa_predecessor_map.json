@@ -6,6 +6,12 @@
       "1209_MA"
     ]
   },
+  "16667_NH": {
+    "note": "Energy North Natural Gas NH (2003+), filed as KeySpan Energy Delivery - Energy North until 2007. One predecessor only: KeySpan Energy Delivery 31459_NH (2000-2002), a clean operator-id change — 1,181 mi and 57,573 services in 2002 against 1,239 and 59,273 in 2003, and 63 vs 62 customers per mile. DELIBERATELY EXCLUDES 4485_NH, EnergyNorth Natural Gas 1997-1999, which looks like the earlier link but reports only about 40% of the system: 484 mi in 1999 against 1,147 in 2000 while EIA customers stayed flat (72,618 to 72,580), giving an implausible 150 customers per mile where this utility has run at 62-63 ever since. All of New Hampshire reported 936 mi in 1999, so the 1,147 cannot be a real gain. Adding 4485 would invent a doubling in 2000; the backfill's own median guard would drop those years anyway.",
+    "predecessors": [
+      "31459_NH"
+    ]
+  },
   "32513_IL": {
     "note": "Ameren Illinois (2010+). Three predecessors, matching the EIA side: Illinois Power (8,051 mi), AmerenCIPS (5,071) and Central Illinois Light/CILCO (3,718). They sum to 16,840 against the 16,874 filed in 2010, a ratio of 0.998. Only Illinois Power had been mapped, leaving the series to double at the handover.",
     "predecessors": [
