@@ -1649,7 +1649,14 @@ function updateInfo(feat, pinned) {
     const age    = avgAge(p);
     const total  = p.phmsa_MMILES_TOTAL;
     const pctPl  = total > 0 && p.phmsa_MMILES_PLASTIC != null ? p.phmsa_MMILES_PLASTIC / total * 100 : null;
-    const ciMi   = (p.phmsa_MMILES_CI || 0) + (p.phmsa_MMILES_CI_WR_TOTAL || 0) + (p.phmsa_MMILES_DI || 0);
+    // MMILES_CI is the form's Part B.1 cast/wrought iron figure. MMILES_CI_WR_TOTAL, which
+    // used to be added here too, is the SAME quantity from the Part B.2 by-diameter table —
+    // they agree in 127 of 132 NH filings. It never actually double-counted, because
+    // getEffectiveProps rebuilds props from identifier-only keys and CI_WR_TOTAL is not a
+    // timeseries column, so it read undefined; adding it to METRIC_COLS would have silently
+    // doubled every cast-iron figure. Reconditioned cast iron is a separate B.1 category and
+    // does belong in the sum.
+    const ciMi   = (p.phmsa_MMILES_CI || 0) + (p.phmsa_MMILES_RCI || 0) + (p.phmsa_MMILES_DI || 0);
     const pctCi  = total > 0 ? ciMi / total * 100 : null;
     const unpSt  = (p.phmsa_MMILES_STEEL_CP_BARE || 0) + (p.phmsa_MMILES_STEEL_UNP_COATED || 0) + (p.phmsa_MMILES_STEEL_UNP_BARE || 0);
     const pctUnpSt = total > 0 && unpSt > 0 ? unpSt / total * 100 : null;
@@ -1674,7 +1681,7 @@ function updateInfo(feat, pinned) {
     html += statRow("Total Main Miles", fmtNum(total));
     const indentStyle = `style="padding-left:14px"`;
     if (pctCi != null && pctCi > 0)
-      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast iron + ductile iron main miles) ÷ total main miles. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
+      html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast/wrought iron + reconditioned cast iron + ductile iron main miles) ÷ total main miles. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctCi.toFixed(1)}%</span></div>`;
     if (pctUnpSt != null)
       html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: steel main miles lacking full protection (both coating and cathodic protection) ÷ total main miles. Includes cathodically-protected bare pipe, unprotected coated pipe, and unprotected bare pipe.")}</span><span class="stat-val">${pctUnpSt.toFixed(1)}%</span></div>`;
     if (dcdTot > 0)
@@ -1683,7 +1690,7 @@ function updateInfo(feat, pinned) {
     // ── Services
     const svcTotal = p.phmsa_NUM_SRVCS_TOTAL;
     if (svcTotal != null && svcTotal > 0) {
-      const svcCi   = (p.phmsa_NUM_SRVS_CI || 0) + (p.phmsa_NUM_SRVS_DI || 0);
+      const svcCi   = (p.phmsa_NUM_SRVS_CI || 0) + (p.phmsa_NUM_SRVS_RCI || 0) + (p.phmsa_NUM_SRVS_DI || 0);
       const pctSvcCi = svcCi > 0 ? svcCi / svcTotal * 100 : null;
       const svcUnpSt = (p.phmsa_NUM_SRVS_STEEL_CP_BARE || 0) + (p.phmsa_NUM_SRVS_STEEL_UNP_COATED || 0) + (p.phmsa_NUM_SRVS_STEEL_UNP_BARE || 0);
       const pctSvcUnpSt = svcUnpSt > 0 ? svcUnpSt / svcTotal * 100 : null;
@@ -1697,7 +1704,7 @@ function updateInfo(feat, pinned) {
       const pctSvcPre70 = svcDcdTot > 0 ? svcPre70 / svcDcdTot * 100 : null;
       html += `<div style="margin-top:5px">` + statRow("Total Services", fmtNum(svcTotal)) + `</div>`;
       if (pctSvcCi != null)
-        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast iron + ductile iron service lines) ÷ total service lines. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
+        html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Iron (Cast &amp; Ductile)${tipIcon("Derived: (cast/wrought iron + reconditioned cast iron + ductile iron service lines) ÷ total service lines. Cast and ductile iron are older materials associated with higher leak rates.")}</span><span class="stat-val">${pctSvcCi.toFixed(1)}%</span></div>`;
       if (pctSvcUnpSt != null)
         html += `<div class="stat-row" ${indentStyle}><span class="stat-label">% Unprotected Steel${tipIcon("Derived: steel service lines lacking full protection (both coating and cathodic protection) ÷ total service lines. Includes cathodically-protected bare pipe, unprotected coated pipe, and unprotected bare pipe.")}</span><span class="stat-val">${pctSvcUnpSt.toFixed(1)}%</span></div>`;
       if (pctSvcPre70 != null && pctSvcPre70 > 0)
@@ -1714,7 +1721,7 @@ function updateInfo(feat, pinned) {
     // Unaccounted-for gas last: it is a balance residual rather than a
     // property of the pipe, so it reads oddly among the material and age rows.
     if (p.phmsa_PERCENT_UNACC_GAS != null) html += statRow("% of unaccounted for gas", `${Number(p.phmsa_PERCENT_UNACC_GAS).toFixed(1)}%`,
-    "PHMSA definition: [(purchased + produced gas) \u2212 (customer use + company use + adjustments)] \u00f7 (customer use + company use + adjustments) \u00d7 100. Negative when more gas is accounted for than received that year \u2014 usually a timing effect, since meter-reading cycles and storage movements do not align with the calendar year.");
+    "PHMSA definition: [(purchased + produced gas) \u2212 (customer use + company use + adjustments)] \u00f7 (customer use + company use + adjustments) \u00d7 100. Reported for the 12 months ending 30 June, not the calendar year. Negative when more gas is accounted for than received \u2014 usually a timing effect, since meter-reading cycles and storage movements do not align with the reporting period.");
     html += `</div>`;
   }
 
