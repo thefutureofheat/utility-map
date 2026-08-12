@@ -44,21 +44,35 @@ and `phmsa_name` are untouched, and `predecessor_of` names the successor.
 
 So in New Hampshire, `LIBERTY UTILITIES DBA ENERGY NORTH` covers two filing entities:
 
-| years | rows | carries |
-|---|---|---|
-| 1997–2000, 2003–2011 | EnergyNorth Nat Gas Inc (`17604829NH`) | EIA customers and sales |
-| 2003–2025 | Liberty Utilities (`17675803NH` / PHMSA `16667`) | PHMSA infrastructure |
-| 2012–2024 | Liberty Utilities | both |
+| years | `eia_id` | `phmsa_id` | filed as |
+|---|---|---|---|
+| 1997–2000 | `17604829NH` | — | EnergyNorth Nat Gas Inc |
+| 2003–2011 | `17604829NH` | `16667` | EnergyNorth Nat Gas Inc |
+| 2012–2025 | `17675803NH` | `16667` | Liberty Utilities dba EnergyNorth |
 
-**2003–2011 has two rows for the same operator and year.** They are complementary,
-not duplicates: the EnergyNorth row holds the EIA figures and the Liberty row holds
-the PHMSA figures, and no field is populated in both. This is verified at build time —
-across all 9 shared operator-years, zero metric columns collide. So grouping by
-`operator` and `year` and summing is safe. Note EnergyNorth filed nothing for 2001
-or 2002; that gap is genuine and preserved rather than smoothed over.
+One row per utility-year throughout. Note EnergyNorth filed nothing for 2001 or 2002,
+and PHMSA operator 16667 does not begin until 2003; both gaps are genuine and preserved
+rather than smoothed over.
 
 Predecessor chains are followed all the way through, so where A became B became C,
 A and B both carry C's name.
+
+### PHMSA filings are attributed by year, not by entity
+
+The two agencies disagree about when a utility becomes a new entity. PHMSA operator
+16667 filed continuously from 2003 to 2025, changing only its *name* as ownership
+changed. EIA issued a **new respondent id** at the 2012 Liberty acquisition. So there is
+no year at which both agencies agree a new company began.
+
+Each PHMSA filing is therefore attributed to whichever entity actually filed with EIA
+that year — 16667's 2003–2011 filings sit with EnergyNorth, its 2012+ filings with
+Liberty. Years nobody filed with EIA fall back to the current identity, which is why
+2025 sits with Liberty.
+
+The practical consequence: **`match_status` describes the row, not the company.** The
+same utility can be `matched` in some years and single-source in others, because that is
+what the underlying filings do. EnergyNorth is `eia_only` for 1997–2000, when no PHMSA
+operator in its lineage was filing, and `matched` from 2003.
 
 ## The one thing to know before using this file
 
@@ -66,11 +80,11 @@ A and B both carry C's name.
 years from the companies it absorbed, this file does not. Gaps stay gaps, and a
 utility's series starts the year it first filed under its own name.
 
-So panel and CSV totals can legitimately differ. Example: Liberty Utilities dba
-EnergyNorth shows EIA data for 1997–2024 in the panel and **2012–2024** here,
-because 1997–2011 belongs to EnergyNorth Nat Gas Inc, which appears in this file
-as its own utility. Nothing has been apportioned across states either — a
-combined multi-state filing is kept whole and flagged in `combined_report`.
+So panel and CSV totals can legitimately differ. The panel shows Liberty Utilities dba
+EnergyNorth with EIA data from 1997, backfilled from EnergyNorth Nat Gas Inc; here those
+years stay on EnergyNorth's own rows under its own `eia_id`. Group by `operator` to get
+the continuous series the panel shows. Nothing has been apportioned across states either
+— a combined multi-state filing is kept whole and flagged in `combined_report`.
 
 **Do not sum a column without filtering `phmsa_report_role = primary`.** An
 operator can file several reports for one state and year, and all of them are
@@ -91,9 +105,9 @@ Constructed for this file, not taken from either source form.
 | 5 | `year` | Calendar year the data describes: PHMSA `REPORT_YEAR`, EIA `YEAR`. |
 | 6 | `operator` | **Shared display name for the utility as the map presents it.** Normally `eia_name`, or `phmsa_name` where there is no EIA filing — but a predecessor carries its *successor's* name, so both read as one utility (see above). Group on this to get the full history; join on the ids to identify a specific filing entity. |
 | 7 | `eia_name` | Name as filed with EIA, taken from the utility's most recent filing, so it is stable across the series rather than changing mid-history. |
-| 8 | `phmsa_name` | Name as filed with PHMSA, same rule. The two often differ in spelling and sometimes in corporate identity. |
+| 8 | `phmsa_name` | The PHMSA operator's **current** name, from its most recent filing — the same name the map's Identifiers section shows. Not the name it filed under in this row's year: operator 16667 filed as "Keyspan Energy Delivery - Energy North" in 2003 and "Energy North Natural Gas Inc" from 2007, and every row carries the latter so one operator does not read as several. The EIA and PHMSA names often differ in spelling and sometimes in corporate identity. |
 | 9 | `ownership` | PHMSA `OPERATOR_TYPE`, a fixed vocabulary the operator selects for itself — Investor Owned, Municipal, Cooperative, Private and similar. Preferred over the territory shapefile's ownership field, which mislabels non-municipal utilities as municipal. **PHMSA only collects this from 2015**, so earlier years are blank. Blank on EIA-only rows. |
-| 10 | `match_status` | `matched` — the same utility was identified in both sources. `eia_only` — files EIA 176 with no PHMSA gas-distribution counterpart. `phmsa_only` — files with PHMSA but is not identified in EIA 176. A single-source row appears only when that utility is on the map or is a predecessor; see the inclusion rule above. |
+| 10 | `match_status` | Describes **this row's year**, not the company. `matched` — this utility-year ties an EIA identity to a PHMSA filing. `eia_only` — an EIA filing with no PHMSA filing attributed to that year. `phmsa_only` — a PHMSA filing with no EIA identity. One utility can be `eia_only` early and `matched` later, because that is what the filings do; see "attributed by year" above. |
 | 11 | `predecessor_of` | The `eia_id` (or PHMSA key) of the utility this one **became**. Blank for a utility filing under its own current identity. When set, this row's `operator`, `territory_name`, `fid` and `on_map` are inherited from that successor. |
 | 12 | `phmsa_report_role` | `primary` — the filing the map treats as the year's figures: the most complete one, then the largest. `additional` — every other filing for that operator, state and year, kept so nothing is dropped. Blank on EIA-only rows. |
 | 13 | `n_phmsa_reports` | How many PHMSA filings exist for that operator-state-year. `1` for most. Where it is greater, that many rows appear, one `primary` and the rest `additional`. |
