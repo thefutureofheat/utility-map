@@ -12,6 +12,25 @@ Sources are two federal collections, joined but never blended:
 | `eia_*`, bracketed columns | EIA **Form 176**, "Annual Report of Natural and Supplemental Gas Supply and Disposition" | EIA |
 | `MMILES_*`, `NUM_SRVS_*`, `PARTD*`, `PERCENT_UNACC_GAS` | PHMSA **Form F 7100.1-1**, "Annual Report for Gas Distribution System" | PHMSA, 49 CFR Part 191 |
 
+## Which utilities are in here
+
+A utility is included if it is **on the map**, or if it is **matched across EIA and
+PHMSA** even without a territory polygon. A utility present in only one source *and*
+absent from the map is not included.
+
+That leaves out two quite different groups. Most of it is filers that are not gas
+distribution utilities at all — interstate pipelines, LNG and vehicle-fuel marketers,
+and EIA's own "Adjustment Company" balancing entry, which exists to make state totals
+reconcile. Nationally this is the bulk of the exclusion: 2,570 of 3,904 utilities.
+
+But it also leaves out some genuine utilities, and that is worth knowing when a name
+you expect is missing. **Predecessor companies are the main case.** In New Hampshire,
+EnergyNorth Nat Gas Inc filed EIA Form 176 from 1997 to 2011 with about 75,000
+residential customers, and is excluded because it was never matched to a PHMSA
+operator or a map territory. Since this file backfills nothing, its filings are the
+only record of Liberty Utilities' history before 2012 — so Liberty simply begins in
+2012 here, with the earlier years absent rather than attributed to it.
+
 ## The one thing to know before using this file
 
 **Every value is as filed.** Where the map's click panel fills a utility's early
@@ -45,7 +64,7 @@ Constructed for this file, not taken from either source form.
 | 7 | `eia_name` | Name as filed with EIA, taken from the utility's most recent filing, so it is stable across the series rather than changing mid-history. |
 | 8 | `phmsa_name` | Name as filed with PHMSA, same rule. The two often differ in spelling and sometimes in corporate identity. |
 | 9 | `ownership` | PHMSA `OPERATOR_TYPE`, a fixed vocabulary the operator selects for itself — Investor Owned, Municipal, Cooperative, Private and similar. Preferred over the territory shapefile's ownership field, which mislabels non-municipal utilities as municipal. **PHMSA only collects this from 2015**, so earlier years are blank. Blank on EIA-only rows. |
-| 10 | `match_status` | `matched` — the same utility was identified in both sources. `eia_only` — files EIA 176 with no PHMSA gas-distribution counterpart, typically an interstate pipeline, a marketer, or a balancing entry. `phmsa_only` — files with PHMSA but not identified in EIA 176. |
+| 10 | `match_status` | `matched` — the same utility was identified in both sources. `eia_only` — files EIA 176 with no PHMSA gas-distribution counterpart. `phmsa_only` — files with PHMSA but is not identified in EIA 176. Per the inclusion rule above, an `eia_only` or `phmsa_only` row appears **only** when that utility is on the map; otherwise it is not in the file at all. |
 | 11 | `phmsa_report_role` | `primary` — the filing the map treats as the year's figures: the most complete one, then the largest. `additional` — every other filing for that operator, state and year, kept so nothing is dropped. Blank on EIA-only rows. |
 | 12 | `n_phmsa_reports` | How many PHMSA filings exist for that operator-state-year. `1` for most. Where it is greater, that many rows appear, one `primary` and the rest `additional`. |
 | 13 | `combined_report` | `yes` when `phmsa_stop` names more than one state, i.e. the figures cover a multi-state system and are **not** specific to this state. Not apportioned — deliberately. |
