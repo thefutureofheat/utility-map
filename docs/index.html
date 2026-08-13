@@ -2531,7 +2531,12 @@ function renderTrends(feat) {
   }
 
   const BASE  = { fill: false, tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, spanGaps: true };
-  const SBASE = { tension: 0.3, borderWidth: 1, pointRadius: 1, pointHoverRadius: 3, spanGaps: false };
+  // spanGaps matches BASE: bridge missing years rather than breaking the bands. Safe for a
+  // stack because each group is gated on one total (MMILES_BY_DCD_TOTAL, MMILES_TOTAL,
+  // NUM_SRVS_BY_DCD_TOTAL, NUM_SRVCS_TOTAL), so every layer in a chart goes null on exactly
+  // the same years. Were the layers gated separately, one band could bridge a year while the
+  // band below kept a real point, and the fill between them would invert.
+  const SBASE = { tension: 0.3, borderWidth: 1, pointRadius: 1, pointHoverRadius: 3, spanGaps: true };
 
   (function() {
     const ctx = document.getElementById("tc-price-consump");
