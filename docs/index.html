@@ -522,7 +522,7 @@ const MODES = {
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
   losses_eia:      { label: "Known Losses",                  unit: "Mcf",    scale: "red",      fixed: null       },
-  delivery_share:   { label: "Delivery Price as % of Residential Price", unit: "%", scale: "pricemap", fixed: [0, 100] },
+  delivery_share:   { label: "Delivery Price as % of Residential Price", unit: "%", scale: "pricemap", fixed: null, fullRange: true },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
   afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
@@ -709,9 +709,12 @@ function getValue(p, mode) {
       return p["Losses from Leaks [VL]"] ?? null;
     case "delivery_share": {
       // How much of the residential price is distribution margin rather than the gas
-      // itself. The 0-100 domain is fixed deliberately: as the commodity price fell the
-      // median share moved from ~32% in 2005 to ~69% in 2024, and an auto-scaled ramp
-      // would renormalise that away and paint every year to look like every other.
+      // itself. The ramp spans the observed range for the year the domains are measured
+      // at (the latest, set just before computeDomains), so the full colour range is
+      // spent on the values actually on screen. That means colours are NOT comparable
+      // between years: the median share moves from ~32% in 2005 to ~69% in 2024, and
+      // the domain moves with it. Reading a trend off this layer needs the legend, not
+      // the colour. Comparing across years is what the CAGR layer beside it is for.
       const cs = p["Residential Sales [CS]"], vl = p["Residential Sales [VL]"];
       const rp = cs && vl && vl > 0 ? cs / vl : null;
       const state = p.phmsa_STOP || p.EIA_state;
@@ -993,6 +996,13 @@ function computeDomains() {
         0.01
       );
       DOMAINS[k] = [-absMax, absMax];
+    } else if (m.fullRange) {
+      // The exact observed range, endpoint to endpoint. The default below trims to
+      // p2..p95 so a few outliers cannot flatten everything else, but modeColor clamps
+      // out-of-domain values to the ends, which would paint the smallest and largest
+      // values the same as their neighbours and make the legend's end labels wrong.
+      const lo = arr[0], hi = arr[arr.length - 1];
+      DOMAINS[k] = [lo, hi > lo ? hi : lo + 1];
     } else {
       const lo = arr[Math.floor(arr.length * 0.02)];
       const hi = arr[Math.floor(arr.length * 0.95)];
