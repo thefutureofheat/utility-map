@@ -2165,15 +2165,19 @@ function assembleTrendsData(eiaId, phmsaKey, state) {
   };
 }
 
-// A year whose neighbours are both missing has nothing to draw an area between, so it
-// rendered as a bare stack of dots — technically correct and nearly invisible. This draws a
-// narrow column for those years instead, so the segment values can be read, while leaving a
-// gap of whitespace either side so the missing years still read as missing.
+// A chart with a SINGLE year of data has nothing to connect: spanGaps bridges missing years,
+// but a lone stack has no neighbour to bridge to, so it renders as a bare row of dots —
+// technically correct and nearly invisible. This draws a narrow column for that one year so the
+// segment values can be read.
+//
+// Two or more years need nothing. Every layer in these charts goes null on the same years (each
+// group is gated on one total), so spanGaps joins them into continuous bands and any column
+// drawn on top would just sit redundantly over a band that is already there.
 //
 // The datasets hold CUMULATIVE values (makeMaterialChart pre-sums them), so a segment runs
 // from the previous dataset's value up to this one's — the same arithmetic the tooltip does.
-const isolatedYearBands = {
-  id: "isolatedYearBands",
+const soleYearBand = {
+  id: "soleYearBand",
   afterDatasetsDraw(chart) {
     const { ctx, chartArea, scales: { x, y } } = chart;
     const ds = chart.data.datasets || [];
@@ -2182,33 +2186,34 @@ const isolatedYearBands = {
     const vis = ds.map((_, k) => chart.isDatasetVisible(k));
     const present = i => ds.some((d, k) => vis[k] && d.data[i] != null);
 
+    // Only when exactly one year carries data. With two or more, spanGaps has already
+    // connected them and there is nothing a column would add.
+    let years = 0, at = -1;
+    for (let i = 0; i < n; i++) if (present(i)) { years++; at = i; }
+    if (years !== 1) return;
+
     // Half a category, capped: wide enough to read, narrow enough to leave a clear gap.
     const w = Math.max(4, Math.min(15, (chartArea.width / n) * 0.5));
-
-    for (let i = 0; i < n; i++) {
-      if (!present(i)) continue;
-      if ((i > 0 && present(i - 1)) || (i < n - 1 && present(i + 1))) continue;
-      const cx = x.getPixelForValue(i);
-      let prev = 0;
-      for (let k = 0; k < ds.length; k++) {
-        const cum = ds[k].data[i];
-        if (cum == null) continue;
-        // A hidden dataset still occupies its place in the stack, because the values were
-        // cumulated before the chart saw them — so advance past it without drawing.
-        if (!vis[k]) { prev = cum; continue; }
-        const yTop = y.getPixelForValue(cum);
-        const yBot = y.getPixelForValue(prev);
-        prev = cum;
-        const h = yBot - yTop;
-        if (!(h > 0.5)) continue;
-        ctx.save();
-        ctx.fillStyle = ds[k].backgroundColor;
-        ctx.fillRect(cx - w / 2, yTop, w, h);
-        ctx.strokeStyle = ds[k].borderColor;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(cx - w / 2, yTop, w, h);
-        ctx.restore();
-      }
+    const cx = x.getPixelForValue(at);
+    let prev = 0;
+    for (let k = 0; k < ds.length; k++) {
+      const cum = ds[k].data[at];
+      if (cum == null) continue;
+      // A hidden dataset still occupies its place in the stack, because the values were
+      // cumulated before the chart saw them — so advance past it without drawing.
+      if (!vis[k]) { prev = cum; continue; }
+      const yTop = y.getPixelForValue(cum);
+      const yBot = y.getPixelForValue(prev);
+      prev = cum;
+      const h = yBot - yTop;
+      if (!(h > 0.5)) continue;
+      ctx.save();
+      ctx.fillStyle = ds[k].backgroundColor;
+      ctx.fillRect(cx - w / 2, yTop, w, h);
+      ctx.strokeStyle = ds[k].borderColor;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - w / 2, yTop, w, h);
+      ctx.restore();
     }
   },
 };
@@ -2242,7 +2247,7 @@ function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
   return new Chart(ctx, {
     type: "line",
     data: { labels, datasets },
-    plugins: [isolatedYearBands],
+    plugins: [soleYearBand],
     options: {
       responsive: true,
       maintainAspectRatio: false,
