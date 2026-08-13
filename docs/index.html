@@ -2265,9 +2265,18 @@ function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
               const dataIdx = ctx.dataIndex;
               const prevCum = dsIdx > 0 ? (ctx.chart.data.datasets[dsIdx - 1].data[dataIdx] ?? 0) : 0;
               const actual  = cumVal - prevCum;
-              if (actual <= 0) return null;
+              // Hide only segments that are genuinely zero — a column of "0" rows is clutter.
+              // NEGATIVES ARE SHOWN. Some PHMSA filings carry one: City of Rockport TX files
+              // -530 services for 2000-09 in both 2009 and 2010, balanced against its own
+              // reported total of 5,003. That inverts the band on the chart, and while
+              // `actual <= 0` hid the number there was no way to see which segment caused it.
+              // Shown as filed and labelled, rather than corrected — see the Infrastructure
+              // note on as-filed figures.
+              if (Math.abs(actual) < 1e-9) return null;
               const fmt = yTickFmt ? yTickFmt(actual) : String(actual);
-              return `${ctx.dataset.label}: ${fmt}`;
+              return actual < 0
+                ? `${ctx.dataset.label}: ${fmt} (negative as filed)`
+                : `${ctx.dataset.label}: ${fmt}`;
             },
           },
         },
