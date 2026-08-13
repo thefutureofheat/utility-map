@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps current EIA utility ID to predecessor IDs that covered the same territory in earlier years. The build script backfills missing years from predecessor data. Edit this file to add/remove mappings, then re-run build_eia_timeseries_json.py. Run generate_predecessor_candidates.py to find more candidates.",
+  "_comment": "Maps current EIA utility ID to predecessor IDs that covered the same territory in earlier years. The build script backfills missing years from predecessor data. Edit this file to add/remove mappings, then re-run s08_build_eia_timeseries_json.py. Run generate_predecessor_candidates.py to find more candidates.",
   "17671662TX": {
     "note": "Atmos Energy Corp TX (2005+). Predecessor entities reported TX distribution before Atmos acquired TXU Gas Distribution in 2004.",
     "predecessors": [

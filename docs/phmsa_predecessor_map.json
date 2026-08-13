@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps current PHMSA operator key (OPERATOR_ID_STOP) to predecessor keys that covered the same territory in earlier years. The build script backfills missing years from predecessor data. Edit this file to add/remove mappings, then re-run build_phmsa_timeseries_json.py.",
+  "_comment": "Maps current PHMSA operator key (OPERATOR_ID_STOP) to predecessor keys that covered the same territory in earlier years. The build script backfills missing years from predecessor data. Edit this file to add/remove mappings, then re-run s07_build_phmsa_timeseries_json.py.",
   "40196_MA": {
     "note": "Eversource Gas of Massachusetts (2020+). Formerly Columbia Gas of Massachusetts; NiSource sold the MA distribution business to Eversource in 2020 following the 2018 Merrimack Valley gas explosions.",
     "predecessors": [

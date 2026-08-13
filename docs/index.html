@@ -284,6 +284,7 @@
         <option value="res_vol" selected>Residential Sales Volume (Mcf)</option>
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
+        <option value="delivery_share">Delivery Price as % of Residential Price</option>
         <option value="delivery_cagr">Delivery Price CAGR (~10yr)</option>
         <option value="losses_eia">Known Losses (Mcf)</option>
       </optgroup>
@@ -521,6 +522,7 @@ const MODES = {
   total_customers:  { label: "Total Customers (Res+Com)",         unit: "",          scale: "purple",   fixed: null       },
   res_consumption:  { label: "Residential Consumption",           unit: "Mcf/cust",  scale: "blue",     fixed: null       },
   losses_eia:      { label: "Known Losses",                  unit: "Mcf",    scale: "red",      fixed: null       },
+  delivery_share:   { label: "Delivery Price as % of Residential Price", unit: "%", scale: "pricemap", fixed: [0, 100] },
   delivery_cagr:    { label: "Delivery Price CAGR (~10yr)",       unit: "%/yr",      scale: "diverge",  fixed: null, diverging: true },
   res_price_chg_10y:{ label: "Residential Price: 10-yr Real Δ",  unit: "Δ$/Mcf",    scale: "diverge",  fixed: null, diverging: true },
   afford_hours:     { label: "Hours at Min. Wage for Gas Bill",  unit: "hrs/yr",    scale: "pricemap", fixed: null },
@@ -705,6 +707,22 @@ function getValue(p, mode) {
       // utility SIZE as much as leakiness — a large system will read high simply for being
       // large — which is the tradeoff for showing the reported figure directly.
       return p["Losses from Leaks [VL]"] ?? null;
+    case "delivery_share": {
+      // How much of the residential price is distribution margin rather than the gas
+      // itself. The 0-100 domain is fixed deliberately: as the commodity price fell the
+      // median share moved from ~32% in 2005 to ~69% in 2024, and an auto-scaled ramp
+      // would renormalise that away and paint every year to look like every other.
+      const cs = p["Residential Sales [CS]"], vl = p["Residential Sales [VL]"];
+      const rp = cs && vl && vl > 0 ? cs / vl : null;
+      const state = p.phmsa_STOP || p.EIA_state;
+      const cg = state ? (CITYGATE_PRICE[state]?.[String(eiaYear)] ?? null) : null;
+      if (rp == null || cg == null) return null;
+      // Citygate is a STATEWIDE average while the price is this utility's own, so a
+      // utility buying above its state's average can sell below it. That is a negative
+      // share, which has no meaning on a 0-100 ramp — 17 utilities in 2024, 68 in 2005.
+      // Dropped rather than clamped, matching the supply/delivery trend chart.
+      return rp - cg >= 0 ? (rp - cg) / rp * 100 : null;
+    }
     case "delivery_cagr": {
       if (!eiaTimeseries || !p.ID) return null;
       const entry = eiaTimeseries[p.ID];
