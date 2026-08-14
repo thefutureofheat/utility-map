@@ -2898,8 +2898,11 @@ function escHtml(s) {
 // are ratio-sized, so a wider panel buys real plotting area, which is the point.
 
 const SB_DEF = 520, SB_MIN = 380;
-// Always leave a usable strip of map; on a narrow window this can bite before SB_MAX.
-function sbMax() { return Math.max(SB_MIN, Math.min(1100, window.innerWidth - 260)); }
+// Prefer to leave a usable strip of map, but never force the panel below its default:
+// the sidebar was a flat 520px before it became resizable, and clamping against a small
+// window would have SHRUNK the panel for anyone on a window under 780px, which is a
+// regression rather than a feature. On a narrow window you simply cannot widen it.
+function sbMax() { return Math.max(SB_DEF, Math.min(1100, window.innerWidth - 260)); }
 function uiScaleFor(w) {
   return Math.min(1.35, Math.max(1, 1 + (w - SB_DEF) / SB_DEF * 0.45));
 }
