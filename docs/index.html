@@ -6,19 +6,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css"/>
   <style>
+    /* The sidebar is user-resizable by dragging its right edge (#sb-resizer).
+       --sbw drives the sidebar width AND everything positioned beside it, so the
+       layout stays in one piece. --ui-scale grows sub-linearly with it and
+       multiplies every font size in the panel, so a wider panel is genuinely
+       bigger rather than just wider. Both are set from JS; these are the defaults. */
+    :root { --sbw: 520px; --ui-scale: 1; }
+
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 13px; color: #222; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: calc(13px * var(--ui-scale)); color: #222; }
 
     #sidebar {
-      position: absolute; top: 0; left: 0; width: 520px; height: 100%;
+      position: absolute; top: 0; left: 0; width: var(--sbw); height: 100%;
       background: #fff; overflow-y: auto; z-index: 1000;
       box-shadow: 2px 0 8px rgba(0,0,0,0.18);
       display: flex; flex-direction: column;
     }
-    #map { position: absolute; top: 0; left: 520px; right: 0; bottom: 0; }
+    #map { position: absolute; top: 0; left: var(--sbw); right: 0; bottom: 0; }
+
+    /* Sits over the sidebar's right edge. Its own element rather than a border on
+       #sidebar, because #sidebar scrolls and a child would scroll away with it. */
+    #sb-resizer {
+      position: absolute; top: 0; left: calc(var(--sbw) - 3px);
+      width: 7px; height: 100%; z-index: 1200;
+      cursor: col-resize; background: transparent;
+    }
+    #sb-resizer:hover, #sb-resizer.dragging { background: rgba(26,58,92,0.28); }
 
     #loading {
-      position: absolute; top: 50%; left: calc(260px + 50%);
+      position: absolute; top: 50%; left: calc(var(--sbw) / 2 + 50%);
       transform: translate(-50%, -50%);
       background: rgba(255,255,255,0.96); padding: 22px 32px;
       border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.22);
@@ -30,21 +46,21 @@
     .sidebar-header {
       padding: 14px 16px 10px; background: #1a3a5c; color: white; flex-shrink: 0;
     }
-    .sidebar-header h2 { margin: 0 0 3px; font-size: 15px; letter-spacing: 0.2px; }
-    .sidebar-header p  { margin: 0; font-size: 10px; opacity: 0.75; }
+    .sidebar-header h2 { margin: 0 0 3px; font-size: calc(15px * var(--ui-scale)); letter-spacing: 0.2px; }
+    .sidebar-header p  { margin: 0; font-size: calc(10px * var(--ui-scale)); opacity: 0.75; }
 
     .color-section { padding: 10px 16px; border-bottom: 1px solid #eee; flex-shrink: 0; }
     .color-section label {
-      display: block; font-weight: 700; font-size: 10px;
+      display: block; font-weight: 700; font-size: calc(10px * var(--ui-scale));
       text-transform: uppercase; letter-spacing: 0.6px; color: #666; margin-bottom: 5px;
     }
     .color-section select {
       width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;
-      font-size: 12px; background: white; cursor: pointer;
+      font-size: calc(12px * var(--ui-scale)); background: white; cursor: pointer;
     }
 
     /* ── Year slider ──────────────────────────────────────── */
-    .year-avail { font-size: 10px; color: #888; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .year-avail { font-size: calc(10px * var(--ui-scale)); color: #888; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .avail-item { display: flex; align-items: center; gap: 4px; }
     .avail-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .avail-dot.yes { background: #43A047; }
@@ -52,30 +68,30 @@
 
     /* ── Legend ───────────────────────────────────────────── */
     #legend { padding: 8px 16px 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
-    .legend-title { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .legend-title { font-size: calc(10px * var(--ui-scale)); font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
     .legend-gradient { height: 10px; border-radius: 5px; margin-bottom: 3px; }
-    .legend-labels { display: flex; justify-content: space-between; font-size: 9px; color: #777;
+    .legend-labels { display: flex; justify-content: space-between; font-size: calc(9px * var(--ui-scale)); color: #777;
       font-variant-numeric: tabular-nums; }
     /* short rules under the bar, so a label can be tied to a position rather than guessed at */
     .legend-ticks { position: relative; height: 4px; }
     .legend-ticks i { position: absolute; top: 0; width: 1px; height: 4px; background: #bbb;
       transform: translateX(-0.5px); }
-    .legend-na { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 10px; color: #888; }
+    .legend-na { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: calc(10px * var(--ui-scale)); color: #888; }
     .legend-na-swatch { width: 12px; height: 12px; border-radius: 2px; background: #fbfbfb; border: 1px solid #c8ccd0; flex-shrink: 0; }
 
     /* ── Info panel ───────────────────────────────────────── */
     #info-panel { flex: 1; padding: 0 16px; overflow-y: auto; min-height: 0; }
-    .info-hint { color: #aaa; font-size: 11px; font-style: italic; margin: 0; line-height: 1.5; padding-top: 12px; }
+    .info-hint { color: #aaa; font-size: calc(11px * var(--ui-scale)); font-style: italic; margin: 0; line-height: 1.5; padding-top: 12px; }
 
     .info-sticky-header {
       position: sticky; top: 0; background: white; z-index: 10;
       padding: 10px 0 7px; border-bottom: 1px solid #eee; margin-bottom: 9px;
     }
-    .info-name { font-size: 13px; font-weight: 700; margin: 0 0 3px; line-height: 1.3; }
-    .info-sub  { font-size: 11px; color: #666; margin: 0; }
+    .info-name { font-size: calc(13px * var(--ui-scale)); font-weight: 700; margin: 0 0 3px; line-height: 1.3; }
+    .info-sub  { font-size: calc(11px * var(--ui-scale)); color: #666; margin: 0; }
     .info-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 9px; }
     .badge {
-      font-size: 9px; padding: 2px 6px; border-radius: 9px;
+      font-size: calc(9px * var(--ui-scale)); padding: 2px 6px; border-radius: 9px;
       font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
     }
     .badge-full    { background: #e3f2fd; color: #1565c0; }
@@ -86,24 +102,24 @@
     /* ── Info sections ────────────────────────────────────── */
     .info-section { margin-bottom: 11px; }
     .info-section-title {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      font-size: calc(10px * var(--ui-scale)); font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.6px; color: #1a3a5c;
       border-bottom: 2px solid #1a3a5c; padding-bottom: 3px; margin-bottom: 7px;
     }
 
     .stat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
-    .stat-label { color: #666; font-size: 11px; flex: 1; }
-    .stat-val   { font-weight: 600; font-size: 11px; text-align: right; }
+    .stat-label { color: #666; font-size: calc(11px * var(--ui-scale)); flex: 1; }
+    .stat-val   { font-weight: 600; font-size: calc(11px * var(--ui-scale)); text-align: right; }
     .stat-tip {
       display: inline-block;
-      color: #aaa; font-size: 10px; margin-left: 3px;
+      color: #aaa; font-size: calc(10px * var(--ui-scale)); margin-left: 3px;
       cursor: help; vertical-align: middle; line-height: 1;
     }
     .stat-tip-box {
       display: none; position: fixed;
       width: 210px; padding: 6px 8px;
       background: #333; color: #fff;
-      font-size: 10.5px; font-weight: 400; line-height: 1.45;
+      font-size: calc(10.5px * var(--ui-scale)); font-weight: 400; line-height: 1.45;
       border-radius: 4px; white-space: normal;
       z-index: 9999; pointer-events: none;
       box-shadow: 0 2px 6px rgba(0,0,0,.35);
@@ -111,31 +127,31 @@
 
     /* ── Decade histogram ─────────────────────────────────── */
     .decade-row { display: flex; align-items: center; margin-bottom: 3px; gap: 4px; }
-    .decade-lbl { width: 55px; font-size: 10px; color: #555; flex-shrink: 0; }
+    .decade-lbl { width: 55px; font-size: calc(10px * var(--ui-scale)); color: #555; flex-shrink: 0; }
     .bar-wrap   { flex: 1; background: #f0f0f0; border-radius: 2px; height: 9px; overflow: hidden; }
     .bar-inner  { height: 9px; border-radius: 2px; transition: width 0.2s; }
-    .bar-val    { width: 46px; font-size: 10px; color: #666; text-align: right; flex-shrink: 0; }
+    .bar-val    { width: 46px; font-size: calc(10px * var(--ui-scale)); color: #666; text-align: right; flex-shrink: 0; }
 
     /* ── Material bar chart ───────────────────────────────── */
     .mat-row { display: flex; align-items: center; margin-bottom: 3px; gap: 4px; }
     .mat-swatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
-    .mat-lbl { flex: 1; font-size: 10px; color: #555; }
+    .mat-lbl { flex: 1; font-size: calc(10px * var(--ui-scale)); color: #555; }
     .mat-bar-wrap { width: 60px; background: #f0f0f0; border-radius: 2px; height: 7px; overflow: hidden; flex-shrink: 0; }
     .mat-bar-inner { height: 7px; border-radius: 2px; }
-    .mat-val { width: 42px; font-size: 10px; color: #666; text-align: right; flex-shrink: 0; }
+    .mat-val { width: 42px; font-size: calc(10px * var(--ui-scale)); color: #666; text-align: right; flex-shrink: 0; }
 
     /* ── Subsection headers ──────────────────────────────── */
     .subsec-hdr {
-      font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+      font-size: calc(9.5px * var(--ui-scale)); font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.5px; color: #555;
       border-bottom: 1px solid #ddd; padding-bottom: 2px;
       margin-top: 9px; margin-bottom: 5px;
     }
 
     /* ── Sales table ─────────────────────────────────────── */
-    .sales-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .sales-table { width: 100%; border-collapse: collapse; font-size: calc(11px * var(--ui-scale)); }
     .sales-table th {
-      font-size: 9px; text-transform: uppercase; color: #999; font-weight: 700;
+      font-size: calc(9px * var(--ui-scale)); text-transform: uppercase; color: #999; font-weight: 700;
       padding: 2px 4px; text-align: right; border-bottom: 1px solid #e0e0e0;
     }
     .sales-table th:first-child { text-align: left; }
@@ -143,11 +159,11 @@
     .sales-table td:first-child { text-align: left; font-weight: 500; }
     .sales-table tr.total-row td { font-weight: 700; background: #f8f8f8; border-top: 1px solid #e0e0e0; border-bottom: none; }
 
-    .pinned-note { font-size: 10px; color: #aaa; font-style: italic; margin-top: 8px; }
+    .pinned-note { font-size: calc(10px * var(--ui-scale)); color: #aaa; font-style: italic; margin-top: 8px; }
 
     /* ── Incidents panel ─────────────────────────────────── */
     #incidents-panel {
-      position: absolute; top: 0; left: 520px; right: 0; bottom: 0;
+      position: absolute; top: 0; left: var(--sbw); right: 0; bottom: 0;
       background: #fff; z-index: 1100;
       display: none; flex-direction: column;
       box-shadow: 2px 0 12px rgba(0,0,0,0.22);
@@ -159,28 +175,28 @@
       display: flex; justify-content: space-between; align-items: flex-start;
       flex-shrink: 0;
     }
-    .incidents-header-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
-    .incidents-header-sub { font-size: 10px; opacity: 0.75; margin-top: 2px; }
+    .incidents-header-title { font-size: calc(13px * var(--ui-scale)); font-weight: 700; line-height: 1.3; }
+    .incidents-header-sub { font-size: calc(10px * var(--ui-scale)); opacity: 0.75; margin-top: 2px; }
     .incidents-close {
       background: none; border: none; color: rgba(255,255,255,0.7);
-      font-size: 18px; cursor: pointer; padding: 0 2px; line-height: 1;
+      font-size: calc(18px * var(--ui-scale)); cursor: pointer; padding: 0 2px; line-height: 1;
       flex-shrink: 0; margin-left: 8px;
     }
     .incidents-close:hover { color: white; }
     #incidents-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
     .incidents-table {
-      width: 100%; border-collapse: collapse; font-size: 11px;
+      width: 100%; border-collapse: collapse; font-size: calc(11px * var(--ui-scale));
       table-layout: fixed;
     }
     .incidents-table th {
-      font-size: 9px; text-transform: uppercase; color: #999; font-weight: 700;
+      font-size: calc(9px * var(--ui-scale)); text-transform: uppercase; color: #999; font-weight: 700;
       padding: 4px 6px; text-align: left; border-bottom: 2px solid #e0e0e0;
       background: #fafafa; position: sticky; top: 0; z-index: 1;
       cursor: pointer; user-select: none; white-space: nowrap;
     }
     .incidents-table th:hover { color: #5c1a1a; }
-    .incidents-table th.sorted-asc::after  { content: " ▲"; font-size: 8px; }
-    .incidents-table th.sorted-desc::after { content: " ▼"; font-size: 8px; }
+    .incidents-table th.sorted-asc::after  { content: " ▲"; font-size: calc(8px * var(--ui-scale)); }
+    .incidents-table th.sorted-desc::after { content: " ▼"; font-size: calc(8px * var(--ui-scale)); }
     .incidents-table td {
       padding: 4px 6px; border-bottom: 1px solid #f0f0f0;
       vertical-align: top; word-break: break-word;
@@ -200,10 +216,10 @@
     .incidents-btn {
       display: block; width: 100%; margin-top: 6px; padding: 7px 12px;
       background: #5c1a1a; color: white; border: none; border-radius: 5px;
-      font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
+      font-size: calc(12px * var(--ui-scale)); font-weight: 600; cursor: pointer; text-align: center;
     }
     .incidents-btn:hover { background: #3e1010; }
-    .incidents-empty { color: #aaa; font-size: 12px; font-style: italic; padding: 12px 0; }
+    .incidents-empty { color: #aaa; font-size: calc(12px * var(--ui-scale)); font-style: italic; padding: 12px 0; }
 
     /* ── Data download ─────────────────────────────────────── */
     /* Same shape as .incidents-btn but a neutral slate, so the download reads as an
@@ -211,7 +227,7 @@
     .download-btn {
       display: block; width: 100%; margin-top: 6px; padding: 7px 12px;
       background: #2f4858; color: white; border: none; border-radius: 5px;
-      font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
+      font-size: calc(12px * var(--ui-scale)); font-weight: 600; cursor: pointer; text-align: center;
       text-decoration: none; box-sizing: border-box;
     }
     .download-btn:hover { background: #1d2e39; }
@@ -219,7 +235,7 @@
       background: #e4e4e4; color: #9a9a9a; cursor: default; pointer-events: none;
     }
     .download-note {
-      color: #777; font-size: 10.5px; line-height: 1.45; margin-top: 6px;
+      color: #777; font-size: calc(10.5px * var(--ui-scale)); line-height: 1.45; margin-top: 6px;
     }
 
     /* ── Chart styles (inline in sidebar) ──────────────────── */
@@ -228,16 +244,23 @@
       /* Deliberately NOT the same as .info-section-title, which it used to match exactly —
          same size, weight, caps and 2px rule — so each chart read as a section of its own.
          Sentence case, lighter weight and a hairline rule put it a level below the heading. */
-      font-size: 11px; font-weight: 600; color: #3d5a75;
+      font-size: calc(11px * var(--ui-scale)); font-weight: 600; color: #3d5a75;
       letter-spacing: 0.1px; border-bottom: 1px solid #e4e8ec;
       padding-bottom: 3px; margin-bottom: 8px;
     }
-    .chart-wrap { position: relative; width: 100%; height: 220px; }
+    /* Sized by RATIO, not a fixed height, so a chart grows with the panel and keeps its
+       proportions. 488 is the chart width at the default 520px panel (520 minus
+       #info-panel's 2x16px padding), so these ratios reproduce the previous pixel
+       heights exactly at the default and scale from there.
+       The canvas is taken out of flow: Chart.js sizes it to its container, and if it
+       stayed in flow its own height could feed back into the wrapper's auto height. */
+    .chart-wrap { position: relative; width: 100%; aspect-ratio: 488 / 220; }
+    .chart-wrap > canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
     /* ── Data availability chips ──────────────────────────────── */
     .data-avail-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
     .src-chip {
-      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9px;
+      font-size: calc(10px * var(--ui-scale)); font-weight: 700; padding: 2px 7px; border-radius: 9px;
       letter-spacing: 0.2px; white-space: nowrap;
     }
     .src-eia   { background: #e3f2fd; color: #1565c0; }
@@ -245,26 +268,26 @@
 
     /* ── Multi-name entries ───────────────────────────────────── */
     .name-group { margin-bottom: 4px; }
-    .name-group-label { font-size: 10px; color: #666; margin-bottom: 2px; }
+    .name-group-label { font-size: calc(10px * var(--ui-scale)); color: #666; margin-bottom: 2px; }
     .name-entry { display: flex; justify-content: space-between; align-items: baseline;
       padding: 1px 0 1px 8px; gap: 6px; }
-    .name-entry-name  { font-size: 11px; color: #333; flex: 1; }
-    .name-entry-years { font-size: 10px; color: #aaa; white-space: nowrap; flex-shrink: 0; }
+    .name-entry-name  { font-size: calc(11px * var(--ui-scale)); color: #333; flex: 1; }
+    .name-entry-years { font-size: calc(10px * var(--ui-scale)); color: #aaa; white-space: nowrap; flex-shrink: 0; }
     .summed-note {
       display: block; margin: 3px 0 5px 8px; padding: 4px 7px;
       background: #fff7e6; border-left: 2px solid #c07d00; border-radius: 3px;
-      font-size: 10px; line-height: 1.45; color: #5c4400;
+      font-size: calc(10px * var(--ui-scale)); line-height: 1.45; color: #5c4400;
     }
 
     /* ── Multi-state note ─────────────────────────────────────── */
     .multi-state-note {
-      display: block; margin-top: 3px; font-size: 11px; font-weight: 700;
+      display: block; margin-top: 3px; font-size: calc(11px * var(--ui-scale)); font-weight: 700;
       color: #c0392b; letter-spacing: 0.1px;
     }
 
     /* ── Footer ───────────────────────────────────────────── */
     .sidebar-footer {
-      padding: 7px 16px; font-size: 10px; color: #bbb;
+      padding: 7px 16px; font-size: calc(10px * var(--ui-scale)); color: #bbb;
       border-top: 1px solid #eee; flex-shrink: 0; text-align: center; line-height: 1.5;
     }
   </style>
@@ -315,6 +338,8 @@
     Sources: EIA Form 176 &bull; PHMSA Annual Report
   </div>
 </div>
+
+<div id="sb-resizer" title="Drag to resize the panel · double-click to reset"></div>
 
 <div id="map"></div>
 <div id="incidents-panel">
@@ -2241,6 +2266,16 @@ function chartTitle(id, label) {
   return `<div class="chart-title">${label}${src ? tipIcon(src) : ""}</div>`;
 }
 
+// Chart text lives inside a canvas, so --ui-scale cannot reach it the way it reaches
+// the panel's HTML. Read the same variable and scale the sizes Chart.js is given, so
+// the two stay in step. Charts bake these in at construction, so the panel is rebuilt
+// once when a drag ends (see the resizer below) rather than on every pointermove.
+function uiScale() {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale"));
+  return Number.isFinite(v) && v > 0 ? v : 1;
+}
+function cf(n) { return Math.round(n * uiScale()); }
+
 function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return null;
@@ -2252,7 +2287,7 @@ function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: "bottom", labels: { boxWidth: 10, font: { size: 9 }, padding: 5 } },
+        legend: { display: true, position: "bottom", labels: { boxWidth: 10, font: { size: cf(9) }, padding: 5 } },
         tooltip: {
           mode: "index",
           intersect: false,
@@ -2283,11 +2318,11 @@ function makeStackedAreaChart(canvasId, labels, datasets, yTickFmt) {
       },
       scales: {
         x: {
-          ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+          ticks: { color: "#aaa", font: { size: cf(9) }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
           grid: { color: "#f5f5f5" },
         },
         y: {
-          ticks: { color: "#aaa", font: { size: 9 }, callback: yTickFmt || (v => v) },
+          ticks: { color: "#aaa", font: { size: cf(9) }, callback: yTickFmt || (v => v) },
           grid: { color: "#f5f5f5" },
           beginAtZero: true,
         },
@@ -2330,16 +2365,16 @@ function makeLineChart(canvasId, labels, datasets, yTickFmt) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: datasets.length > 1, labels: { boxWidth: 10, font: { size: 10 }, padding: 6 } },
+        legend: { display: datasets.length > 1, labels: { boxWidth: 10, font: { size: cf(10) }, padding: 6 } },
         tooltip: { mode: "index", intersect: false },
       },
       scales: {
         x: {
-          ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+          ticks: { color: "#aaa", font: { size: cf(9) }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
           grid: { color: "#f5f5f5" },
         },
         y: {
-          ticks: { color: "#aaa", font: { size: 9 }, callback: yTickFmt || (v => v) },
+          ticks: { color: "#aaa", font: { size: cf(9) }, callback: yTickFmt || (v => v) },
           grid: { color: "#f5f5f5" },
           beginAtZero: true,
         },
@@ -2503,19 +2538,19 @@ function renderTrends(feat) {
     </div>` : ""}
     ${hasDcd ? `<div class="chart-block">
       ${chartTitle("dcd", "Main Miles by Installation Era")}
-      <div class="chart-wrap" style="height:290px"><canvas id="tc-dcd"></canvas></div>
+      <div class="chart-wrap" style="aspect-ratio:488/290"><canvas id="tc-dcd"></canvas></div>
     </div>` : ""}
     ${hasMatMiles ? `<div class="chart-block">
       ${chartTitle("mat", "Main Miles by Material")}
-      <div class="chart-wrap" style="height:290px"><canvas id="tc-mat"></canvas></div>
+      <div class="chart-wrap" style="aspect-ratio:488/290"><canvas id="tc-mat"></canvas></div>
     </div>` : ""}
     ${hasSrvDcd ? `<div class="chart-block">
       ${chartTitle("srvdcd", "Number of Services by Installation Era")}
-      <div class="chart-wrap" style="height:290px"><canvas id="tc-srvdcd"></canvas></div>
+      <div class="chart-wrap" style="aspect-ratio:488/290"><canvas id="tc-srvdcd"></canvas></div>
     </div>` : ""}
     ${hasSrvMat ? `<div class="chart-block">
       ${chartTitle("srvmat", "Number of Services by Material")}
-      <div class="chart-wrap" style="height:290px"><canvas id="tc-srvmat"></canvas></div>
+      <div class="chart-wrap" style="aspect-ratio:488/290"><canvas id="tc-srvmat"></canvas></div>
     </div>` : ""}
     ${hasExcav ? `<div class="chart-block">
       ${chartTitle("excav", "Excavation Damage Rate (per 10K tickets)")}
@@ -2539,11 +2574,12 @@ function renderTrends(feat) {
     incSlot.innerHTML = hasIncidents
       ? `<div class="chart-block">
            <div class="chart-title">Significant Incidents Since 2010 by Cause</div>
-           <div class="chart-wrap" style="height:240px"><canvas id="tc-incidents"></canvas></div>
+           <div class="chart-wrap" style="aspect-ratio:488/240"><canvas id="tc-incidents"></canvas></div>
          </div>`
       : "";
   }
 
+  Chart.defaults.font.size = cf(12);
   const BASE  = { fill: false, tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, spanGaps: true };
   // spanGaps matches BASE: bridge missing years rather than breaking the bands. Safe for a
   // stack because each group is gated on one total (MMILES_BY_DCD_TOTAL, MMILES_TOTAL,
@@ -2567,23 +2603,23 @@ function renderTrends(feat) {
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, labels: { boxWidth: 10, font: { size: 10 }, padding: 6 } },
+          legend: { display: true, labels: { boxWidth: 10, font: { size: cf(10) }, padding: 6 } },
           tooltip: { mode: "index", intersect: false },
         },
         scales: {
           x: {
-            ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+            ticks: { color: "#aaa", font: { size: cf(9) }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
             grid: { color: "#f5f5f5" },
           },
           y: {
             position: "left",
-            ticks: { color: "#1a3a5c", font: { size: 9 }, callback: v => v != null ? "$" + v.toFixed(2) : "" },
+            ticks: { color: "#1a3a5c", font: { size: cf(9) }, callback: v => v != null ? "$" + v.toFixed(2) : "" },
             grid: { color: "#f5f5f5" },
             beginAtZero: true,
           },
           y2: {
             position: "right",
-            ticks: { color: "#d4890a", font: { size: 9 }, callback: v => v != null ? v.toFixed(1) : "" },
+            ticks: { color: "#d4890a", font: { size: cf(9) }, callback: v => v != null ? v.toFixed(1) : "" },
             grid: { drawOnChartArea: false },
             beginAtZero: true,
           },
@@ -2646,7 +2682,7 @@ function renderTrends(feat) {
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, position: "bottom", labels: { boxWidth: 10, font: { size: 9 }, padding: 4 } },
+            legend: { display: true, position: "bottom", labels: { boxWidth: 10, font: { size: cf(9) }, padding: 4 } },
             tooltip: {
               mode: "index",
               intersect: false,
@@ -2659,13 +2695,13 @@ function renderTrends(feat) {
           scales: {
             x: {
               stacked: true,
-              ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
+              ticks: { color: "#aaa", font: { size: cf(9) }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
               grid: { color: "#f5f5f5" },
             },
             y: {
               stacked: true,
               beginAtZero: true,
-              ticks: { color: "#555", font: { size: 9 }, precision: 0 },
+              ticks: { color: "#555", font: { size: cf(9) }, precision: 0 },
               grid: { color: "#f5f5f5" },
             },
           },
@@ -2806,7 +2842,7 @@ function renderTrends(feat) {
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, labels: { boxWidth: 10, font: { size: 10 }, padding: 6 } },
+            legend: { display: true, labels: { boxWidth: 10, font: { size: cf(10) }, padding: 6 } },
             tooltip: {
               mode: "index", intersect: false,
               callbacks: {
@@ -2821,22 +2857,22 @@ function renderTrends(feat) {
           },
           scales: {
             x: {
-              ticks: { color: "#aaa", font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+              ticks: { color: "#aaa", font: { size: cf(9) }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
               grid: { color: "#f5f5f5" },
             },
             y: {
               position: "left",
               beginAtZero: true,
-              ticks: { color: "#1a3a5c", font: { size: 9 }, callback: v => v != null ? v.toFixed(0) + " hrs" : "" },
+              ticks: { color: "#1a3a5c", font: { size: cf(9) }, callback: v => v != null ? v.toFixed(0) + " hrs" : "" },
               grid: { color: "#f5f5f5" },
-              title: { display: true, text: "Hours/yr", color: "#1a3a5c", font: { size: 9 } },
+              title: { display: true, text: "Hours/yr", color: "#1a3a5c", font: { size: cf(9) } },
             },
             y2: {
               position: "right",
               beginAtZero: true,
-              ticks: { color: "#b03a00", font: { size: 9 }, callback: v => v != null ? v.toFixed(1) + "%" : "" },
+              ticks: { color: "#b03a00", font: { size: cf(9) }, callback: v => v != null ? v.toFixed(1) + "%" : "" },
               grid: { drawOnChartArea: false },
-              title: { display: true, text: "% income", color: "#b03a00", font: { size: 9 } },
+              title: { display: true, text: "% income", color: "#b03a00", font: { size: cf(9) } },
             },
           },
         },
@@ -2850,6 +2886,88 @@ function escHtml(s) {
   if (!s) return "";
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
+
+// ── Resizable sidebar ─────────────────────────────────────────────────────────
+//
+// Drag the right edge to widen the panel. Everything positioned beside it keys off
+// --sbw, so the map, the incidents panel and the loading card all follow.
+//
+// Text grows too, but SUB-LINEARLY and capped: at the widest the panel is 1.9x its
+// default width, and matching that in type would be absurd, so --ui-scale reaches
+// 1.35 and stops. Charts, by contrast, scale fully with the width — their wrappers
+// are ratio-sized, so a wider panel buys real plotting area, which is the point.
+
+const SB_DEF = 520, SB_MIN = 380;
+// Always leave a usable strip of map; on a narrow window this can bite before SB_MAX.
+function sbMax() { return Math.max(SB_MIN, Math.min(1100, window.innerWidth - 260)); }
+function uiScaleFor(w) {
+  return Math.min(1.35, Math.max(1, 1 + (w - SB_DEF) / SB_DEF * 0.45));
+}
+
+function setSidebarWidth(w, persist) {
+  w = Math.round(Math.min(sbMax(), Math.max(SB_MIN, w)));
+  const root = document.documentElement;
+  root.style.setProperty("--sbw", w + "px");
+  root.style.setProperty("--ui-scale", uiScaleFor(w).toFixed(3));
+  if (persist !== false) { try { localStorage.setItem("sidebarWidth", String(w)); } catch (e) {} }
+  // MapLibre caches its canvas size; without this the map keeps the old width and the
+  // basemap is stretched until the next window resize.
+  if (typeof map !== "undefined" && map && map.resize) map.resize();
+  return w;
+}
+
+(function initSidebarResize() {
+  const handle = document.getElementById("sb-resizer");
+  if (!handle) return;
+
+  let dragging = false, frame = 0, pendingX = 0;
+  const flush = () => { frame = 0; setSidebarWidth(pendingX); };
+
+  handle.addEventListener("pointerdown", e => {
+    dragging = true;
+    handle.classList.add("dragging");
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+    // Without this a drag across the page selects text under the cursor.
+    document.body.style.userSelect = "none";
+    e.preventDefault();
+  });
+
+  handle.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    // The sidebar starts at x=0, so the pointer's x IS the width.
+    pendingX = e.clientX;
+    if (!frame) frame = requestAnimationFrame(flush);   // at most one update per paint
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove("dragging");
+    if (frame) { cancelAnimationFrame(frame); flush(); }
+    try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+    document.body.style.userSelect = "";
+    // The CSS half of the resize is already live; this is only for the chart text,
+    // which Chart.js fixed when it built the canvas. Once, at the end of the drag.
+    if (typeof pinnedFeat !== "undefined" && pinnedFeat) updateInfo(pinnedFeat, true);
+  }
+  handle.addEventListener("pointerup", endDrag);
+  handle.addEventListener("pointercancel", endDrag);
+
+  handle.addEventListener("dblclick", () => {
+    setSidebarWidth(SB_DEF);
+    if (typeof pinnedFeat !== "undefined" && pinnedFeat) updateInfo(pinnedFeat, true);
+  });
+
+  // Re-clamp when the window shrinks, so the panel cannot end up wider than the window.
+  window.addEventListener("resize", () => {
+    const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sbw"), 10);
+    setSidebarWidth(Number.isFinite(cur) ? cur : SB_DEF, false);
+  });
+
+  let saved = NaN;
+  try { saved = parseInt(localStorage.getItem("sidebarWidth"), 10); } catch (e) {}
+  setSidebarWidth(Number.isFinite(saved) ? saved : SB_DEF, false);
+})();
 </script>
 </body>
 </html>
