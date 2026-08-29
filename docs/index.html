@@ -304,7 +304,7 @@
     <label>Color territories by</label>
     <select id="colorMode">
       <optgroup label="Sales &amp; Customers (EIA)">
-        <option value="res_vol" selected>Residential Sales Volume (Mcf)</option>
+        <option value="res_vol">Residential Sales Volume (Mcf)</option>
         <option value="res_consumption">Residential Consumption (Mcf/customer)</option>
         <option value="res_price">Residential Avg Price ($/Mcf)</option>
         <option value="delivery_share">Delivery Price as % of Residential Price</option>
@@ -323,7 +323,8 @@
         <option value="pct_unp_steel">% Unprotected Steel Main Mileage</option>
         <option value="pct_pre1970">% Pre-1970 Main Mileage</option>
         <option value="excav_damage_rate">Damages per 10K Excavation Tickets</option>
-        <option value="unacc">% of Unaccounted for Gas</option>
+        <option value="unacc_10y" selected>% Unaccounted-for Gas (10-yr avg)</option>
+        <option value="unacc">% of Unaccounted for Gas (single year)</option>
       </optgroup>
     </select>
   </div>
@@ -539,6 +540,13 @@ const MODES = {
   pct_unp_steel:  { label: "% Unprotected Steel Main Mileage",   unit: "%",      scale: "unp_steel", fixed: null       },
   pct_pre1970:    { label: "% Pre-1970 Main Mileage",            unit: "%",      scale: "orange",    fixed: [0, 100]   },
   unacc:          { label: "% of Unaccounted for Gas",          unit: "%",      scale: "diverge",  fixed: null, diverging: true },
+  // Domain fixed rather than measured. The diverging branch of computeDomains sets
+  // +/-max(|p2|,|p98|), which here is +/-15.1% because a few small municipal systems
+  // run above 30%. That put 68% of all utilities inside a single tenth of the ramp and
+  // left the interquartile range spanning 9% of it -- the map read as one flat colour.
+  // +/-5 keeps 88% of utilities inside and gives the interquartile range 27% of the ramp;
+  // the 12% above +5% clamp to the end, which is the trade. See ramp_check.py.
+  unacc_10y:      { label: "% Unaccounted-for Gas (10-yr avg)", unit: "%",      scale: "diverge",  fixed: [-5, 5], diverging: true },
   res_vol:        { label: "Residential Sales Volume",     unit: "Mcf",   scale: "blue",     fixed: null       },
   res_price:      { label: "Residential Avg Price",        unit: "$/Mcf",  scale: "pricemap", fixed: null       },
   res_customers:  { label: "Residential Customers",        unit: "",       scale: "purple",   fixed: null       },
@@ -787,6 +795,33 @@ function getValue(p, mode) {
       return (Math.pow(end.v / best.v, 1 / (end.yr - best.yr)) - 1) * 100;
     }
     case "unacc":    return p.phmsa_PERCENT_UNACC_GAS != null ? p.phmsa_PERCENT_UNACC_GAS : null;
+    case "unacc_10y": {
+      // Mean Part G percentage over the utility's most recent ten reporting
+      // years. A single year of this quantity is a difference between two large
+      // metered numbers, so it moves on billing-cycle boundaries and
+      // restatements; the ten-year mean is what a reader is actually asking for.
+      // Window rules and why they are there: see the header comment of
+      // map_lauf10.py, kept with the report build.
+      if (!phmsaTimeseries || !p.phmsaKey) return null;
+      const entry = phmsaTimeseries[p.phmsaKey];
+      if (!entry?.data) return null;
+      const pts = [];
+      for (const [yrStr, yd] of Object.entries(entry.data)) {
+        const v = yd.PERCENT_UNACC_GAS;
+        // Beyond +/-100% is a reporting defect, not a loss rate. One of them
+        // would otherwise take the whole colour ramp.
+        if (v != null && isFinite(v) && Math.abs(v) <= 100) pts.push({ yr: +yrStr, v });
+      }
+      if (pts.length < 5) return null;
+      pts.sort((a, b) => a.yr - b.yr);
+      const lastYr = Math.max(...Object.keys(entry.data).map(Number));
+      const end = pts[pts.length - 1];
+      // Do not paint a stale colour for a system that stopped filing years ago.
+      if (end.yr < lastYr - 2) return null;
+      const win = pts.filter(pt => pt.yr > end.yr - 10);
+      if (win.length < 5) return null;
+      return win.reduce((s, pt) => s + pt.v, 0) / win.length;
+    }
     case "res_vol":  return p["Residential Sales [VL]"] || null;
     case "res_price": {
       const cs = p["Residential Sales [CS]"], vl = p["Residential Sales [VL]"];
@@ -908,7 +943,7 @@ let hoveredId        = null;
 let pinnedFeat       = null;
 let currentInfoFeat  = null;
 let trendCharts      = {};
-let currentMode      = "res_vol";
+let currentMode      = "unacc_10y";
 let operatorStateMap = {};
 let incidentsData    = null;
 let affordabilityData = null;
@@ -927,6 +962,9 @@ function buildPropsForId(eiaId, phmsaKeyOverride) {
   const phmsaKey = phmsaKeyOverride || idMap[eiaId];
   const phmsaData = phmsaKey ? (phmsaTimeseries?.[phmsaKey]?.data?.[phmsaYear] ?? {}) : {};
   const p = { ID: eiaId, EIA_state: eiaEntry?.state, ...eiaData };
+  // unacc_10y needs the whole PHMSA history, not just the selected year,
+  // so it needs the key to look the series up again.
+  p.phmsaKey = phmsaKey || null;
   for (const [k, v] of Object.entries(phmsaData)) p["phmsa_" + k] = v;
   return p;
 }

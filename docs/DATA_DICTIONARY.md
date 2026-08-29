@@ -343,6 +343,56 @@ analysis: pre-1970 mileage is the usual proxy for the oldest, highest-risk pipe.
 | 90 | `PARTDTOTTICKETS` | Form Part D item 2, **number of excavation tickets** — locate requests received through the One-Call/811 centre. Damages ÷ tickets is the standard damage-rate denominator. Called `EXCAV_TICKETS` before 2024. |
 | 91 | `PERCENT_UNACC_GAS` | Form Part G, percent of unaccounted-for gas. Per the form: `[(purchased gas + produced gas) − (customer use + company use + adjustments)] ÷ (customer use + company use + adjustments) × 100`. **Reported for the 12 months ending 30 June of the reporting year, not the calendar year.** Can be negative when more gas is accounted for than received, usually a meter-reading and storage timing effect. |
 
+### The default map layer: `% Unaccounted-for Gas (10-yr avg)`
+
+Derived in the browser from `PERCENT_UNACC_GAS`, not stored in
+`final/phmsa_timeseries.json`, so it inherits any correction to that field
+automatically. It is the map's **default colour layer**, and it does not respond
+to the year slider — like `delivery_cagr`, it is a multi-year statistic.
+
+The mean of each utility's Part G percentage over **the most recent ten
+reporting years in its own record**, not a fixed calendar decade, since
+operators enter and leave the panel. Four rules, all of them choices:
+
+- at least **five** non-null years, so a utility with two filings is not given
+  something labelled a ten-year average;
+- the window must end within **two years** of the end of that utility's record,
+  so a system that stopped filing in 2003 does not paint a stale colour (the
+  same guard `delivery_cagr` uses);
+- values beyond **±100%** are dropped as reporting defects rather than averaged
+  in — they exist in Part G, and one of them would otherwise take the entire
+  colour ramp;
+- **negative values are kept.** A utility can account for more gas than it
+  received over a period, which is informative rather than an error, and is why
+  the layer keeps the diverging scale.
+
+On the 2024 file this colours **1,786 of 2,244 utilities (80%)**; the rest fail
+the five-year or recency guards. Median 1.11%, quartiles 0.10% and 2.78%, and
+8.9% of coloured utilities are negative.
+
+**Two artefacts worth knowing before reading the map.** Washington Gas Light
+reports one system-wide figure for the District, Maryland and Virginia, so those
+three territories are identical by construction (3.74%) and none of them is a
+jurisdiction-specific measurement. And the extremes are small municipal systems,
+where a small denominator makes the percentage volatile — the top and bottom of
+this layer are mostly telling you about system size, not about leakage.
+
+**The colour domain is fixed at ±5%, not measured.** `computeDomains`' diverging
+branch would set ±max(|p2|,|p98|), which here is **±15.1%** because a handful of small
+municipal systems average above 30%. On that ramp **68% of all utilities fell inside a
+single tenth** and the interquartile range spanned 9% of it — the map read as one flat
+colour. Fixing the domain at ±5% keeps 88% of utilities inside and gives the
+interquartile range 27% of the ramp. The trade is that the **12% above +5% all clamp to
+the deepest colour** and are not distinguishable from one another; read those off the
+info panel, not the fill.
+
+**What this layer is not.** Part G is a mass balance, not a leak measurement.
+PHMSA states the point directly in its 2017 *Report to Congress on LAUF
+Metrics*: "LAUF gas is a combination of measurement inaccuracy and unknown
+leaks, but it is impossible to know the portion attributable to each. LAUF gas
+is not a valid proxy for either unknown leak volume or methane emissions."
+
+
 ---
 
 ## Reading notes
